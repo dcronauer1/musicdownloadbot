@@ -1,6 +1,7 @@
 import subprocess
 import json
 import os
+import sys
 
 # Parameters
 yt_dlp_path = "/home/nas/nas/yt-dlp/yt-dlp"  # Absolute path to yt-dlp
@@ -13,7 +14,7 @@ output_name = "MyCustomName"
 os.makedirs(base_directory, exist_ok=True)
 
 # Full paths for output
-output_file = os.path.join(base_directory, f"{output_name}.m4a")
+output_file = os.path.join(base_directory, f"{output_name}.m4a")  # Ensure correct extension
 chapter_file = os.path.join(base_directory, f"{output_name}.txt")
 
 # Download the video
@@ -21,7 +22,8 @@ yt_dlp_cmd = [
     yt_dlp_path, "-x", "--audio-format", "alac",
     "--embed-thumbnail", "--add-metadata", "--embed-chapters",
     "--postprocessor-args", f"-metadata artist='{artist_name}'",
-    "-o", output_file, video_url
+    "-o", os.path.join(base_directory, f"{output_name}.%(ext)s"),  # Fix double extension issue
+    video_url
 ]
 
 print("Downloading audio...")
@@ -30,7 +32,7 @@ try:
     print("Download complete.")
 except subprocess.CalledProcessError as e:
     print(f"Error: yt-dlp failed with code {e.returncode}")
-    exit(1)
+    sys.exit(1)
 
 # Extract chapter metadata
 ffprobe_cmd = [
@@ -44,7 +46,7 @@ try:
     chapters = json.loads(result.stdout).get("chapters", [])
 except subprocess.CalledProcessError as e:
     print(f"Error: ffprobe failed with code {e.returncode}")
-    exit(1)
+    sys.exit(1)
 
 # Generate chapter file
 if chapters:
@@ -55,7 +57,7 @@ if chapters:
             seconds = int(start_time % 60)
             milliseconds = int((start_time % 1) * 1000)
             chapter_name = chapter["tags"].get("title", "Unknown")
-            f.write(f"[{minutes}:{seconds:02}.{milliseconds:03}]{chapter_name}\n")
+            f.write(f"[{minutes}:{seconds:02}.{milliseconds:03}] {chapter_name}\n")
     print(f"Chapters saved to {chapter_file}")
 else:
     print("No chapters found.")
