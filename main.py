@@ -1,65 +1,30 @@
-import subprocess
-import json
-import os
-import sys
+import discord
+from discord.ext import commands
+from config_manager import config
+from ytdownloader import download_audio
+from musicolet_timestamp_converter import extract_chapters
 
-# Parameters
-yt_dlp_path = "/home/nas/nas/yt-dlp/yt-dlp"  # Absolute path to yt-dlp
-base_directory = "/home/nas/nas/music"  # Directory where files will be downloaded
-video_url = "https://www.youtube.com/watch?v=7cwrM12pOzU"
-artist_name = "MyArtist"
-output_name = "MyCustomName"
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.default())
 
-# Ensure base directory exists
-os.makedirs(base_directory, exist_ok=True)
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}")
 
-# Full paths for output
-output_file = os.path.join(base_directory, f"{output_name}.m4a")  # Ensure correct extension
-chapter_file = os.path.join(base_directory, f"{output_name}.txt")
+@bot.command()
+async def download(ctx, link: str, title: str, artist: str):
+    """Downloads a video, extracts chapters, and sends metadata to Discord."""
+    await ctx.send(f"Downloading `{title}` by `{artist}`...")
 
-# Download the video
-yt_dlp_cmd = [
-    yt_dlp_path, "-x", "--audio-format", "alac",
-    "--embed-thumbnail", "--add-metadata", "--embed-chapters",
-    "--postprocessor-args", f"-metadata artist='{artist_name}'",
-    "-o", os.path.join(base_directory, f"{output_name}.%(ext)s"),  # Fix double extension issue
-    video_url
-]
+    audio_file = download_audio(link, title, artist)
+    if not audio_file:
+        await ctx.send("Failed to download audio.")
+        return
 
-print("Downloading audio...")
-try:
-    subprocess.run(yt_dlp_cmd, check=True)
-    print("Download complete.")
-except subprocess.CalledProcessError as e:
-    print(f"Error: yt-dlp failed with code {e.returncode}")
-    sys.exit(1)
+    chapter_file = extract_chapters(audio_file)
+    if chapter_file:
+        await ctx.send(f"Chapters saved! Uploading file...")
+        await ctx.send(file=discord.File(chapter_file))
+    else:
+        await ctx.send("No chapters found.")
 
-# Extract chapter metadata
-ffprobe_cmd = [
-    "ffprobe", "-i", output_file,
-    "-print_format", "json", "-show_chapters", "-loglevel", "error"
-]
-
-print("Extracting chapter data...")
-try:
-    result = subprocess.run(ffprobe_cmd, capture_output=True, text=True, check=True)
-    chapters = json.loads(result.stdout).get("chapters", [])
-except subprocess.CalledProcessError as e:
-    print(f"Error: ffprobe failed with code {e.returncode}")
-    sys.exit(1)
-
-# Generate chapter file
-if chapters:
-    with open(chapter_file, "w") as f:
-        for chapter in chapters:
-            start_time = float(chapter["start_time"])
-            minutes = int(start_time // 60)
-            seconds = int(start_time % 60)
-            milliseconds = int((start_time % 1) * 1000)
-            chapter_name = chapter["tags"].get("title", "Unknown")
-            f.write(f"[{minutes}:{seconds:02}.{milliseconds:02}]{chapter_name}\n")
-    print(f"Chapters saved to {chapter_file}")
-else:
-    print("No chapters found.")
-
-print("Process complete.")
+bot.run(config["bot_settings"]["BOT_TOKEN"])
