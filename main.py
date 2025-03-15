@@ -57,7 +57,7 @@ if chapters:
             seconds = int(start_time % 60)
             milliseconds = int((start_time % 1) * 1000)
             chapter_name = chapter["tags"].get("title", "Unknown")
-            f.write(f"[{minutes}:{seconds:02}.{milliseconds:03}] {chapter_name}\n")
+            f.write(f"[{minutes}:{seconds:02}.{milliseconds:02}]{chapter_name}\n")
     print(f"Chapters saved to {chapter_file}")
 else:
     print("No chapters found.")
