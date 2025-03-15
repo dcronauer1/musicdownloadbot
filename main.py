@@ -3,8 +3,8 @@ import json
 import os
 
 # Parameters
-yt_dlp_path = "/mnt/nas/yt-dlp/yt-dlp"  # Absolute path to yt-dlp
-base_directory = "/mnt/nas/music"  # Directory where files will be downloaded
+yt_dlp_path = "/home/nas/nas/yt-dlp/yt-dlp"  # Absolute path to yt-dlp
+base_directory = "/home/nas/nas/music"  # Directory where files will be downloaded
 video_url = "https://www.youtube.com/watch?v=7cwrM12pOzU"
 artist_name = "MyArtist"
 output_name = "MyCustomName"
