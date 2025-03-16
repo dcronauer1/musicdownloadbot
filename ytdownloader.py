@@ -3,6 +3,7 @@ import os
 import json
 import difflib
 from config_manager import config
+from main import ask_confirmation
 import re
 
 # Retrieve settings from the JSON configuration
@@ -137,10 +138,15 @@ def download_audio(video_url: str, output_name: str = None, artist_name: str = N
     output_file_template = os.path.join(BASE_DIRECTORY, f"{output_name}.%(ext)s")
     
     # Build the metadata postprocessor args:
-    meta_args = f"-metadata artist='{artist_name}'"
+    meta_args = f"-metadata title='{output_name}'"
+    meta_args += f"-metadata artist='{artist_name}'"
     if tags_str:
         meta_args += f" -metadata genre='{tags_str}'"
     
+    #confirm selection
+    if ask_confirmation(meta_args) == False:
+        return
+
     #Update yt-dlp
     yt_dlp_cmd = [
         YT_DLP_PATH, "-U"

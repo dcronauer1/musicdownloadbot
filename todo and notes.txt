@@ -38,6 +38,7 @@ arguments
 	add more arguments
 		date, year
 		maybe album?
+		add in a force: so if force is true then it uses inputted args exactly
 add ability to download playlists into albums
 add tags
 	command to list tags
