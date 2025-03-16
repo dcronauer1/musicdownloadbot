@@ -31,13 +31,30 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     )
     await view.wait()  # Wait for the user to respond
     return view.value
+import asyncio
 
 async def run_command(command):
-    """Run a command asynchronously and return its output."""
+    """Run a command asynchronously and stream its output in real-time."""
     process = await asyncio.create_subprocess_exec(
         *command,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
-    stdout, stderr = await process.communicate()
-    return process.returncode, stdout.decode().strip(), stderr.decode().strip()
+
+    stdout_lines = []
+    stderr_lines = []
+
+    # Read and print stdout line by line
+    async for line in process.stdout:
+        decoded_line = line.decode().strip()
+        print(decoded_line)  # Print to console immediately
+        stdout_lines.append(decoded_line)
+
+    # Read and print stderr line by line
+    async for line in process.stderr:
+        decoded_line = line.decode().strip()
+        print(decoded_line)  # Print to console immediately
+        stderr_lines.append(decoded_line)
+
+    returncode = await process.wait()  # Wait for process to finish
+    return returncode, "\n".join(stdout_lines), "\n".join(stderr_lines)
