@@ -22,14 +22,16 @@ every time yt-dlp is ran, run below:
 seperate by artist (directory should be music/artist/[songs, album, or album folder]
 	so check if dir exists
 		add a confirm to add new artists if it doesnt exist, so seperate message
-	maybe code to check if there are similar names?
+✓	maybe code to check if there are similar names?
 	make a command to list artists
-	store artists in a list?
-	handle moving the file to the proper directory
+✓	store artists in a list?
+✓	handle moving the file to the proper directory
 arguments
 	add argument for song/playlist (default song)
-		check for timestamps, handle accordingly
+		when playlist, it should have the option to put everything into a subfolder for that album
 	argument to either split or timestamp
+		check for timestamps, handle accordingly
+		when splitting, it should have the option to put everything into a subfolder for that album
 	set up defaults properly (default author is channel uploader, default title is video title, etc)
 	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
 		--download-sections REGEX

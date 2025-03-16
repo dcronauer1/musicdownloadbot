@@ -19,14 +19,15 @@ async def on_ready():
 
 # Slash command: /download
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
-async def download(interaction: discord.Interaction, link: str, title: str, artist: str):
+async def download(interaction: discord.Interaction, link: str, title: str, artist: str, tags: list = None):
     """
     Slash command to download a video.
     
     Parameters:
     - link: The URL of the YouTube video.
     - title: Custom title for the output file.
-    - artist: Artist name for metadata.
+    - artist: Artist name for metadata. Checked against a list to see if it already exists
+    - tags: tags, is a list. Checked against a list to see if they already exist
     
     The 'interaction' object is similar to 'ctx' in prefix commands, 
     containing information about the command invocation.
@@ -35,7 +36,7 @@ async def download(interaction: discord.Interaction, link: str, title: str, arti
     await interaction.response.send_message(f"Downloading `{title}` by `{artist}`...")
 
     # Download audio file using ytdownloader.py
-    audio_file = download_audio(link, title, artist)
+    audio_file = download_audio(link, title, artist, tags)
     if not audio_file:
         await interaction.followup.send("Failed to download audio.")
         return
