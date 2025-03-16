@@ -19,6 +19,10 @@ def download_audio(video_url: str, output_name: str, artist_name: str):
     output_file_template = os.path.join(BASE_DIRECTORY, f"{output_name}.%(ext)s")
     
     yt_dlp_cmd = [
+        YT_DLP_PATH, "-U"
+    ]
+
+    yt_dlp_cmd = [
         YT_DLP_PATH, "-x", "--audio-format", "alac",
         "--embed-thumbnail", "--add-metadata", "--embed-chapters",
         "--postprocessor-args", f"-metadata artist='{artist_name}'",
