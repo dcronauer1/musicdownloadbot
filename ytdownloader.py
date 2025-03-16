@@ -138,7 +138,7 @@ def download_audio(video_url: str, output_name: str = None, artist_name: str = N
     # Build the metadata postprocessor args:
     meta_args = f"-metadata artist='{artist_name}'"
     if tags_str:
-        meta_args += f" -metadata tags='{tags_str}'"
+        meta_args += f" -metadata genre='{tags_str}'"
     
     #Update yt-dlp
     yt_dlp_cmd = [
