@@ -85,19 +85,19 @@ def check_and_update_tags(tags: str) -> list:
     save_known_list(filename, known_tags)
     return updated_tags
 
-def get_video_info(video_url: str) -> dict:
+async def get_video_info(video_url: str) -> dict:
     """Fetch video info (as JSON) using yt-dlp and return the parsed dictionary. Used for defaulting parameters"""
     yt_dlp_info_cmd = [YT_DLP_PATH, "--dump-single-json", video_url]
-    success, output = run_command(yt_dlp_info_cmd)
-    
-    if success:
+    returncode, output, stderr = await run_command(yt_dlp_info_cmd)
+
+    if returncode == 0:
         try:
             return json.loads(output)
         except json.JSONDecodeError:
-            print("Error: Failed to parse video info JSON.")
+            print(f"Error: Failed to parse video info JSON.\nRaw output:\n{output}")
             return {}
     
-    print("Error: Failed to fetch video info.")
+    print(f"Error: Failed to fetch video info.\nStderr:\n{stderr}")
     return {}
 
 async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None) -> str:
@@ -116,7 +116,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     # Get video info to set defaults if needed
     info = {}
     if not output_name or not artist_name:
-        info = get_video_info(video_url)
+        info = await get_video_info(video_url)
     
     if not output_name:
         output_name = info.get("title", "Untitled")
