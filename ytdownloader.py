@@ -1,10 +1,9 @@
-import subprocess
 import os
 import json
 import difflib
-from config_manager import config
-from utils import ask_confirmation
 import re
+from config_manager import config
+from utils import ask_confirmation, run_command
 
 # Retrieve settings from the JSON configuration
 YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
@@ -89,13 +88,17 @@ def check_and_update_tags(tags: str) -> list:
 def get_video_info(video_url: str) -> dict:
     """Fetch video info (as JSON) using yt-dlp and return the parsed dictionary. Used for defaulting parameters"""
     yt_dlp_info_cmd = [YT_DLP_PATH, "--dump-single-json", video_url]
-    try:
-        result = subprocess.run(yt_dlp_info_cmd, capture_output=True, text=True, check=True)
-        info = json.loads(result.stdout)
-        return info
-    except subprocess.CalledProcessError as e:
-        print(f"Error fetching video info: {e.returncode}")
-        return {}
+    success, output = run_command(yt_dlp_info_cmd)
+    
+    if success:
+        try:
+            return json.loads(output)
+        except json.JSONDecodeError:
+            print("Error: Failed to parse video info JSON.")
+            return {}
+    
+    print("Error: Failed to fetch video info.")
+    return {}
 
 async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None) -> str:
     """
@@ -149,18 +152,16 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
         return
 
     #Update yt-dlp
-    yt_dlp_cmd = [
-        YT_DLP_PATH, "-U"
-    ]
-    print("Updating yt-dlp.")
-    try:
-        subprocess.run(yt_dlp_cmd, check=True)
-        print("Update complete.")
-        # The converted file should be .m4a
-    except subprocess.CalledProcessError as e:
-        print(f"Error: yt-dlp failed with code {e.returncode}")
+    print("Updating yt-dlp...")
+    update_command = [YT_DLP_PATH, "-U"]
+    returncode, _, stderr = await run_command(update_command)
+    
+    if returncode != 0:
+        print(f"Error updating yt-dlp: {stderr}")
         return None
+    
     #Download video
+    print("Download starting...")
     yt_dlp_cmd = [
         YT_DLP_PATH, "-x", "--audio-format", "alac",
         "--embed-thumbnail", "--add-metadata", "--embed-chapters",
@@ -169,13 +170,12 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
         video_url
     ]
     
-    print("Downloading audio...")
-    try:
-        print(f"full debug command: {yt_dlp_cmd}")   #for debugging
-        subprocess.run(yt_dlp_cmd, check=True)
+    print(f"Full command: {' '.join(yt_dlp_cmd)}")
+    returncode, _, stderr = await run_command(yt_dlp_cmd)
+
+    if returncode == 0:
         print("Download complete.")
-        # The converted file should be .m4a
         return os.path.join(BASE_DIRECTORY, f"{output_name}.m4a")
-    except subprocess.CalledProcessError as e:
-        print(f"Error: yt-dlp failed with code {e.returncode}")
+    else:
+        print(f"Error downloading: {stderr}")
         return None

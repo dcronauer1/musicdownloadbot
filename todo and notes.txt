@@ -48,3 +48,4 @@ timestamps
 ✓	[min:sec.mili]{chaptername}
 ✓	[songname].txt
 fix postprocessor-args, or use it correctly? idk
+make bot cleanup its confirmation boxes

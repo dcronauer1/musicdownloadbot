@@ -1,4 +1,5 @@
 import discord
+import asyncio
 # Confirmation view using Discord UI buttons
 class ConfirmView(discord.ui.View):
     def __init__(self, timeout=30):
@@ -30,3 +31,13 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     )
     await view.wait()  # Wait for the user to respond
     return view.value
+
+async def run_command(command):
+    """Run a command asynchronously and return its output."""
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    return process.returncode, stdout.decode().strip(), stderr.decode().strip()
