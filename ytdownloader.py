@@ -171,6 +171,7 @@ def download_audio(interaction, video_url: str, output_name: str = None, artist_
     
     print("Downloading audio...")
     try:
+        print(f"full debug command: {yt_dlp_cmd}")   #for debugging
         subprocess.run(yt_dlp_cmd, check=True)
         print("Download complete.")
         # The converted file should be .m4a
