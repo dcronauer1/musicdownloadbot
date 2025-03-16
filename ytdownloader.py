@@ -3,7 +3,7 @@ import os
 import json
 import difflib
 from config_manager import config
-from main import ask_confirmation
+from utils import ask_confirmation
 import re
 
 # Retrieve settings from the JSON configuration
@@ -97,7 +97,7 @@ def get_video_info(video_url: str) -> dict:
         print(f"Error fetching video info: {e.returncode}")
         return {}
 
-def download_audio(video_url: str, output_name: str = None, artist_name: str = None, tags: list = None) -> str:
+def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None) -> str:
     """
     Downloads a YouTube video as ALAC audio with embedded metadata.
     
@@ -144,7 +144,7 @@ def download_audio(video_url: str, output_name: str = None, artist_name: str = N
         meta_args += f" -metadata genre='{tags_str}'"
     
     #confirm selection
-    if ask_confirmation(meta_args) == False:
+    if ask_confirmation(interaction, meta_args) == False:
         return
 
     #Update yt-dlp
