@@ -52,7 +52,7 @@ def check_and_update_artist(artist: str) -> str:
         save_known_list(filename, known_artists)
         return artist
 
-def check_and_update_tags(tags: list) -> list:
+def check_and_update_tags(tags: str) -> list:
     """
     Check each tag against the known list. Each tag is converted to Title Case.
     If a close match exists, use that suggestion; otherwise, add the new tag.
@@ -105,7 +105,7 @@ def download_audio(video_url: str, output_name: str = None, artist_name: str = N
     :param video_url: URL of the YouTube video.
     :param output_name: Base name for the output file. Defaults to video title.
     :param artist_name: Artist name to embed in metadata. Defaults to video uploader.
-    :param tags: List of tag strings.
+    :param tags: tags in a string.
     :return: The path to the downloaded audio file (.m4a) or None if error.
     """
     # Get video info to set defaults if needed
@@ -121,8 +121,14 @@ def download_audio(video_url: str, output_name: str = None, artist_name: str = N
     # Check against known lists. (authors and tags)
     artist_name = check_and_update_artist(artist_name)
     if tags:
-        tags = check_and_update_tags(tags)
-        tags_str = ", ".join(tags)
+        # Split the tags by commas and strip extra spaces
+        tags_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
+        
+        # Process and update tags list
+        tags_list = check_and_update_tags(tags_list)
+
+        # Join them back into a properly formatted string
+        tags_str = ", ".join(tags_list)
     else:
         tags_str = None
 

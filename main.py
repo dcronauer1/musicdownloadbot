@@ -19,7 +19,7 @@ async def on_ready():
 
 # Slash command: /download
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
-async def download(interaction: discord.Interaction, link: str, title: str, artist: str, tags: list = None):
+async def download(interaction: discord.Interaction, link: str, title: str, artist: str, tags: str = None):
     """
     Slash command to download a video.
     
@@ -27,7 +27,7 @@ async def download(interaction: discord.Interaction, link: str, title: str, arti
     - link: The URL of the YouTube video.
     - title: Custom title for the output file.
     - artist: Artist name for metadata. Checked against a list to see if it already exists
-    - tags: tags, is a list. Checked against a list to see if they already exist
+    - tags: tags. formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
     
     The 'interaction' object is similar to 'ctx' in prefix commands, 
     containing information about the command invocation.
