@@ -18,9 +18,6 @@ bot = MyBot(command_prefix="!", intents=discord.Intents.default())
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
-async def download_wrapper(*args):
-    return await asyncio.to_thread(download_audio, *args)
-
 # Slash command: /download
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None):
@@ -40,7 +37,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     await interaction.response.defer()  # Acknowledge the command first
 
     # Download the audio in a separate thread
-    audio_file = await download_wrapper(interaction, link, title, artist, tags)
+    audio_file = await download_audio(interaction, link, title, artist, tags)
     
     if not audio_file:
         await interaction.followup.send("Failed to download audio.")
