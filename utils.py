@@ -23,7 +23,7 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     Returns True if the user confirms; False if canceled.
     """
     view = ConfirmView()
-    await interaction.response.send_message(
+    await interaction.followup.send(
         f"Please confirm the following details:\n{details}",
         view=view,
         ephemeral=True  # Only the command user sees this
