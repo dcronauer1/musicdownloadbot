@@ -1,9 +1,3 @@
---download-sections REGEX      
---embed-thumbnail
---audio-format flac
-
-$ yt-dlp --parse-metadata "title:%(artist)s - %(title)s"
-
 
 ./yt-dlp -x --audio-format alac --embed-thumbnail --add-metadata --embed-chapters --postprocessor-args "-metadata artist='MyArtist'" -o "MyCustomName.m4a" https://www.youtube.com/watch?v=7cwrM12pOzU
 
@@ -20,24 +14,30 @@ $ yt-dlp --parse-metadata "title:%(artist)s - %(title)s"
 
 script reqs:
 
+
+every time yt-dlp is ran, run below:
 ./yt-dlp -U # update
 
 
-seperate by artist
+seperate by artist (directory should be music/artist/[songs, album, or album folder]
 	so check if dir exists
 		add a confirm to add new artists if it doesnt exist, so seperate message
 	maybe code to check if there are similar names?
 	make a command to list artists
 	store artists in a list?
 	handle moving the file to the proper directory
-add argument for album/song (default song)
-add ability to download playlists into albums (so music/artist/[songs, album, or album folder])
+arguments
+	add argument for song/playlist (default song)
+		check for timestamps, handle accordingly
+	argument to either split or timestamp
+	set up defaults properly (default author is channel uploader, default title is video title, etc)
+	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
+		--download-sections REGEX
+add ability to download playlists into albums
 add tags
 	command to list tags
 	store tags
 timestamps
-	argument for splitting or timestamping
-	✓need a way to parse yt description
-	argument to manually add them
-	[min:sec.mili]{chaptername}
-	[songname].txt
+✓	need a way to parse yt description
+✓	[min:sec.mili]{chaptername}
+✓	[songname].txt
