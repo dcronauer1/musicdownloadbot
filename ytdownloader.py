@@ -138,8 +138,9 @@ def download_audio(interaction, video_url: str, output_name: str = None, artist_
     output_file_template = os.path.join(BASE_DIRECTORY, f"{output_name}.%(ext)s")
     
     # Build the metadata postprocessor args:
-    meta_args = f"-metadata title='{output_name}'"
-    meta_args += f"-metadata artist='{artist_name}'"
+    meta_args = f"-metadata artist='{artist_name}'"
+    #meta_args += f" -metadata title='{output_name}'"
+
     if tags_str:
         meta_args += f" -metadata genre='{tags_str}'"
     
