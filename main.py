@@ -3,6 +3,7 @@ from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
 from musicolet_timestamp_converter import extract_chapters
+import asyncio
 
 # Custom Bot class to sync slash commands on startup.
 class MyBot(commands.Bot):
@@ -16,6 +17,9 @@ bot = MyBot(command_prefix="!", intents=discord.Intents.default())
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+
+async def download_wrapper(*args):
+    return await asyncio.to_thread(download_audio, *args)
 
 # Slash command: /download
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
@@ -33,10 +37,11 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     containing information about the command invocation.
     """
     # Send an initial response.
-    await interaction.response.send_message(f"Downloading `{title}` by `{artist}`...")
+    await interaction.response.defer()  # Acknowledge the command first
 
-    # Download audio file using ytdownloader.py
-    audio_file = download_audio(link, title, artist, tags)
+    # Download the audio in a separate thread
+    audio_file = await download_wrapper(link, title, artist, tags)
+    
     if not audio_file:
         await interaction.followup.send("Failed to download audio.")
         return

@@ -19,7 +19,7 @@ every time yt-dlp is ran, run below:
 ✓	./yt-dlp -U # update
 
 
-seperate by artist (directory should be music/artist/[songs, album, or album folder]
+seperate by artist (directory should be music/[songs, album, or album folder])
 	so check if dir exists
 		add a confirm to add new artists if it doesnt exist, so seperate message
 ✓	maybe code to check if there are similar names?
@@ -35,10 +35,13 @@ arguments
 	set up defaults properly (default author is channel uploader, default title is video title, etc)
 	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
 		--download-sections REGEX
+	add more arguments
+		date, year
+		maybe album?
 add ability to download playlists into albums
 add tags
 	command to list tags
-	store tags
+✓	store tags
 timestamps
 ✓	need a way to parse yt description
 ✓	[min:sec.mili]{chaptername}
