@@ -9,3 +9,11 @@ on phone:
 get musicolet and foldersync
 set up foldersync with nas to auto copy
 set musicolet up
+
+
+
+features:
+download youtube videos as .m4a (ALAC so lossless)
+add title, author, tags, and more (year, date)
+store a list of authors and tags so if names are very close they get stored as the same artist, or same tag
+user confirmations for adding new tags *
