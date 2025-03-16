@@ -19,7 +19,7 @@ async def on_ready():
 
 # Slash command: /download
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
-async def download(interaction: discord.Interaction, link: str, title: str, artist: str, tags: str = None):
+async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None):
     """
     Slash command to download a video.
     
