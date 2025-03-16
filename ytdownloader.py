@@ -3,6 +3,7 @@ import os
 import json
 import difflib
 from config_manager import config
+import re
 
 # Retrieve settings from the JSON configuration
 YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
@@ -122,13 +123,13 @@ def download_audio(video_url: str, output_name: str = None, artist_name: str = N
     artist_name = check_and_update_artist(artist_name)
     if tags:
         # Split the tags by commas and strip extra spaces
-        tags_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
+        tags_list = [tag.strip() for tag in re.split(r"[,;]", tags) if tag.strip()]
         
         # Process and update tags list
         tags_list = check_and_update_tags(tags_list)
 
         # Join them back into a properly formatted string
-        tags_str = ", ".join(tags_list)
+        tags_str = "; ".join(tags_list) #m4a uses semicolins
     else:
         tags_str = None
 
