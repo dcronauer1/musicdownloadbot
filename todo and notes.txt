@@ -47,3 +47,4 @@ timestamps
 ✓	need a way to parse yt description
 ✓	[min:sec.mili]{chaptername}
 ✓	[songname].txt
+fix postprocessor-args, or use it correctly? idk

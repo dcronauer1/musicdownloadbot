@@ -97,7 +97,7 @@ def get_video_info(video_url: str) -> dict:
         print(f"Error fetching video info: {e.returncode}")
         return {}
 
-def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None) -> str:
+async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None) -> str:
     """
     Downloads a YouTube video as ALAC audio with embedded metadata.
     
@@ -145,7 +145,7 @@ def download_audio(interaction, video_url: str, output_name: str = None, artist_
         meta_args += f" -metadata genre='{tags_str}'"
     
     #confirm selection
-    if ask_confirmation(interaction, meta_args) == False:
+    if (await ask_confirmation(interaction, meta_args)) == False:
         return
 
     #Update yt-dlp
