@@ -32,10 +32,10 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     await view.wait()  # Wait for the user to respond
     return view.value
 
-async def run_command(command):
-    """Run a command asynchronously and stream its output in real-time."""
+async def run_command(command, verbose=False):
+    """Run a command asynchronously and optionally stream its output in real-time."""
     process = await asyncio.create_subprocess_shell(
-        command,  # Use create_subprocess_shell for string commands
+        command,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
@@ -43,14 +43,27 @@ async def run_command(command):
     stdout_lines = []
     stderr_lines = []
 
-    async def read_stream(stream, line_list, prefix=""):
+    async def read_stream(stream, line_list):
+        buffer = bytearray()
         while True:
-            line = await stream.readline()
-            if not line:
+            chunk = await stream.read(1024)  # read in 1024 byte chunks
+            if not chunk:
                 break
-            decoded_line = line.decode().strip()
-            print(decoded_line)  # Print to console immediately
-            line_list.append(decoded_line)
+            buffer.extend(chunk)
+            # Process complete lines from the buffer
+            while b'\n' in buffer:
+                line, sep, buffer = buffer.partition(b'\n')
+                decoded_line = line.decode().strip()
+                if verbose:
+                    print(decoded_line)  # Only print if verbose is True
+                line_list.append(decoded_line)
+        # Process any remaining data in the buffer
+        if buffer:
+            decoded_line = buffer.decode().strip()
+            if decoded_line:
+                if verbose:
+                    print(decoded_line)
+                line_list.append(decoded_line)
 
     # Read both stdout and stderr concurrently
     await asyncio.gather(
