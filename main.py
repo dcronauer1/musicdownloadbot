@@ -50,8 +50,8 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     if timestamps: #timestamps not empty, use user timestamps
             await apply_manual_timestamps_to_file(timestamps,audio_file)
             timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
-    
-    timestamp_file = await extract_chapters(interaction, audio_file)    #get timestamps
+    else:
+        timestamp_file = await extract_chapters(interaction, audio_file)    #get timestamps
     if timestamp_file == None:  #no timestamps, prompt user
         #prompt user defined templates 
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):

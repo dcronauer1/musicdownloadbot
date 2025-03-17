@@ -5,6 +5,7 @@ from utils import ask_confirmation, run_command
 
 async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
     """take a string of timestamps formatted as "min:sc 'chapter title'\n", and apply it to the file"""
+    print(f"User provided timestamps: {timestamps}")
     #convert
     metadata = [";FFMETADATA1"]
     timebase = 1000  # FFmetadata timebase in milliseconds
