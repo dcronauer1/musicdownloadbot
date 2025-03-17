@@ -87,7 +87,7 @@ def check_and_update_tags(tags: str) -> list:
 
 async def get_video_info(video_url: str) -> dict:
     """Fetch video info (as JSON) using yt-dlp and return the parsed dictionary. Used for defaulting parameters"""
-    yt_dlp_info_cmd = [YT_DLP_PATH, "--dump-single-json", video_url]
+    yt_dlp_info_cmd = f"{YT_DLP_PATH} --dump-single-json {video_url}"
     returncode, output, stderr = await run_command(yt_dlp_info_cmd)
 
     if returncode == 0:
@@ -126,14 +126,14 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     # Check against known lists. (authors and tags)
     artist_name = check_and_update_artist(artist_name)
     if tags:
-        # Split the tags by commas and strip extra spaces
+        # Split the tags by commas and semicolons, and strip extra spaces
         tags_list = [tag.strip() for tag in re.split(r"[,;]", tags) if tag.strip()]
         
         # Process and update tags list
         tags_list = check_and_update_tags(tags_list)
 
         # Join them back into a properly formatted string
-        tags_str = "; ".join(tags_list) #m4a uses semicolins
+        tags_str = "; ".join(tags_list)  #m4a uses semicolons
     else:
         tags_str = None
 
@@ -142,7 +142,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     
     # Build the metadata postprocessor args:
     meta_args = f"-metadata artist='{artist_name}'"
-    #meta_args += f" -metadata title='{output_name}'"
+    meta_args += f" -metadata title='{output_name}'"
 
     if tags_str:
         meta_args += f" -metadata genre='{tags_str}'"
@@ -153,7 +153,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
 
     #Update yt-dlp
     print("Updating yt-dlp...")
-    update_command = [YT_DLP_PATH, "-U"]
+    update_command = f"{YT_DLP_PATH} -U"
     returncode, _, stderr = await run_command(update_command)
     
     if returncode != 0:
@@ -162,15 +162,13 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     
     #Download video
     print("Download starting...")
-    yt_dlp_cmd = [
-        YT_DLP_PATH, "-x", "--audio-format", "alac",
-        "--embed-thumbnail", "--add-metadata", "--embed-chapters",
-        "--postprocessor-args", meta_args,
-        "-o", output_file_template,
-        video_url
-    ]
+    # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
+    yt_dlp_cmd = (
+        f"{YT_DLP_PATH} -x --audio-format alac --embed-thumbnail --add-metadata "
+        f"--embed-chapters --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
+    )
     
-    print(f"Full command: {' '.join(yt_dlp_cmd)}")
+    print(f"Full command: {yt_dlp_cmd}")
     returncode, _, stderr = await run_command(yt_dlp_cmd)
 
     if returncode == 0:

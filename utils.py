@@ -31,12 +31,11 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     )
     await view.wait()  # Wait for the user to respond
     return view.value
-import asyncio
 
 async def run_command(command):
     """Run a command asynchronously and stream its output in real-time."""
-    process = await asyncio.create_subprocess_exec(
-        *command,
+    process = await asyncio.create_subprocess_shell(
+        command,  # Use create_subprocess_shell for string commands
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
@@ -44,17 +43,20 @@ async def run_command(command):
     stdout_lines = []
     stderr_lines = []
 
-    # Read and print stdout line by line
-    async for line in process.stdout:
-        decoded_line = line.decode().strip()
-        print(decoded_line)  # Print to console immediately
-        stdout_lines.append(decoded_line)
+    async def read_stream(stream, line_list, prefix=""):
+        while True:
+            line = await stream.readline()
+            if not line:
+                break
+            decoded_line = line.decode().strip()
+            print(decoded_line)  # Print to console immediately
+            line_list.append(decoded_line)
 
-    # Read and print stderr line by line
-    async for line in process.stderr:
-        decoded_line = line.decode().strip()
-        print(decoded_line)  # Print to console immediately
-        stderr_lines.append(decoded_line)
+    # Read both stdout and stderr concurrently
+    await asyncio.gather(
+        read_stream(process.stdout, stdout_lines),
+        read_stream(process.stderr, stderr_lines)
+    )
 
     returncode = await process.wait()  # Wait for process to finish
     return returncode, "\n".join(stdout_lines), "\n".join(stderr_lines)
