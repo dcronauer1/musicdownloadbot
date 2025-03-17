@@ -63,7 +63,7 @@ async def check_and_update_tags(tags: str, interaction) -> list:
     known_tags = load_known_list(filename)
     updated_tags = []
     lower_known = {tag.lower(): tag for tag in known_tags}
-    user_output = None
+    user_output = ""
     trying_to_gen_new_tag = False
     for tag in tags:
         # Convert tag to Title Case.
@@ -76,18 +76,19 @@ async def check_and_update_tags(tags: str, interaction) -> list:
             if matches:
                 suggestion = lower_known[matches[0]]
                 print(f"Tag '{tag_normalized}' not found. Did you mean '{suggestion}'? Using '{suggestion}'.")
-                user_output += f"Tag '{tag_normalized}' not found. Did you mean '{suggestion}'? Using '{suggestion}'.\n" #output this to user
+                user_output += (f"Tag '{tag_normalized}' not found. Did you mean '{suggestion}'? Using '{suggestion}'.\n") #output this to user
                 updated_tags.append(suggestion)
             else: 
                 #if here, then user must confirm the addition of new tag(s)
                 trying_to_gen_new_tag=True
                 
                 print(f"Tag '{tag_normalized}' is new. Adding it to the known list.")
-                user_output += f"Tag '{tag_normalized}' is new. Adding it to the known list.\n" #output this to user
+                user_output += (f"Tag '{tag_normalized}' is new. Adding it to the known list.\n") #output this to user
                 known_tags.append(tag_normalized)
                 updated_tags.append(tag_normalized)
-    if (await ask_confirmation(interaction, user_output)) == False:
-        return False
+    if trying_to_gen_new_tag:
+        if (await ask_confirmation(interaction, user_output)) == False:
+            return False
     save_known_list(filename, known_tags)
     return updated_tags
 
