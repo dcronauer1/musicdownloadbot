@@ -90,7 +90,7 @@ async def get_video_info(video_url: str) -> dict:
     yt_dlp_info_cmd = (
         f"{YT_DLP_PATH} --print 'title' --print 'uploader' --print 'upload_date' {video_url}"
     )
-    returncode, output, stderr = await run_command(yt_dlp_info_cmd)
+    returncode, output, stderr = await run_command(yt_dlp_info_cmd, verbose=True)
 
     if returncode == 0:
         try:
