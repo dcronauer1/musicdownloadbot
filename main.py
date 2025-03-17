@@ -21,7 +21,7 @@ async def on_ready():
 # Slash command: /download
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None, date: str = None,
-                   timestamps: str = None, type: str = "Song", force_user_defined_timestamps: bool = False):
+                   timestamps: str = None, type: str = "Song"):
     """
     Slash command to download a video.
     
@@ -33,8 +33,6 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     - date: _____________
     - timestamps: formatted as min:sc "title"
     - type: (Song|Playlist):
-    - force_user_defined_timestamps: if true, user is prompted to add timestamps, regardless of existance
-
     
     The 'interaction' object is similar to 'ctx' in prefix commands, 
     containing information about the command invocation.
@@ -51,9 +49,14 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 
     timestamp_file = await extract_chapters(interaction, audio_file)
 
-    if timestamp_file == None or force_user_defined_timestamps:
+    if timestamp_file == None or timestamps:
         #prompt user defined templates
-        if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
+        if timestamps: #timestamps not empty, use user timestamps
+            apply_manual_timestamps_to_file(timestamps,audio_file)
+            timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt 
+        elif (await ask_confirmation(interaction, "Would you like to add timestamps?")):
+            ##########need to prompt for timestamps here
+            #timestamps=
             apply_manual_timestamps_to_file(timestamps,audio_file)
             timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
     if timestamp_file:
