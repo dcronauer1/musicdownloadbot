@@ -7,6 +7,7 @@ from musicolet_timestamp_converter import extract_chapters,apply_manual_timestam
 from utils import ask_confirmation, run_command
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
+FILE_EXTENSION = config["download_settings"]["file_extension"]
 
 # Custom Bot class to sync slash commands on startup.
 class MyBot(commands.Bot):
@@ -69,13 +70,13 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
         await interaction.followup.send("🎊Audio downloaded without chapters.")
 
 
-#for command to apply timestamps after generating, use os.path.join(BASE_DIRECTORY, f"{output_name}.m4a")
+#for command to apply timestamps after generating, use os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
 @bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing video")
 async def download(interaction: discord.Interaction, title: str = None, timestamps: str = None):
     """
 
     """
-    audio_file = os.path.join(BASE_DIRECTORY, f"{title}.m4a")
+    audio_file = os.path.join(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
     #check if it exists
     ##################
     await apply_manual_timestamps_to_file(timestamps,audio_file)

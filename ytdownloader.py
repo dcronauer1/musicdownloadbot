@@ -8,6 +8,9 @@ from utils import ask_confirmation, run_command
 # Retrieve settings from the JSON configuration
 YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
+FILE_TYPE = config["download_settings"]["file_type"]
+FILE_EXTENSION = config["download_settings"]["file_extension"]
+
 
 def load_known_list(filename):
     """Load a JSON list from a file, or return an empty list if file does not exist."""
@@ -116,7 +119,7 @@ async def get_video_info(video_url: str) -> dict:
 
 async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None) -> str:
     """
-    Downloads a YouTube video as ALAC audio with embedded metadata.
+    Downloads a YouTube video as FILE_EXTENSION audio with embedded metadata.
     
     If output_name or artist_name is not provided, uses video title and uploader respectively.
     Tags (if provided) are checked against known tags and added as a comma-separated metadata field.
@@ -125,7 +128,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     :param output_name: Base name for the output file. Defaults to video title.
     :param artist_name: Artist name to embed in metadata. Defaults to video uploader.
     :param tags: tags in a string.
-    :return: The path to the downloaded audio file (.m4a) or None if error.
+    :return: The path to the downloaded audio file (FILE_TYPE) or None if error.
     """
     # Get video info to set defaults if needed
     info = {}
@@ -151,6 +154,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
             return
 
         # Join them back into a properly formatted string
+        #NOTE: need to change this if other file types are expected
         tags_str = "; ".join(tags_list)  #m4a uses semicolons
     else:
         tags_str = None
@@ -182,7 +186,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     print("Download starting...")
     # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
     yt_dlp_cmd = (
-        f"{YT_DLP_PATH} -x --audio-format alac --embed-thumbnail --add-metadata "
+        f"{YT_DLP_PATH} -x --audio-format {FILE_EXTENSION} --embed-thumbnail --add-metadata "
         f"--embed-chapters --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
     )
     
@@ -191,7 +195,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
 
     if returncode == 0:
         print("Download complete.")
-        return os.path.join(BASE_DIRECTORY, f"{output_name}.m4a")
+        return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
     else:
         print(f"Error downloading: {stderr}")
         return None

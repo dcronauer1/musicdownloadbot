@@ -2,6 +2,9 @@ import subprocess
 import json
 import re
 from utils import ask_confirmation, run_command
+from config_manager import config
+
+FILE_EXTENSION = config["download_settings"]["file_extension"]
 
 async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
     """take a string of timestamps formatted as "min:sc 'chapter title'\n", and apply it to the file"""
@@ -50,7 +53,7 @@ def format_timestamps_for_musicolet(chapters, chapter_file):
 
 async def extract_chapters(interaction, audio_file: str):
     """Extracts chapters from the audio file and saves them in a .txt file."""
-    chapter_file = audio_file.replace(".m4a", ".txt")
+    chapter_file = audio_file.replace("{FILE_EXTENSION}", ".txt")
 
     ffprobe_cmd = [
         "ffprobe", "-i", audio_file,

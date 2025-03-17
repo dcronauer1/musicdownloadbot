@@ -9,7 +9,9 @@ DEFAULT_CONFIG = {
     },
     "download_settings": {
         "yt_dlp_path": "/home/nas/nas/yt-dlp/yt-dlp",
-        "base_directory": "/home/nas/nas/music"
+        "base_directory": "/home/nas/nas/music",
+        "file_type": "alac",
+        "file_extension": ".m4a"
     }
 }
 
