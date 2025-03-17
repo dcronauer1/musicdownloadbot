@@ -32,7 +32,7 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
 
     ffmpeg_covert_cmd = (f"ffmpeg -i \"{audio_file}\" -i {converted_chapters} -map_metadata 1 -codec copy output_video.mp4")
     #need to make sure above replaces existing
-    run_command(ffmpeg_covert_cmd, True)
+    await run_command(ffmpeg_covert_cmd, True)
 
 def format_timestamps_for_musicolet(chapters, chapter_file):
     """Converts json sorted timestamps into musicolet timestamps [mn:sc.ms]"""

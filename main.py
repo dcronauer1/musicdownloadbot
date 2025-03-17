@@ -65,6 +65,9 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     else:   
         await interaction.followup.send("🎊Audio downloaded without chapters.")
 
+
+#for command to apply timestamps after generating, use os.path.join(BASE_DIRECTORY, f"{output_name}.m4a")
+
 # Example of a simple slash command that sends a message.
 @bot.tree.command(name="hello", description="Replies with a greeting.")
 async def hello(interaction: discord.Interaction):
