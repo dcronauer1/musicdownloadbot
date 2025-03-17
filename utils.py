@@ -21,7 +21,7 @@ class ConfirmView(discord.ui.View):
 async def ask_confirmation(interaction: discord.Interaction, details: str) -> bool:
     """
     Sends a confirmation prompt with the given details.
-    Returns True if the user confirms; False if canceled.
+    Returns True if the user confirms; False if canceled or timed out.
     """
     view = ConfirmView()
     await interaction.followup.send(
@@ -30,6 +30,11 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
         ephemeral=True  # Only the command user sees this
     )
     await view.wait()  # Wait for the user to respond
+
+    # Default to False (cancel) if the user doesn't interact within the timeout
+    if view.value is None:
+        view.value = False
+
     return view.value
 
 async def run_command(command, verbose=False):
