@@ -154,7 +154,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     #Update yt-dlp
     print("Updating yt-dlp...")
     update_command = f"{YT_DLP_PATH} -U"
-    returncode, _, stderr = await run_command(update_command)
+    returncode, _, stderr = await run_command(update_command, True)
     
     if returncode != 0:
         print(f"Error updating yt-dlp: {stderr}")
@@ -169,7 +169,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     )
     
     print(f"Full command: {yt_dlp_cmd}")
-    returncode, _, stderr = await run_command(yt_dlp_cmd)
+    returncode, _, stderr = await run_command(yt_dlp_cmd, True)
 
     if returncode == 0:
         print("Download complete.")
