@@ -186,7 +186,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     print("Download starting...")
     # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
     yt_dlp_cmd = (
-        f"{YT_DLP_PATH} -x --audio-format {FILE_EXTENSION} --embed-thumbnail --add-metadata "
+        f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
         f"--embed-chapters --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
     )
     
