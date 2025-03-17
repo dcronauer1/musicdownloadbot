@@ -47,14 +47,14 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
         await interaction.followup.send("❗Failed to download audio.")
         return
 
-    timestamp_file = await extract_chapters(interaction, audio_file)
-
-    if timestamp_file == None or timestamps:
-        #prompt user defined templates
-        if timestamps: #timestamps not empty, use user timestamps
+    if timestamps: #timestamps not empty, use user timestamps
             await apply_manual_timestamps_to_file(timestamps,audio_file)
-            timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt 
-        elif (await ask_confirmation(interaction, "Would you like to add timestamps?")):
+            timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
+    
+    timestamp_file = await extract_chapters(interaction, audio_file)    #get timestamps
+    if timestamp_file == None:  #no timestamps, prompt user
+        #prompt user defined templates 
+        if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
             ##########need to prompt for timestamps here
             #timestamps=
             await apply_manual_timestamps_to_file(timestamps,audio_file)
