@@ -21,7 +21,7 @@ async def on_ready():
 # Slash command: /download
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None, date: str = None,
-                   timestamps: str = None, type: str = "Song", forceUserDefinedTimestamps: bool = False):
+                   timestamps: str = None, type: str = "Song", force_user_defined_timestamps: bool = False):
     """
     Slash command to download a video.
     
@@ -33,7 +33,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     - date: _____________
     - timestamps: formatted as min:sc "title"
     - type: (Song|Playlist):
-    - forceUserDefinedTimestamps: if true, user is prompted to add timestamps, regardless of existance
+    - force_user_defined_timestamps: if true, user is prompted to add timestamps, regardless of existance
 
     
     The 'interaction' object is similar to 'ctx' in prefix commands, 
@@ -51,7 +51,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 
     timestamp_file = await extract_chapters(interaction, audio_file)
 
-    if timestamp_file == None or forceUserDefinedTimestamps:
+    if timestamp_file == None or force_user_defined_timestamps:
         #prompt user defined templates
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
             apply_manual_timestamps_to_file(timestamps,audio_file)
