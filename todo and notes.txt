@@ -48,6 +48,7 @@ timestamps
 ✓	[songname].txt
 	add timestamps manually if not found
 	need to have a confirmation too
+	add a way to get timestamps
 ✓fix postprocessor-args, or use it correctly? idk
 make bot cleanup its confirmation boxes
 ✓	add emojis for sucess/fail to make it more readable

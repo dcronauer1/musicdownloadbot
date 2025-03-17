@@ -1,9 +1,12 @@
 import discord
+import os
 from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
 from musicolet_timestamp_converter import extract_chapters,apply_manual_timestamps_to_file
 from utils import ask_confirmation, run_command
+
+BASE_DIRECTORY = config["download_settings"]["base_directory"]
 
 # Custom Bot class to sync slash commands on startup.
 class MyBot(commands.Bot):
@@ -67,6 +70,22 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 
 
 #for command to apply timestamps after generating, use os.path.join(BASE_DIRECTORY, f"{output_name}.m4a")
+@bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing video")
+async def download(interaction: discord.Interaction, title: str = None, timestamps: str = None):
+    """
+
+    """
+    audio_file = os.path.join(BASE_DIRECTORY, f"{title}.m4a")
+    #check if it exists
+    ##################
+    await apply_manual_timestamps_to_file(timestamps,audio_file)
+    timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
+    if timestamp_file:
+        # Extract chapters using musicolet_timestamp_converter.py
+        await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
+    else:   
+        await interaction.followup.send("🎊Audio downloaded without chapters.")
+
 
 # Example of a simple slash command that sends a message.
 @bot.tree.command(name="hello", description="Replies with a greeting.")
