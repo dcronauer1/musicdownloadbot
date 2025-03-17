@@ -21,14 +21,14 @@ def save_known_list(filename, lst):
     with open(filename, "w") as f:
         json.dump(lst, f, indent=4)
 
-def check_and_update_artist(artist: str) -> str:
+async def check_and_update_artist(artist: str, interaction) -> str:
     """
     Check if the artist is known (case-insensitive). If a close match exists,
     suggest it (and automatically use it), otherwise add the new artist to the list.
     """
     filename = os.path.join(BASE_DIRECTORY, "artists.json")
     known_artists = load_known_list(filename)
-    
+
     # lowercase for easier matching
     lower_artist = artist.lower()
     lower_known = {a.lower(): a for a in known_artists}
@@ -45,15 +45,16 @@ def check_and_update_artist(artist: str) -> str:
         print(f"Artist '{artist}' not found. Did you mean '{suggestion}'? Using '{suggestion}'.")
         return suggestion
     else:
-        print(f"Artist '{artist}' is new. Adding it to the known list.")
-
-        ####### Need to add a user confirmation for this!!
+        print(f"Artist '{artist}' is new. Add it to the known list?")
+        user_output=f"Artist '{artist}' is new. Add it to the known list?\n"
+        if (await ask_confirmation(interaction, user_output)) == False: #confirm if user wants to add artist to list
+            return False
 
         known_artists.append(artist)
         save_known_list(filename, known_artists)
         return artist
 
-def check_and_update_tags(tags: str) -> list:
+async def check_and_update_tags(tags: str, interaction) -> list:
     """
     Check each tag against the known list. Each tag is converted to Title Case.
     If a close match exists, use that suggestion; otherwise, add the new tag.
@@ -62,7 +63,8 @@ def check_and_update_tags(tags: str) -> list:
     known_tags = load_known_list(filename)
     updated_tags = []
     lower_known = {tag.lower(): tag for tag in known_tags}
-    
+    user_output = None
+    trying_to_gen_new_tag = False
     for tag in tags:
         # Convert tag to Title Case.
         tag_normalized = tag.strip().title()
@@ -74,14 +76,18 @@ def check_and_update_tags(tags: str) -> list:
             if matches:
                 suggestion = lower_known[matches[0]]
                 print(f"Tag '{tag_normalized}' not found. Did you mean '{suggestion}'? Using '{suggestion}'.")
+                user_output += f"Tag '{tag_normalized}' not found. Did you mean '{suggestion}'? Using '{suggestion}'.\n" #output this to user
                 updated_tags.append(suggestion)
-            else:
+            else: 
+                #if here, then user must confirm the addition of new tag(s)
+                trying_to_gen_new_tag=True
                 
-                ####### Need to add a user confirmation for this!!
-
                 print(f"Tag '{tag_normalized}' is new. Adding it to the known list.")
+                user_output += f"Tag '{tag_normalized}' is new. Adding it to the known list.\n" #output this to user
                 known_tags.append(tag_normalized)
                 updated_tags.append(tag_normalized)
+    if (await ask_confirmation(interaction, user_output)) == False:
+        return False
     save_known_list(filename, known_tags)
     return updated_tags
 
@@ -131,13 +137,17 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
         artist_name = info.get("uploader", "Unknown")
     
     # Check against known lists. (authors and tags)
-    artist_name = check_and_update_artist(artist_name)
+    artist_name = await check_and_update_artist(artist_name, interaction)
+    if artist_name == False:  #user did not confirm addition of new author
+        return
     if tags:
         # Split the tags by commas and semicolons, and strip extra spaces
         tags_list = [tag.strip() for tag in re.split(r"[,;]", tags) if tag.strip()]
         
         # Process and update tags list
-        tags_list = check_and_update_tags(tags_list)
+        tags_list = await check_and_update_tags(tags_list, interaction)
+        if tags_list == False:  #user did not confirm addition of new tags
+            return
 
         # Join them back into a properly formatted string
         tags_str = "; ".join(tags_list)  #m4a uses semicolons
