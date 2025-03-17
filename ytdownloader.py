@@ -87,14 +87,21 @@ def check_and_update_tags(tags: str) -> list:
 
 async def get_video_info(video_url: str) -> dict:
     """Fetch video info (as JSON) using yt-dlp and return the parsed dictionary. Used for defaulting parameters"""
-    yt_dlp_info_cmd = f"{YT_DLP_PATH} --dump-single-json {video_url}"
+    yt_dlp_info_cmd = (
+        f"{YT_DLP_PATH} --print 'title' --print 'uploader' --print 'upload_date' {video_url}"
+    )
     returncode, output, stderr = await run_command(yt_dlp_info_cmd)
 
     if returncode == 0:
         try:
-            return json.loads(output)
-        except json.JSONDecodeError:
-            print(f"Error: Failed to parse video info JSON.\nRaw output:\n{output}")
+            title, uploader, upload_date = output.strip().split("\n", 2)
+            return {
+                "title": title,
+                "uploader": uploader,
+                "upload_date": upload_date,
+            }
+        except ValueError:
+            print(f"Error: Unexpected output format.\nRaw output:\n{output}")
             return {}
     
     print(f"Error: Failed to fetch video info.\nStderr:\n{stderr}")

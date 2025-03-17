@@ -33,7 +33,8 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     return view.value
 
 async def run_command(command, verbose=False):
-    """Run a command asynchronously and optionally stream its output in real-time."""
+    """Run a command asynchronously and optionally stream its output in real-time.
+    If verbose=True, then output will print to console"""
     process = await asyncio.create_subprocess_shell(
         command,
         stdout=asyncio.subprocess.PIPE,
