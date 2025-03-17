@@ -52,12 +52,12 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     if timestamp_file == None or timestamps:
         #prompt user defined templates
         if timestamps: #timestamps not empty, use user timestamps
-            apply_manual_timestamps_to_file(timestamps,audio_file)
+            await apply_manual_timestamps_to_file(timestamps,audio_file)
             timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt 
         elif (await ask_confirmation(interaction, "Would you like to add timestamps?")):
             ##########need to prompt for timestamps here
             #timestamps=
-            apply_manual_timestamps_to_file(timestamps,audio_file)
+            await apply_manual_timestamps_to_file(timestamps,audio_file)
             timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
     if timestamp_file:
         # Extract chapters using musicolet_timestamp_converter.py
