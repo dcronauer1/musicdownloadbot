@@ -10,13 +10,13 @@ class ConfirmView(discord.ui.View):
     async def confirm_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = True
         self.stop()
-        await interaction.response.send_message("Confirmed!", ephemeral=True)
+        await interaction.response.send_message("✅Confirmed!", ephemeral=True)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red)
     async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.value = False
         self.stop()
-        await interaction.response.send_message("Canceled.", ephemeral=True)
+        await interaction.response.send_message("❌Canceled.", ephemeral=True)
 
 async def ask_confirmation(interaction: discord.Interaction, details: str) -> bool:
     """
@@ -25,7 +25,7 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     """
     view = ConfirmView()
     await interaction.followup.send(
-        f"Please confirm the following details:\n{details}",
+        f"⚠️Please confirm the following details:\n{details}",
         view=view,
         ephemeral=True  # Only the command user sees this
     )

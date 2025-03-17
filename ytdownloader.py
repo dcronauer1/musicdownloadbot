@@ -82,8 +82,8 @@ async def check_and_update_tags(tags: str, interaction) -> list:
                 #if here, then user must confirm the addition of new tag(s)
                 trying_to_gen_new_tag=True
                 
-                print(f"Tag '{tag_normalized}' is new. Adding it to the known list.")
-                user_output += (f"Tag '{tag_normalized}' is new. Adding it to the known list.\n") #output this to user
+                print(f"Tag '{tag_normalized}' is new. Add it to the known list?")
+                user_output += (f"Tag '{tag_normalized}' is new. Add it to the known list?\n") #output this to user
                 known_tags.append(tag_normalized)
                 updated_tags.append(tag_normalized)
     if trying_to_gen_new_tag:

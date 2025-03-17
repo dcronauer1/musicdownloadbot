@@ -3,7 +3,6 @@ from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
 from musicolet_timestamp_converter import extract_chapters
-import asyncio
 
 # Custom Bot class to sync slash commands on startup.
 class MyBot(commands.Bot):
@@ -40,15 +39,15 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     audio_file = await download_audio(interaction, link, title, artist, tags)
     
     if not audio_file:
-        await interaction.followup.send("Failed to download audio.")
+        await interaction.followup.send("❗Failed to download audio.")
         return
 
     # Extract chapters using musicolet_timestamp_converter.py
     chapter_file = extract_chapters(audio_file)
     if chapter_file:
-        await interaction.followup.send("Chapters saved! Uploading file...", file=discord.File(chapter_file))
+        await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(chapter_file))
     else:
-        await interaction.followup.send("No chapters found.")
+        await interaction.followup.send("❓🎊No chapters found.")
 
 # Example of a simple slash command that sends a message.
 @bot.tree.command(name="hello", description="Replies with a greeting.")

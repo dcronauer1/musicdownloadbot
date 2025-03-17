@@ -23,7 +23,6 @@ seperate by artist (directory should be music/[songs, album, or album folder])
 	so check if dir exists
 		add a confirm to add new artists if it doesnt exist, so seperate message
 ✓	maybe code to check if there are similar names?
-	make a command to list artists
 ✓	store artists in a list?
 ✓	handle moving the file to the proper directory
 arguments
@@ -32,7 +31,8 @@ arguments
 	argument to either split or timestamp
 		check for timestamps, handle accordingly
 		when splitting, it should have the option to put everything into a subfolder for that album
-	set up defaults properly (default author is channel uploader, default title is video title, etc)
+✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
+		need to do date still
 	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
 		--download-sections REGEX
 	add more arguments
@@ -41,7 +41,6 @@ arguments
 		add in a force: so if force is true then it uses inputted args exactly
 add ability to download playlists into albums
 add tags
-	command to list tags
 ✓	store tags
 timestamps
 ✓	need a way to parse yt description
@@ -49,3 +48,8 @@ timestamps
 ✓	[songname].txt
 fix postprocessor-args, or use it correctly? idk
 make bot cleanup its confirmation boxes
+	add emojis for sucess/fail to make it more readable
+commands:
+	make a command to list artists
+	command to list tags
+	command to add artists or tags
