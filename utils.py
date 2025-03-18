@@ -34,6 +34,7 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     # Default to False (cancel) if the user doesn't interact within the timeout
     if view.value is None:
         view.value = False
+        print("User confirm timed out")
 
     return view.value
 

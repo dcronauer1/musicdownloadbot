@@ -1,5 +1,6 @@
 import discord
 import os
+import asyncio
 from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
@@ -58,8 +59,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     if timestamp_file == None:  #no timestamps, prompt user
         #prompt user defined templates 
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
-            ##########need to prompt for timestamps here
-            #timestamps=
+            timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
             await apply_manual_timestamps_to_file(timestamps,audio_file)
             timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     if timestamp_file:
@@ -90,6 +90,19 @@ async def replace_timestamps(interaction: discord.Interaction, title: str = None
     else:   
         await interaction.followup.send("🎊Audio downloaded without chapters.")
 
+
+async def ask_for_timestamps(interaction: discord.Interaction) -> str:
+    await interaction.followup.send("⏳ Please enter the timestamps in the format `min:sec \"title\"` (one per line):")
+
+    def check(msg: discord.Message):
+        return msg.author == interaction.user and msg.channel == interaction.channel
+
+    try:
+        response = await bot.wait_for("message", check=check, timeout=120)  # Wait for 2 minutes
+        return response.content
+    except asyncio.TimeoutError:
+        await interaction.followup.send("❌ You took too long to respond. Skipping timestamp entry.")
+        return None
 
 # Example of a simple slash command that sends a message.
 @bot.tree.command(name="hello", description="Replies with a greeting.")
