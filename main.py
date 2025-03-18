@@ -51,9 +51,9 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
         await interaction.followup.send("❗Failed to download audio.")
         return
 
-    if timestamps: #timestamps not empty, use user timestamps
-            await apply_manual_timestamps_to_file(timestamps,audio_file)
-            timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
+    if timestamps != None: #timestamps not empty, use user timestamps
+        await apply_manual_timestamps_to_file(timestamps,audio_file)
+        timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
     else:
         timestamp_file = await extract_chapters(interaction, audio_file)    #get timestamps
     if timestamp_file == None:  #no timestamps, prompt user
