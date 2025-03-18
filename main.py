@@ -74,7 +74,7 @@ async def replace_timestamps(interaction: discord.Interaction, title: str = None
     """
     Replace timestamps on an already existing audio file
     """
-    audio_file = os.path.join(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}".lower)
+    audio_file = os.path.join(BASE_DIRECTORY, (f"{title}{FILE_EXTENSION}").lower())
     #check if file exists
     if os.path.exists(audio_file) == False:
         #NOTE: could have an issue here with split playlists if i put them in sub directories (just add a variable ig?)
