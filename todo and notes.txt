@@ -46,8 +46,8 @@ timestamps
 ✓	need a way to parse yt description
 ✓	[min:sec.mili]{chaptername}
 ✓	[songname].txt
-	add timestamps manually if not found
-	need to have a confirmation too
+✓	add timestamps manually if not found
+✓	need to have a confirmation too
 	add a way to get timestamps
 ✓fix postprocessor-args, or use it correctly? idk
 make bot cleanup its confirmation boxes
@@ -57,5 +57,5 @@ commands:
 	command to list tags
 	command to add artists or tags
 	generate timestamps for an already downloaded song
-add descriptions to arguments
-make file names all lowercase
+✓add descriptions to arguments
+✓make file names all lowercase

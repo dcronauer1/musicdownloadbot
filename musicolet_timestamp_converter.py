@@ -16,7 +16,7 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
 
     # Split into lines and process each one
     for line in timestamps.strip().split("\n"):
-        match = re.match(r"(\d+):(\d+)\s+(.+)", line)
+        match = re.match(r"(\d+):(\d+)\s+(.+)", line.strip())
         if match:
             minutes, seconds, title = int(match[1]), int(match[2]), match[3]
             end_time = (minutes * 60 + seconds) * timebase  # Convert to milliseconds
@@ -32,11 +32,14 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
             start_time = end_time
         else:
             print(f"Skipping invalid format: {line}")
-    converted_chapters = "\n".join(metadata)
 
-    ffmpeg_covert_cmd = (f"ffmpeg -i \"{audio_file}\" -i {converted_chapters} -map_metadata 1 -codec copy output_video.mp4")
+    metadata_file = "metadata.txt"
+    with open(metadata_file, "w") as f:
+        f.write("\n".join(metadata))
+
+    ffmpeg_convert_cmd = f'ffmpeg -i "{audio_file}" -i {metadata_file} -map_metadata 1 -codec copy "{audio_file}"'
     #need to make sure above replaces existing
-    await run_command(ffmpeg_covert_cmd, True)
+    await run_command(ffmpeg_convert_cmd, True)
 
 def format_timestamps_for_musicolet(chapters, chapter_file):
     """Converts json sorted timestamps into musicolet timestamps [mn:sc.ms]"""
