@@ -5,7 +5,7 @@ from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
 from musicolet_timestamp_converter import extract_chapters,apply_manual_timestamps_to_file
-from utils import ask_confirmation, run_command
+from utils import ask_confirmation, run_command, find_file_case_insensitive
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
@@ -74,9 +74,8 @@ async def replace_timestamps(interaction: discord.Interaction, title: str = None
     """
     Replace timestamps on an already existing audio file
     """
-    audio_file = os.path.join(BASE_DIRECTORY, (f"{title}{FILE_EXTENSION}").lower())
-    #check if file exists
-    if os.path.exists(audio_file) == False:
+    audio_file = find_file_case_insensitive(BASE_DIRECTORY,f"{title}{FILE_EXTENSION}") #get file, ignore casing of input
+    if audio_file == None:    #check if file exists
         #NOTE: could have an issue here with split playlists if i put them in sub directories (just add a variable ig?)
         await interaction.followup.send("❗File does not exist")
         ################# add a check here for similar files and/or to print a list

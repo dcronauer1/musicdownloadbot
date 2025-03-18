@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import os
 # Confirmation view using Discord UI buttons
 class ConfirmView(discord.ui.View):
     def __init__(self, timeout=30):
@@ -80,3 +81,10 @@ async def run_command(command, verbose=False):
 
     returncode = await process.wait()  # Wait for process to finish
     return returncode, "\n".join(stdout_lines), "\n".join(stderr_lines)
+
+def find_file_case_insensitive(directory, filename):
+    """function to find files of the same name, with different casing, and return the file in use"""
+    for file in os.listdir(directory):
+        if file.lower() == filename.lower():
+            return os.path.join(directory, file)
+    return None

@@ -160,7 +160,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
         tags_str = None
 
     # Construct the output file template; yt-dlp will append the proper extension.
-    output_file_template = os.path.join(BASE_DIRECTORY, (f"{output_name}.%(ext)s").lower())
+    output_file_template = os.path.join(BASE_DIRECTORY, f"{output_name}.%(ext)s")
     
     # Build the metadata postprocessor args:
     meta_args = f"-metadata artist='{artist_name}'"
@@ -195,7 +195,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
 
     if returncode == 0:
         print("Download complete.")
-        return os.path.join(BASE_DIRECTORY, (f"{output_name}{FILE_EXTENSION}").lower())
+        return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
     else:
         print(f"Error downloading: {stderr}")
         return None
