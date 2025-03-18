@@ -70,7 +70,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 
 
 @bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing audio file")
-async def replace_timestamps(interaction: discord.Interaction, title: str = None, timestamps: str = None):
+async def replace_timestamps(interaction: discord.Interaction, title: str, timestamps: str):
     """
     Replace timestamps on an already existing audio file
     """
