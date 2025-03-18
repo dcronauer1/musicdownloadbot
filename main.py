@@ -70,11 +70,10 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
         await interaction.followup.send("🎊Audio downloaded without chapters.")
 
 
-#for command to apply timestamps after generating, use os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
-@bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing video")
-async def download(interaction: discord.Interaction, title: str = None, timestamps: str = None):
+@bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing audio file")
+async def replace_timestamps(interaction: discord.Interaction, title: str = None, timestamps: str = None):
     """
-
+    Replace timestamps on an already existing audio file
     """
     audio_file = os.path.join(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
     #check if it exists
