@@ -53,16 +53,16 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 
     if timestamps != None: #timestamps not empty, use user timestamps
         await apply_manual_timestamps_to_file(timestamps,audio_file)
-        timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
+        timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     else:
-        timestamp_file = await extract_chapters(interaction, audio_file)    #get timestamps
+        timestamp_file = await extract_chapters(audio_file)    #get timestamps
     if timestamp_file == None:  #no timestamps, prompt user
         #prompt user defined templates 
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
             ##########need to prompt for timestamps here
             #timestamps=
             await apply_manual_timestamps_to_file(timestamps,audio_file)
-            timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
+            timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     if timestamp_file:
         # Extract chapters using musicolet_timestamp_converter.py
         await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
@@ -79,7 +79,7 @@ async def replace_timestamps(interaction: discord.Interaction, title: str = None
     #check if it exists
     ##################
     await apply_manual_timestamps_to_file(timestamps,audio_file)
-    timestamp_file = await extract_chapters(interaction, audio_file)    #convert user provided timestamps to .txt
+    timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     if timestamp_file:
         # Extract chapters using musicolet_timestamp_converter.py
         await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))

@@ -51,7 +51,7 @@ def format_timestamps_for_musicolet(chapters, chapter_file):
     print(f"Chapters saved to {chapter_file}")
     return chapter_file        
 
-async def extract_chapters(interaction, audio_file: str):
+async def extract_chapters(audio_file: str):
     """Extracts chapters from the audio file and saves them in a .txt file."""
     chapter_file = audio_file.replace(f"{FILE_EXTENSION}", ".txt")
 
