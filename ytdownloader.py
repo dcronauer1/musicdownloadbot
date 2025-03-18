@@ -128,7 +128,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     :param output_name: Base name for the output file. Defaults to video title.
     :param artist_name: Artist name to embed in metadata. Defaults to video uploader.
     :param tags: tags in a string.
-    :return: The path to the downloaded audio file (FILE_TYPE) or None if error.
+    :return: The path to the downloaded audio file (FILE_TYPE) or None if error. NOTE: returns as lowercase
     """
     # Get video info to set defaults if needed
     info = {}
@@ -195,7 +195,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
 
     if returncode == 0:
         print("Download complete.")
-        return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
+        return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}".lower)
     else:
         print(f"Error downloading: {stderr}")
         return None

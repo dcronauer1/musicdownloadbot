@@ -29,14 +29,13 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     """
     Slash command to download a video.
     
-    Parameters:
-    - link: The URL of the YouTube video.
-    - title: Custom title for the output file.
-    - artist: Artist name for metadata. Checked against a list to see if it already exists
-    - tags: tags. formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
-    - date: _____________
-    - timestamps: formatted as min:sc "title"
-    - type: (Song|Playlist):
+    :param link: The URL of the YouTube video.
+    :param title: Custom title for the output file.
+    :param artist: Artist name for metadata. Checked against a list to see if it already exists
+    :param tags: tags. formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
+    :param date: _____________
+    :param timestamps: formatted as min:sc "title"
+    :param type: (Song|Playlist):
     
     The 'interaction' object is similar to 'ctx' in prefix commands, 
     containing information about the command invocation.
@@ -75,7 +74,7 @@ async def replace_timestamps(interaction: discord.Interaction, title: str = None
     """
     Replace timestamps on an already existing audio file
     """
-    audio_file = os.path.join(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
+    audio_file = os.path.join(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}".lower)
     #check if file exists
     if os.path.exists(audio_file) == False:
         #NOTE: could have an issue here with split playlists if i put them in sub directories (just add a variable ig?)

@@ -58,3 +58,4 @@ commands:
 	command to add artists or tags
 	generate timestamps for an already downloaded song
 add descriptions to arguments
+make file names all lowercase
