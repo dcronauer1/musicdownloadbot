@@ -69,7 +69,7 @@ async def extract_chapters(interaction, audio_file: str):
         return None
 
     if chapters:
-        format_timestamps_for_musicolet(chapters, chapter_file)
+        return format_timestamps_for_musicolet(chapters, chapter_file)
     else:
         print("No chapters found.")
         return None
