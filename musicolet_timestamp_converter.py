@@ -6,19 +6,34 @@ from config_manager import config
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 
-async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
-    """Take a string of timestamps formatted as 'min:sec Chapter Title' per line and apply it to the file."""
+async def get_audio_duration(audio_file: str) -> int:
+    """Get the duration of the audio file in milliseconds using ffprobe."""
+    cmd = f'ffprobe -i "{audio_file}" -show_entries format=duration -v quiet -of csv="p=0"'
+    returncode, duration_str, error = await run_command(cmd)
+    
+    if returncode != 0:
+        print(f"Error getting duration: {error}")
+        return None
 
+    try:
+        return int(float(duration_str) * 1000)  # Convert seconds to milliseconds
+    except ValueError:
+        print("Failed to parse audio duration.")
+        return None
+
+async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
+    """Convert timestamps to FFmetadata and apply them to an audio file."""
+    
     metadata = [";FFMETADATA1"]
     timebase = 1000  # FFmetadata timebase in milliseconds
     chapter_times = []
 
     # Parse timestamps
     for line in timestamps.strip().split("\n"):
-        match = re.match(r"(\d+):(\d+)\s+(.+)", line.strip())
+        match = re.match(r"\[(\d+):(\d+\.\d+)](.+)", line.strip())  # Format: [min:sec.millisec]title
         if match:
-            minutes, seconds, title = int(match[1]), int(match[2]), match[3]
-            start_time = (minutes * 60 + seconds) * timebase  # Convert to milliseconds
+            minutes, seconds, title = int(match[1]), float(match[2]), match[3].strip()
+            start_time = int((minutes * 60 + seconds) * timebase)  # Convert to milliseconds
             chapter_times.append((start_time, title))
         else:
             print(f"Skipping invalid format: {line}")
@@ -28,20 +43,21 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
         print("No valid timestamps found.")
         return
 
+    # Get total duration of audio file
+    total_duration = await get_audio_duration(audio_file)
+    if total_duration is None:
+        return
+
     # Assign END times correctly
     for i, (start_time, title) in enumerate(chapter_times):
         metadata.append("[CHAPTER]")
         metadata.append("TIMEBASE=1/1000")
         metadata.append(f"START={start_time}")
 
-        # Set END to the start of the next chapter, or leave it open-ended for the last one
-        if i < len(chapter_times) - 1:
-            end_time = chapter_times[i + 1][0]
-        else:
-            end_time = ""  # Let FFmpeg decide the last chapter's duration
-
+        # Set END to the start of the next chapter or the total duration for the last one
+        end_time = chapter_times[i + 1][0] if i < len(chapter_times) - 1 else total_duration
         metadata.append(f"END={end_time}")
-        metadata.append(f"title={title}")
+        metadata.append(f"title={title.replace('\"', '\'')}")  # Escape quotes in titles
 
     # Write to metadata file
     metadata_file = "metadata.txt"
@@ -50,7 +66,10 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
 
     # Apply metadata with FFmpeg
     ffmpeg_cmd = f'ffmpeg -i "{audio_file}" -i {metadata_file} -map_metadata 1 -codec copy -y "{audio_file}.tmp" && mv "{audio_file}.tmp" "{audio_file}"'
-    await run_command(ffmpeg_cmd, True)
+    returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
+
+    if returncode != 0:
+        print(f"FFmpeg command failed: {error}")
 
 def format_timestamps_for_musicolet(chapters, chapter_file):
     """Converts json sorted timestamps into musicolet timestamps [mn:sc.ms]"""
