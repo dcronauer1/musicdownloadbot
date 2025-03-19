@@ -30,10 +30,10 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
 
     # Parse timestamps
     for line in timestamps.strip().split("\n"):
-        match = re.match(r"\[(\d+):(\d+\.\d+)](.+)", line.strip())  # Format: [min:sec.millisec]title
+        match = re.match(r"(\d+):(\d+)\s+(.+)", line.strip())  # Match "00:00 Title"
         if match:
-            minutes, seconds, title = int(match[1]), float(match[2]), match[3].strip()
-            start_time = int((minutes * 60 + seconds) * timebase)  # Convert to milliseconds
+            minutes, seconds, title = int(match[1]), int(match[2]), match[3].strip()
+            start_time = (minutes * 60 + seconds) * timebase  # Convert to milliseconds
             chapter_times.append((start_time, title))
         else:
             print(f"Skipping invalid format: {line}")
