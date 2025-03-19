@@ -84,10 +84,6 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
         os.remove(metadata_file)
     except OSError as e:
         print(f"Warning: Failed to delete metadata file: {e}")
-    #try:
-    #    os.remove(f"{audio_file}.tmp.{FILE_EXTENSION}")
-    #except OSError as e:
-    #    print(f"Warning: Failed to delete metadata file: {e}")
 
 def format_timestamps_for_musicolet(chapters, chapter_file):
     """Converts json sorted timestamps into musicolet timestamps [mn:sc.ms]"""
