@@ -16,8 +16,13 @@ class MyBot(commands.Bot):
         # This will sync your slash commands with Discord
         await self.tree.sync()
 
-# Create bot instance with default intents.
-bot = MyBot(command_prefix="!", intents=discord.Intents.default())
+# Enable necessary intents
+intents = discord.Intents.default()
+intents.message_content = True  # Enable message content intent
+
+# Create bot instance with updated intents
+bot = MyBot(command_prefix="!", intents=intents)
+
 
 @bot.event
 async def on_ready():
