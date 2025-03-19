@@ -1,6 +1,7 @@
 import subprocess
 import json
 import re
+import os
 from utils import ask_confirmation, run_command
 from config_manager import config
 from typing import Optional
@@ -78,10 +79,13 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
     if returncode != 0:
         print(f"FFmpeg command failed: {error}")
 
-    # Cleanup metadata file
+    # Cleanup metadata and temp.{FILE_EXTENSION} file
+    try:
+        os.remove(metadata_file)
+    except OSError as e:
+        print(f"Warning: Failed to delete metadata file: {e}")
     #try:
-    #    import os
-    #    os.remove(metadata_file)
+    #    os.remove(f"{audio_file}.tmp.{FILE_EXTENSION}")
     #except OSError as e:
     #    print(f"Warning: Failed to delete metadata file: {e}")
 
