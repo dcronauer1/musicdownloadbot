@@ -91,6 +91,7 @@ async def replace_timestamps(interaction: discord.Interaction, title: str, times
 
 
 async def ask_for_timestamps(interaction: discord.Interaction) -> str:
+    """ask user for timestamps"""
     await interaction.followup.send("⏳ Please enter the timestamps in the format `min:sec \"title\"` (one per line):")
 
     def check(msg: discord.Message):
@@ -98,6 +99,7 @@ async def ask_for_timestamps(interaction: discord.Interaction) -> str:
 
     try:
         response = await bot.wait_for("message", check=check, timeout=120)  # Wait for 2 minutes
+        print(f"user provided timestamps: {response.content}")
         return response.content
     except asyncio.TimeoutError:
         await interaction.followup.send("❌ You took too long to respond. Skipping timestamp entry.")

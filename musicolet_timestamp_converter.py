@@ -8,7 +8,6 @@ FILE_EXTENSION = config["download_settings"]["file_extension"]
 
 async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
     """Take a string of timestamps formatted as 'min:sec Chapter Title' per line and apply it to the file."""
-    print(f"User provided timestamps: {timestamps}")
 
     metadata = [";FFMETADATA1"]
     timebase = 1000  # FFmetadata timebase in milliseconds
