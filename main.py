@@ -91,19 +91,27 @@ async def replace_timestamps(interaction: discord.Interaction, title: str, times
 
 
 async def ask_for_timestamps(interaction: discord.Interaction) -> str:
-    """ask user for timestamps"""
-    await interaction.followup.send("⏳ Please enter the timestamps in the format `min:sec \"title\"` (one per line):")
+    """Ask user for timestamps."""
+
+    # Only defer if interaction has not been responded to
+    if not interaction.response.is_done():
+        await interaction.response.defer()
+
+    await interaction.followup.send(
+        "⏳ Please enter the timestamps in the format `min:sec \"title\"` (one per line):"
+    )
 
     def check(msg: discord.Message):
         return msg.author == interaction.user and msg.channel == interaction.channel
 
     try:
-        response = await bot.wait_for("message", check=check, timeout=120)  # Wait for 2 minutes
-        print(f"user provided timestamps: {response.content}")
+        response = await interaction.client.wait_for("message", check=check, timeout=120)  # 2-minute timeout
+        print(f"User provided timestamps: {response.content}")
         return response.content
     except asyncio.TimeoutError:
         await interaction.followup.send("❌ You took too long to respond. Skipping timestamp entry.")
-        return None
+        return ""
+
 
 # Example of a simple slash command that sends a message.
 @bot.tree.command(name="hello", description="Replies with a greeting.")

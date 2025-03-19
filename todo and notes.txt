@@ -59,3 +59,4 @@ commands:
 	generate timestamps for an already downloaded song
 ✓add descriptions to arguments
 ✓make file names all lowercase
+make confirmations refer to the music file
