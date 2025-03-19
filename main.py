@@ -75,7 +75,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 
 
 @bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing audio file")
-async def replace_timestamps(interaction: discord.Interaction, title: str, timestamps: str):
+async def replace_timestamps(interaction: discord.Interaction, title: str, timestamps: str = None):
     """
     Replace timestamps on an already existing audio file
     """
@@ -86,6 +86,7 @@ async def replace_timestamps(interaction: discord.Interaction, title: str, times
         ################# add a check here for similar files and/or to print a list
         return
     
+    timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
     await apply_manual_timestamps_to_file(timestamps,audio_file)
     timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     if timestamp_file:
