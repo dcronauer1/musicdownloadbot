@@ -31,7 +31,7 @@ async def on_ready():
 # Slash command: /download
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None, date: str = None,
-                   timestamps: str = None, type: str = "Song"):
+                   addtimestamps: bool = False, type: str = "Song"):
     """
     Slash command to download a video.
     
@@ -40,7 +40,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     :param artist: Artist name for metadata. Checked against a list to see if it already exists
     :param tags: tags. formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
     :param date: _____________
-    :param timestamps: formatted as min:sc "title"
+    :param addtimestamps: if True, prompt for timestamps
     :param type: (Song|Playlist):
     
     The 'interaction' object is similar to 'ctx' in prefix commands, 
@@ -55,8 +55,9 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     if not audio_file:
         await interaction.followup.send("❗Failed to download audio.")
         return
-
-    if timestamps != None: #timestamps not empty, use user timestamps
+    timestamps = None
+    if addtimestamps: #user_timestamps true, use user timestamps
+        timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
         await apply_manual_timestamps_to_file(timestamps,audio_file)
         timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     else:
