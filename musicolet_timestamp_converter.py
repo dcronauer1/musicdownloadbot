@@ -71,7 +71,7 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
         f.write("\n".join(metadata))
 
     # Apply metadata with FFmpeg
-    ffmpeg_cmd = f'ffmpeg -i "{audio_file}" -i {metadata_file} -map_metadata 1 -codec copy -y "{audio_file}.tmp" && mv "{audio_file}.tmp" "{audio_file}"'
+    ffmpeg_cmd = f'ffmpeg -i "{audio_file}" -i {metadata_file} -map_chapters 1 -map_metadata 1 -c copy -y "{audio_file}.tmp" && mv "{audio_file}.tmp" "{audio_file}"'
     returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
 
     if returncode != 0:
