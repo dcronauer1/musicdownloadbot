@@ -3,23 +3,25 @@ import json
 import re
 from utils import ask_confirmation, run_command
 from config_manager import config
+from typing import Optional
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 
-async def get_audio_duration(audio_file: str) -> int:
+async def get_audio_duration(audio_file: str) -> Optional[int]:
     """Get the duration of the audio file in milliseconds using ffprobe."""
     cmd = f'ffprobe -i "{audio_file}" -show_entries format=duration -v quiet -of csv="p=0"'
     returncode, duration_str, error = await run_command(cmd)
-    
-    if returncode != 0:
-        print(f"Error getting duration: {error}")
+
+    if returncode != 0 or not duration_str.strip():
+        print(f"Error getting duration for {audio_file}: {error or 'Empty duration output'}")
         return None
 
     try:
-        return int(float(duration_str) * 1000)  # Convert seconds to milliseconds
+        return int(float(duration_str.strip()) * 1000)  # Convert seconds to milliseconds
     except ValueError:
-        print("Failed to parse audio duration.")
+        print(f"Failed to parse audio duration: {duration_str}")
         return None
+
 
 async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
     """Convert timestamps to FFmetadata and apply them to an audio file."""
@@ -28,12 +30,16 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
     timebase = 1000  # FFmetadata timebase in milliseconds
     chapter_times = []
 
+    # Improved regex to support optional milliseconds
+    timestamp_pattern = re.compile(r"(\d+):(\d+)(?:\.(\d+))?\s+(.+)")  
+
     # Parse timestamps
     for line in timestamps.strip().split("\n"):
-        match = re.match(r"(\d+):(\d+)\s+(.+)", line.strip())  # Match "00:00 Title"
+        match = timestamp_pattern.match(line.strip())
         if match:
-            minutes, seconds, title = int(match[1]), int(match[2]), match[3].strip()
-            start_time = (minutes * 60 + seconds) * timebase  # Convert to milliseconds
+            minutes, seconds, millis, title = int(match[1]), int(match[2]), match[3], match[4].strip()
+            millis = int(millis) if millis else 0
+            start_time = (minutes * 60 + seconds) * timebase + millis  # Convert to milliseconds
             chapter_times.append((start_time, title))
         else:
             print(f"Skipping invalid format: {line}")
@@ -59,7 +65,7 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
         metadata.append(f"END={end_time}")
         metadata.append(f"title={title.replace('\"', '\'')}")  # Escape quotes in titles
 
-    # Write to metadata file
+    # Write metadata to file
     metadata_file = "metadata.txt"
     with open(metadata_file, "w") as f:
         f.write("\n".join(metadata))
@@ -70,6 +76,13 @@ async def apply_manual_timestamps_to_file(timestamps: str, audio_file: str):
 
     if returncode != 0:
         print(f"FFmpeg command failed: {error}")
+
+    # Cleanup metadata file
+    try:
+        import os
+        os.remove(metadata_file)
+    except OSError as e:
+        print(f"Warning: Failed to delete metadata file: {e}")
 
 def format_timestamps_for_musicolet(chapters, chapter_file):
     """Converts json sorted timestamps into musicolet timestamps [mn:sc.ms]"""
