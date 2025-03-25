@@ -2,6 +2,7 @@ import discord
 import os
 import asyncio
 
+from discord import app_commands
 from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
@@ -75,7 +76,10 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
         await interaction.followup.send("🎊Audio downloaded without chapters.")
 
 
-@bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing audio file", name_localizations={"en-US": "replace timestamps"})
+"""Replace commands"""
+replace_group = app_commands.Group(name="replace", description="replace related commands")
+
+@replace_group.command(name="timestamps", description="Replace timestamps on an already existing audio file")
 async def replace_timestamps(interaction: discord.Interaction, title: str):
     """
     Replace timestamps on an already existing audio file
@@ -121,7 +125,9 @@ async def ask_for_timestamps(interaction: discord.Interaction) -> str:
         return ""
     
 """List commands"""
-@bot.tree.command(name="list_music", description="list all music files", name_localizations={"en-US": "list music"})
+list_group = app_commands.Group(name="list", description="List related commands")
+
+@list_group.command(name="music", description="list all music files")
 async def list_music(interaction: discord.Interaction):
     """function to list all music"""
     # Use the initial response method
@@ -131,12 +137,12 @@ async def list_music(interaction: discord.Interaction):
     else:
         await interaction.response.send_message(f"List of music: {', '.join(music_files)}")
 
-@bot.tree.command(name="list_artists", description="list all authors in use", name_localizations={"en-US": "list artists"})
+@list_group.command(name="artists", description="list all authors in use")
 async def list_artists(interaction: discord.Interaction):
     """function to list all authors that are stored"""
     await interaction.response.send_message(f"List of authors: {get_entries_from_json('artists.json')}")
 
-@bot.tree.command(name="list_tags", description="list all tags in use", name_localizations={"en-US": "list tags"})
+@list_group.command(name="tags", description="list all tags in use")
 async def list_tags(interaction: discord.Interaction):
     """function to list all tags that are stored"""
     await interaction.response.send_message(f"List of tags: {get_entries_from_json('tags.json')}")
