@@ -59,4 +59,4 @@ commands:
 ✓add descriptions to arguments
 ✓make file names all lowercase
 make confirmations refer to the music file
-check if song already exists
+✓check if song already exists

@@ -169,8 +169,13 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     if tags_str:
         meta_args += f" -metadata genre='{tags_str}'"
     
+    #does the song already exist?
+    if os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}{FILE_EXTENSION}")):
+        confirmation_str=f'"{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
+    else:
+        confirmation_str=f'Arguments: {meta_args}'
     #confirm selection
-    if (await ask_confirmation(interaction, meta_args)) == False:
+    if (await ask_confirmation(interaction, confirmation_str)) == False:
         return
 
     #Update yt-dlp
