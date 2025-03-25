@@ -29,7 +29,7 @@ async def check_and_update_artist(artist: str, interaction) -> str:
     Check if the artist is known (case-insensitive). If a close match exists,
     suggest it (and automatically use it), otherwise add the new artist to the list.
     """
-    filename = os.path.join(BASE_DIRECTORY, "artists.json")
+    filename = "artists.json"
     known_artists = load_known_list(filename)
 
     # lowercase for easier matching
@@ -62,7 +62,7 @@ async def check_and_update_tags(tags: str, interaction) -> list:
     Check each tag against the known list. Each tag is converted to Title Case.
     If a close match exists, use that suggestion; otherwise, add the new tag.
     """
-    filename = os.path.join(BASE_DIRECTORY, "tags.json")
+    filename = "tags.json"
     known_tags = load_known_list(filename)
     updated_tags = []
     lower_known = {tag.lower(): tag for tag in known_tags}
