@@ -97,6 +97,12 @@ def find_file_case_insensitive(directory, filename):
 
 def get_entries_from_json(filename):
     """function to return all entries from a json file"""
-    with open(filename) as file:
-        data = json.load(file)
-    return data
+    if not os.path.exists(filename):
+        return "file doesn't exist"
+    
+    try:
+        with open(filename) as file:
+            data = json.load(file)
+        return data
+    except json.JSONDecodeError:
+        return "file exists but contains invalid JSON"
