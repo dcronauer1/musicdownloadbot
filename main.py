@@ -129,7 +129,7 @@ async def list_music(interaction: discord.Interaction):
 @bot.tree.command(name="list_authors", description="list all authors in use")
 async def list_authors(interaction: discord.Interaction):
     """function to list all authors that are stored"""
-    await interaction.followup.send(f"List of authors: {get_entries_from_json('authors.json')}")   #send all authors to user
+    await interaction.followup.send(f"List of authors: {get_entries_from_json('artists.json')}")   #send all authors to user
 
 @bot.tree.command(name="list_tags", description="list all tags in use")
 async def list_tags(interaction: discord.Interaction):
