@@ -95,7 +95,7 @@ def find_file_case_insensitive(directory, filename):
             return os.path.join(directory, file)
     return None
 
-def get_entries_from_json(filename):
+def get_entries_from_json(filename) -> str:
     """function to return all entries from a json file"""
     if not os.path.exists(filename):
         return "file doesn't exist"

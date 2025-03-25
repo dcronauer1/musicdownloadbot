@@ -124,16 +124,17 @@ async def ask_for_timestamps(interaction: discord.Interaction) -> str:
 @bot.tree.command(name="list_music", description="list all music files")
 async def list_music(interaction: discord.Interaction):
     """function to list all music"""
-    await interaction.followup.send(f"List of music: {os.listdir(BASE_DIRECTORY)}")   #send all music to user
+    # Use the initial response method
+    await interaction.response.send_message(f"List of music: {os.listdir(BASE_DIRECTORY)}")
 
 @bot.tree.command(name="list_authors", description="list all authors in use")
 async def list_authors(interaction: discord.Interaction):
     """function to list all authors that are stored"""
-    await interaction.followup.send(f"List of authors: {get_entries_from_json('artists.json')}")   #send all authors to user
+    await interaction.response.send_message(f"List of authors: {get_entries_from_json('artists.json')}")
 
 @bot.tree.command(name="list_tags", description="list all tags in use")
 async def list_tags(interaction: discord.Interaction):
     """function to list all tags that are stored"""
-    await interaction.followup.send(f"List of tags: {get_entries_from_json('tags.json')}")   #send all tags to user
+    await interaction.response.send_message(f"List of tags: {get_entries_from_json('tags.json')}")
 
 bot.run(config["bot_settings"]["BOT_TOKEN"])
