@@ -75,7 +75,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
         await interaction.followup.send("🎊Audio downloaded without chapters.")
 
 
-@bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing audio file")
+@bot.tree.command(name="replace_timestamps", description="Replace timestamps on an already existing audio file", name_localizations={"en-US": "replace timestamps"})
 async def replace_timestamps(interaction: discord.Interaction, title: str):
     """
     Replace timestamps on an already existing audio file
@@ -121,18 +121,18 @@ async def ask_for_timestamps(interaction: discord.Interaction) -> str:
         return ""
     
 """List commands"""
-@bot.tree.command(name="list_music", description="list all music files")
+@bot.tree.command(name="list_music", description="list all music files", name_localizations={"en-US": "list music"})
 async def list_music(interaction: discord.Interaction):
     """function to list all music"""
     # Use the initial response method
     await interaction.response.send_message(f"List of music: {os.listdir(BASE_DIRECTORY)}")
 
-@bot.tree.command(name="list_authors", description="list all authors in use")
-async def list_authors(interaction: discord.Interaction):
+@bot.tree.command(name="list_artists", description="list all authors in use", name_localizations={"en-US": "list artists"})
+async def list_artists(interaction: discord.Interaction):
     """function to list all authors that are stored"""
     await interaction.response.send_message(f"List of authors: {get_entries_from_json('artists.json')}")
 
-@bot.tree.command(name="list_tags", description="list all tags in use")
+@bot.tree.command(name="list_tags", description="list all tags in use", name_localizations={"en-US": "list tags"})
 async def list_tags(interaction: discord.Interaction):
     """function to list all tags that are stored"""
     await interaction.response.send_message(f"List of tags: {get_entries_from_json('tags.json')}")
