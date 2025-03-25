@@ -40,6 +40,27 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
 
     return view.value
 
+async def ask_for_timestamps(interaction: discord.Interaction) -> str:
+    """Ask user for timestamps."""
+    # Only defer if interaction has not been responded to
+    if not interaction.response.is_done():
+        await interaction.response.defer()
+
+    await interaction.followup.send(
+        "⏳ Please enter the timestamps in the format `min:sec \"title\"` (one per line):"
+    )
+
+    def check(msg: discord.Message):
+        return msg.author == interaction.user and msg.channel == interaction.channel
+
+    try:
+        response = await interaction.client.wait_for("message", check=check, timeout=120)  # 2-minute timeout
+        print(f"User provided timestamps: {response.content}")
+        return response.content
+    except asyncio.TimeoutError:
+        await interaction.followup.send("❌ You took too long to respond. Skipping timestamp entry.")
+        return ""
+
 async def run_command(command, verbose=False):
     """Run a command asynchronously and optionally stream its output in real-time.
     If verbose=True, then output will print to console"""

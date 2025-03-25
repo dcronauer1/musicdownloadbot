@@ -7,7 +7,7 @@ from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
 from musicolet_timestamp_converter import extract_chapters,apply_manual_timestamps_to_file
-from utils import ask_confirmation, run_command, find_file_case_insensitive, get_entries_from_json
+from utils import ask_confirmation, ask_for_timestamps, run_command, find_file_case_insensitive, get_entries_from_json
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
@@ -102,27 +102,6 @@ async def replace_timestamps(interaction: discord.Interaction, title: str):
         await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
     else:   
         await interaction.followup.send("🎊Audio downloaded without chapters.")
-
-async def ask_for_timestamps(interaction: discord.Interaction) -> str:
-    """Ask user for timestamps."""
-    # Only defer if interaction has not been responded to
-    if not interaction.response.is_done():
-        await interaction.response.defer()
-
-    await interaction.followup.send(
-        "⏳ Please enter the timestamps in the format `min:sec \"title\"` (one per line):"
-    )
-
-    def check(msg: discord.Message):
-        return msg.author == interaction.user and msg.channel == interaction.channel
-
-    try:
-        response = await interaction.client.wait_for("message", check=check, timeout=120)  # 2-minute timeout
-        print(f"User provided timestamps: {response.content}")
-        return response.content
-    except asyncio.TimeoutError:
-        await interaction.followup.send("❌ You took too long to respond. Skipping timestamp entry.")
-        return ""
     
 """List commands"""
 list_group = app_commands.Group(name="list", description="List related commands")
