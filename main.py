@@ -125,7 +125,11 @@ async def ask_for_timestamps(interaction: discord.Interaction) -> str:
 async def list_music(interaction: discord.Interaction):
     """function to list all music"""
     # Use the initial response method
-    await interaction.response.send_message(f"List of music: {os.listdir(BASE_DIRECTORY)}")
+    music_files = [f for f in os.listdir(BASE_DIRECTORY)]
+    if not music_files:
+        await interaction.response.send_message("No music files found.")
+    else:
+        await interaction.response.send_message(f"List of music: {', '.join(music_files)}")
 
 @bot.tree.command(name="list_artists", description="list all authors in use", name_localizations={"en-US": "list artists"})
 async def list_artists(interaction: discord.Interaction):
