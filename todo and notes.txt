@@ -21,7 +21,7 @@ every time yt-dlp is ran, run below:
 
 seperate by artist (directory should be music/[songs, album, or album folder])
 	so check if dir exists
-		add a confirm to add new artists if it doesnt exist, so seperate message
+✓		add a confirm to add new artists if it doesnt exist, so seperate message
 ✓	maybe code to check if there are similar names?
 ✓	store artists in a list?
 ✓	handle moving the file to the proper directory
@@ -33,8 +33,7 @@ arguments
 		when splitting, it should have the option to put everything into a subfolder for that album
 ✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
 		need to do date still
-	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
-		--download-sections REGEX
+✓	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
 	add more arguments
 		date, year
 		maybe album?
@@ -42,13 +41,13 @@ arguments
 add ability to download playlists into albums
 ✓add tags
 ✓	store tags
-timestamps
+✓timestamps
 ✓	need a way to parse yt description
 ✓	[min:sec.mili]{chaptername}
 ✓	[songname].txt
 ✓	add timestamps manually if not found
 ✓	need to have a confirmation too
-	add a way to get timestamps
+✓	add a way to get timestamps
 ✓fix postprocessor-args, or use it correctly? idk
 make bot cleanup its confirmation boxes
 ✓	add emojis for sucess/fail to make it more readable
@@ -60,3 +59,4 @@ commands:
 ✓add descriptions to arguments
 ✓make file names all lowercase
 make confirmations refer to the music file
+check if song already exists

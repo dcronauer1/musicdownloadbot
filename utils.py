@@ -1,6 +1,7 @@
 import discord
 import asyncio
 import os
+import json
 # Confirmation view using Discord UI buttons
 class ConfirmView(discord.ui.View):
     def __init__(self, timeout=30):
@@ -84,7 +85,18 @@ async def run_command(command, verbose=False):
 
 def find_file_case_insensitive(directory, filename):
     """function to find files of the same name, with different casing, and return the file in use"""
+    #first check if exact casing exists already
+    fullPath = os.path.join(directory,filename)
+    if os.path.exists(fullPath):
+        return fullPath
+    #next check if same name, different casing exists
     for file in os.listdir(directory):
         if file.lower() == filename.lower():
             return os.path.join(directory, file)
     return None
+
+def get_entries_from_json(filename):
+    """function to return all entries from a json file"""
+    with open(filename) as file:
+        data = json.load(file)
+    return data
