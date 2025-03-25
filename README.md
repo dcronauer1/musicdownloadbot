@@ -1,5 +1,5 @@
 how to:
-sudo apt install ffmpeg samba
+sudo apt install python3 python3-pip samba ffmpeg atomicparsley python3-mutagen 
 set up samba
 get runable for yt-dlp: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options
 
