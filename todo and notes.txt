@@ -60,3 +60,11 @@ commands:
 ✓make file names all lowercase
 make confirmations refer to the music file
 ✓check if song already exists
+make lists separated by new line
+	dont forget about the replace timestamps list files thin
+handle this error:
+	ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
+	Error: Failed to fetch video info.
+	Stderr:
+	ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
+	Artist 'Unknown' is new. Add it to the known list?
