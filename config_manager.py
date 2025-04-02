@@ -8,8 +8,8 @@ DEFAULT_CONFIG = {
         "BOT_TOKEN": "[your-token-here]"
     },
     "download_settings": {
-        "yt_dlp_path": "/home/nas/nas/yt-dlp/yt-dlp",
-        "base_directory": "/home/nas/nas/music",
+        "yt_dlp_path": "/path/to/yt-dlp",
+        "base_directory": "/path/to/music",
         "file_type": "alac",
         "file_extension": ".m4a"
     }

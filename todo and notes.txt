@@ -20,7 +20,7 @@ every time yt-dlp is ran, run below:
 
 
 seperate by artist (directory should be music/[songs, album, or album folder])
-	so check if dir exists
+✓	so check if dir exists
 ✓		add a confirm to add new artists if it doesnt exist, so seperate message
 ✓	maybe code to check if there are similar names?
 ✓	store artists in a list?
@@ -31,8 +31,6 @@ arguments
 	argument to either split or timestamp
 		check for timestamps, handle accordingly
 		when splitting, it should have the option to put everything into a subfolder for that album
-✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
-		need to do date still
 ✓	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
 	add more arguments
 		date, year
@@ -50,7 +48,7 @@ add ability to download playlists into albums
 ✓	add a way to get timestamps
 ✓fix postprocessor-args, or use it correctly? idk
 make bot cleanup its confirmation boxes
-✓	add emojis for sucess/fail to make it more readable
+✓	add emojis for success/fail to make it more readable
 commands:
 	make a command to list artists
 	command to list tags
@@ -58,13 +56,22 @@ commands:
 	generate timestamps for an already downloaded song
 ✓add descriptions to arguments
 ✓make file names all lowercase
-make confirmations refer to the music file
+✓make confirmations refer to the music file
 ✓check if song already exists
-make lists separated by new line
-	dont forget about the replace timestamps list files thin
-handle this error:
-	ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
-	Error: Failed to fetch video info.
-	Stderr:
-	ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
-	Artist 'Unknown' is new. Add it to the known list?
+make an argument for download to default confirmations timeouts to true
+	so itll still send confirmations, but when they timeout itll be true instead of false
+Custom thumbnail argument
+Add other platforms
+
+priority:
+	make a list of all youtube links used? maybe?
+	make lists separated by new line
+		dont forget about the replace timestamps list files on fail thing
+	handle this error:
+		ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
+		Error: Failed to fetch video info.
+		Stderr:
+		ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
+		Artist 'Unknown' is new. Add it to the known list?
+✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
+		need to do date still
