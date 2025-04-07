@@ -2,7 +2,6 @@ import discord
 import asyncio
 import os
 import json
-import pwd
 import grp
 from config_manager import config
 
@@ -144,42 +143,36 @@ def apply_directory_permissions():
 
     :return: False if failed, True if success
     """
-    if not config["directory_settings"].get("keep_perms_consistent", True):
+    if not config["directory_settings"]["keep_perms_consistent"]:
         return False
 
     base_dir = config["download_settings"]["base_directory"]
-    file_perms = config["directory_settings"]["file_perms"]
-    dir_perms = config["directory_settings"]["directory_perms"]
-    user = config["directory_settings"]["user"]
-    group = config["directory_settings"]["group"]
+    
+    # Convert permissions to octal
+    file_perms = int(str(config["directory_settings"]["file_perms"]), 8)
+    dir_perms = int(str(config["directory_settings"]["directory_perms"]), 8)
+    target_group = config["directory_settings"]["group"]
 
-    # Convert string perms to octal (e.g., "755" → 0o755)
-    file_perms = int(file_perms, 8) if isinstance(file_perms, str) else file_perms
-    dir_perms = int(dir_perms, 8) if isinstance(dir_perms, str) else dir_perms
+    try:
+        gid = grp.getgrnam(target_group).gr_gid
+    except KeyError:
+        print(f"Group {target_group} not found")
+        return False
 
-    # Unix-only: Get UID/GID (skip on Windows)
-    uid = gid = None
-    if sys.platform != "win32":
-        try:
-            uid = pwd.getpwnam(user).pw_uid
-            gid = grp.getgrnam(group).gr_gid
-        except (ImportError, KeyError) as e:
-            print(f"⚠️ Owner/group not set (non-Unix or invalid user/group): {e}")
-
-    # Apply recursively
     for root, dirs, files in os.walk(base_dir):
         for name in dirs + files:
             path = os.path.join(root, name)
             try:
-                # Set permissions (dir_perms for dirs, file_perms for files)
-                os.chmod(path, dir_perms if os.path.isdir(path) else file_perms)
+                # Set group ownership first
+                os.chown(path, -1, gid)  # -1 preserves current UID
                 
-                # Set owner/group (Unix only)
-                if uid is not None and gid is not None:
-                    os.chown(path, uid, gid)
+                # Set permissions
+                mode = dir_perms if os.path.isdir(path) else file_perms
+                os.chmod(path, mode)
+                
             except PermissionError as e:
-                print(f"❌ Permission denied on {path}: {e}")
+                print(f"Permission denied on {path}: {e}")
             except Exception as e:
-                print(f"❌ Unexpected error on {path}: {e}")
+                print(f"Error processing {path}: {e}")
 
     return True
