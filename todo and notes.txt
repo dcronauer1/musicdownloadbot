@@ -25,12 +25,7 @@ seperate by artist (directory should be music/[songs, album, or album folder])
 ✓	maybe code to check if there are similar names?
 ✓	store artists in a list?
 ✓	handle moving the file to the proper directory
-arguments
-	add argument for song/playlist (default song)
-		when playlist, it should have the option to put everything into a subfolder for that album
-	argument to either split or timestamp
-		check for timestamps, handle accordingly
-		when splitting, it should have the option to put everything into a subfolder for that album
+
 ✓	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
 	add more arguments
 		date, year
@@ -64,6 +59,22 @@ Custom thumbnail argument
 Add other platforms
 
 priority:
+	make it so when timestamps flag is true, timestamps are asked for before downloading the video
+✓	[BUG] when adding custom timestamps, all other metadata is wiped
+		from mutagen.m4a import M4ATags
+		https://chat.deepseek.com/a/chat/s/55c9d945-bdd9-403c-8766-e5c585b3b681
+	if timestamps bool is false, it should skip asking. should default store as NONE
+
+	arguments
+		add argument for song/playlist (default song)
+			when playlist, it should have the option to put everything into a subfolder for that album
+		argument to either split or timestamp
+			check for timestamps, handle accordingly
+			when splitting, it should have the option to put everything into a subfolder for that album
+		make sure to add an album argument
+
+	[feat] combine playlists into one file and timestamp each video
+
 	make a list of all youtube links used? maybe?
 	make lists separated by new line
 		dont forget about the replace timestamps list files on fail thing
@@ -75,3 +86,4 @@ priority:
 		Artist 'Unknown' is new. Add it to the known list?
 ✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
 		need to do date still
+	
