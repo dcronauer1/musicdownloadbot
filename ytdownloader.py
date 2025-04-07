@@ -117,7 +117,7 @@ async def get_video_info(video_url: str) -> dict:
     print(f"Error: Failed to fetch video info.\nStderr:\n{stderr}")
     return {}
 
-async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None) -> str:
+async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None, album: str = None) -> str:
     """
     Downloads a YouTube video as FILE_EXTENSION audio with embedded metadata.
     
@@ -168,6 +168,8 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
 
     if tags_str:
         meta_args += f" -metadata genre='{tags_str}'"
+    if album:
+        meta_args += f" -metadata album='{album}'"
     
     #does the song already exist?
     if os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}{FILE_EXTENSION}")):

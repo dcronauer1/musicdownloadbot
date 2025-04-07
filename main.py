@@ -26,8 +26,8 @@ intents.message_content = True  # Enable message content intent
 bot = MyBot(command_prefix="!", intents=intents)
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
-async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None, date: str = None,
-         type: str = "Song", addtimestamps: bool = False):
+async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None,
+        album: str = None, date: str = None, type: str = "Song", addtimestamps: bool = False):
     """
     Slash command to download a video.
     
@@ -35,6 +35,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     :param title: Custom title for the output file and metadata title
     :param artist: Artist name for metadata. Checked against a list to see if it already exists
     :param tags: Formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
+    :param album: album name
     :param date: _____________
     :param type: (Song|Playlist): ____
     :param addtimestamps: if True, prompt for timestamps. Default False
@@ -46,7 +47,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     await interaction.response.defer()  # Acknowledge the command first
 
     # Download the audio in a separate thread
-    audio_file = await download_audio(interaction, link, title, artist, tags)
+    audio_file = await download_audio(interaction, link, title, artist, tags, album)
     
     if not audio_file:
         await interaction.followup.send("❗Failed to download audio.")
