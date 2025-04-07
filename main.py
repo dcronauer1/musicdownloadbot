@@ -27,7 +27,7 @@ bot = MyBot(command_prefix="!", intents=intents)
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None,
-        album: str = None, date: str = None, type: str = "Song", addtimestamps: bool = False):
+        album: str = None, date: str = None, type: str = "Song", addtimestamps: bool = None):
     """
     Slash command to download a video.
     
@@ -38,7 +38,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     :param album: album name
     :param date: _____________
     :param type: (Song|Playlist): ____
-    :param addtimestamps: if True, prompt for timestamps. Default False
+    :param addtimestamps: True: ask for timestamps. False: do not ask for or add timestamps (even if included in video). Default None
     
     The 'interaction' object is similar to 'ctx' in prefix commands, 
     containing information about the command invocation.
@@ -46,30 +46,34 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     # Send an initial response.
     await interaction.response.defer()  # Acknowledge the command first
 
+    timestamps = None
+    if addtimestamps: #addtimestamps true, ask user for timestamps before downloading
+        timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
+
     # Download the audio in a separate thread
-    audio_file = await download_audio(interaction, link, title, artist, tags, album)
-    
+    audio_file = await download_audio(interaction, link, title, artist, tags, album, addtimestamps)
     if not audio_file:
         await interaction.followup.send("❗Failed to download audio.")
         return
-    timestamps = None
-    if addtimestamps: #addtimestamps true, use user timestamps
-        timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
+    
+    if timestamps: #if timestamps exist, then user entered timestamps, so use those
         await apply_manual_timestamps_to_file(timestamps,audio_file)
-        timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
-    else:
-        timestamp_file = await extract_chapters(audio_file)    #get timestamps
-    if timestamp_file == None:  #no timestamps, prompt user
+    timestamp_file = await extract_chapters(audio_file)    #get timestamps (either user or embedded in video)
+
+    #if no timestamp file, then no timestamps exist, so prompt user. UNLESS user entered False for adding timestamps
+    if (timestamp_file == None) and (addtimestamps != False):
         #prompt user defined templates 
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
             timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
             await apply_manual_timestamps_to_file(timestamps,audio_file)
             timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
+    
     if timestamp_file:
         # Extract chapters using musicolet_timestamp_converter.py
         await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
     else:   
         await interaction.followup.send("🎊Audio downloaded without chapters.")
+    
     apply_directory_permissions()    #update perms if enabled
     return
 

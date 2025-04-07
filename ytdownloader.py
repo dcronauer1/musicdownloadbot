@@ -117,7 +117,7 @@ async def get_video_info(video_url: str) -> dict:
     print(f"Error: Failed to fetch video info.\nStderr:\n{stderr}")
     return {}
 
-async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None, album: str = None) -> str:
+async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None, album: str = None, addtimestamps: bool = None) -> str:
     """
     Downloads a YouTube video as FILE_EXTENSION audio with embedded metadata.
     
@@ -189,12 +189,18 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
         print(f"Error updating yt-dlp: {stderr}")
         return None
     
+    #if user doesn't want chapters, dont include flag. 
+    if addtimestamps == False:
+        chapter_flag = None
+    else:
+        chapter_flag = "--embed-chapters "
+
     #Download video
     print("Download starting...")
     # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
     yt_dlp_cmd = (
         f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
-        f"--embed-chapters --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
+        f"{chapter_flag} --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
     )
     
     print(f"Full command: {yt_dlp_cmd}")
