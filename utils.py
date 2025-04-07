@@ -171,8 +171,8 @@ def apply_directory_permissions():
                 os.chmod(path, mode)
                 
             except PermissionError as e:
-                print(f"Permission denied on {path}: {e}")
+                print(f"⚠️Permission denied on {path}: {e}")
             except Exception as e:
-                print(f"Error processing {path}: {e}")
-
+                print(f"⚠️Error processing {path}: {e}")
+    print("✅Updated file permissions successfully")
     return True
