@@ -2,6 +2,10 @@ import discord
 import asyncio
 import os
 import json
+import pwd
+import grp
+from config_manager import config
+
 # Confirmation view using Discord UI buttons
 class ConfirmView(discord.ui.View):
     def __init__(self, timeout=30):
@@ -127,3 +131,55 @@ def get_entries_from_json(filename) -> str:
         return data
     except json.JSONDecodeError:
         return "file exists but contains invalid JSON"
+
+
+import os
+import sys
+from config_manager import config
+
+def apply_directory_permissions():
+    """
+    Applies consistent permissions to all files and directories in BASE_DIRECTORY
+    based on the configuration settings.
+
+    :return: False if failed, True if success
+    """
+    if not config["directory_settings"].get("keep_perms_consistent", True):
+        return False
+
+    base_dir = config["download_settings"]["base_directory"]
+    file_perms = config["directory_settings"]["file_perms"]
+    dir_perms = config["directory_settings"]["directory_perms"]
+    user = config["directory_settings"]["user"]
+    group = config["directory_settings"]["group"]
+
+    # Convert string perms to octal (e.g., "755" → 0o755)
+    file_perms = int(file_perms, 8) if isinstance(file_perms, str) else file_perms
+    dir_perms = int(dir_perms, 8) if isinstance(dir_perms, str) else dir_perms
+
+    # Unix-only: Get UID/GID (skip on Windows)
+    uid = gid = None
+    if sys.platform != "win32":
+        try:
+            uid = pwd.getpwnam(user).pw_uid
+            gid = grp.getgrnam(group).gr_gid
+        except (ImportError, KeyError) as e:
+            print(f"⚠️ Owner/group not set (non-Unix or invalid user/group): {e}")
+
+    # Apply recursively
+    for root, dirs, files in os.walk(base_dir):
+        for name in dirs + files:
+            path = os.path.join(root, name)
+            try:
+                # Set permissions (dir_perms for dirs, file_perms for files)
+                os.chmod(path, dir_perms if os.path.isdir(path) else file_perms)
+                
+                # Set owner/group (Unix only)
+                if uid is not None and gid is not None:
+                    os.chown(path, uid, gid)
+            except PermissionError as e:
+                print(f"❌ Permission denied on {path}: {e}")
+            except Exception as e:
+                print(f"❌ Unexpected error on {path}: {e}")
+
+    return True

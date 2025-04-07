@@ -7,7 +7,7 @@ from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
 from musicolet_timestamp_converter import extract_chapters,apply_manual_timestamps_to_file
-from utils import ask_confirmation, ask_for_timestamps, run_command, find_file_case_insensitive, get_entries_from_json
+from utils import ask_confirmation, ask_for_timestamps, run_command, find_file_case_insensitive, get_entries_from_json, apply_directory_permissions
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
@@ -70,6 +70,8 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
         await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
     else:   
         await interaction.followup.send("🎊Audio downloaded without chapters.")
+    apply_directory_permissions()    #update perms if enabled
+    return
 
 """Replace commands"""
 class ReplaceGroup(app_commands.Group):
@@ -99,6 +101,8 @@ class ReplaceGroup(app_commands.Group):
             await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
         else:   
             await interaction.followup.send("❗No timestamp file generated, something went wrong.")
+        apply_directory_permissions()    #update perms if enabled
+        return
 
 """List commands"""
 class ListGroup(app_commands.Group):
@@ -131,6 +135,9 @@ async def on_ready():
     bot.tree.add_command(ReplaceGroup())
     bot.tree.add_command(ListGroup())
     
+    #update perms if enabled
+    apply_directory_permissions()
+
     # Sync the commands with Discord
     await bot.tree.sync()  # Sync the commands with Discord
     print(f"Logged in as {bot.user}")

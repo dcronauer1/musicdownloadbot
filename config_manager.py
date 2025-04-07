@@ -12,6 +12,13 @@ DEFAULT_CONFIG = {
         "base_directory": "/path/to/music",
         "file_type": "alac",
         "file_extension": ".m4a"
+    },
+    "directory_settings":{
+        "keep_perms_consistent": True,
+        "file perms": 644,
+        "directory perms": 755,
+        "user": "sambaadmin",
+        "group": "sambashare"
     }
 }
 
