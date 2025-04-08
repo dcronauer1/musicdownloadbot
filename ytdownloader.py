@@ -191,7 +191,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     
     #if user doesn't want chapters, dont include flag. 
     if addtimestamps == False:
-        chapter_flag = None
+        chapter_flag = "--no-embed-chapters"
     else:
         chapter_flag = "--embed-chapters "
 
