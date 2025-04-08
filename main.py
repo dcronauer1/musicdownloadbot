@@ -38,7 +38,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     :param album: album name
     :param date: _____________
     :param type: (Song|Playlist): ____
-    :param addtimestamps: True: ask for timestamps. False: do not ask for or add timestamps (even if included in video). Default None
+    :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
     
     The 'interaction' object is similar to 'ctx' in prefix commands, 
     containing information about the command invocation.

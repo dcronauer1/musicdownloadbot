@@ -1,37 +1,87 @@
+[big things]
+	Add other platforms
+		soundcloud
+		grabbing links raw (with wget or smthing)
 
-./yt-dlp -x --audio-format alac --embed-thumbnail --add-metadata --embed-chapters --postprocessor-args "-metadata artist='MyArtist'" -o "MyCustomName.m4a" https://www.youtube.com/watch?v=7cwrM12pOzU
+[features]
+	add more arguments
+		date, year
+		add in a force: so if force is true then it uses inputted args exactly
+		add argument for song/playlist (default song)
+			when playlist, it should have the option to put everything into a subfolder for that album
+		argument to either split or timestamp
+			check for timestamps, handle accordingly
+			when splitting, it should have the option to put everything into a subfolder for that album
+
+	commands:
+✓		make a command to list artists
+✓		command to list tags
+		command to add artists or tags
+✓		generate timestamps for an already downloaded song
+
+	add ability to download playlists into albums
+		combine playlists into one file and timestamp each video
+
+	Custom thumbnail argument
+
+	When confirming download, affirm user that it is downloading
+
+	make an argument for download to default confirmations timeouts to true
+		so itll still send confirmations, but when they timeout itll be true instead of false
 
 
 
+[bugs]
+	handle this error: (happens when providing a bad link)
+		ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
+		Error: Failed to fetch video info.
+		Stderr:
+		ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
+		Artist 'Unknown' is new. Add it to the known list?
+	
 
 
-./yt-dlp -x --audio-format flac --embed-thumbnail --add-metadata \
-  --postprocessor-args "-metadata artist='MyArtist'" \
-  -o "MyCustomName.flac" \
-  https://www.youtube.com/watch?v=SvNVQYrhIsE
+[improvements]
+	bot message improvements
+		make bot cleanup its confirmation boxes
+	✓	add emojis for success/fail to make it more readable
+		make more specific errors
+			Timeout error
+		react to timestamp message if it processes correctly
+		polish messages
+			some messages are client only, some get sent. this should be universal
+		include some sort of id with EVERY message for multi downloading
+			probably just use yt link
+		let user know when its downloading
+		Send timestamps text file as a codeblock instead of a file upload
 
 
 
-script reqs:
+[other]
+	from mutagen.m4a import M4ATags
+		https://chat.deepseek.com/a/chat/s/55c9d945-bdd9-403c-8766-e5c585b3b681
+
+	make lists separated by new line
+		dont forget about the replace timestamps list files on fail thing
+	
+✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
+		need to do date still
+	
 
 
-every time yt-dlp is ran, run below:
-✓	./yt-dlp -U # update
 
+[Archive]
 
-seperate by artist (directory should be music/[songs, album, or album folder])
-✓	so check if dir exists
-✓		add a confirm to add new artists if it doesnt exist, so seperate message
+✓	add a confirm to add new artists if it doesnt exist, so seperate message
 ✓	maybe code to check if there are similar names?
 ✓	store artists in a list?
 ✓	handle moving the file to the proper directory
 
 ✓	argument to manually add timestamps, support same format as yt description: hr:min:sec "title"
-	add more arguments
-		date, year
-		maybe album?
-		add in a force: so if force is true then it uses inputted args exactly
-add ability to download playlists into albums
+
+every time yt-dlp is ran, run below:
+✓	./yt-dlp -U # update
+
 ✓add tags
 ✓	store tags
 ✓timestamps
@@ -41,49 +91,12 @@ add ability to download playlists into albums
 ✓	add timestamps manually if not found
 ✓	need to have a confirmation too
 ✓	add a way to get timestamps
-✓fix postprocessor-args, or use it correctly? idk
-make bot cleanup its confirmation boxes
-✓	add emojis for success/fail to make it more readable
-commands:
-	make a command to list artists
-	command to list tags
-	command to add artists or tags
-	generate timestamps for an already downloaded song
+
 ✓add descriptions to arguments
 ✓make file names all lowercase
 ✓make confirmations refer to the music file
 ✓check if song already exists
-make an argument for download to default confirmations timeouts to true
-	so itll still send confirmations, but when they timeout itll be true instead of false
-Custom thumbnail argument
-Add other platforms
 
-priority:
-	make it so when timestamps flag is true, timestamps are asked for before downloading the video
 ✓	[BUG] when adding custom timestamps, all other metadata is wiped
-		from mutagen.m4a import M4ATags
-		https://chat.deepseek.com/a/chat/s/55c9d945-bdd9-403c-8766-e5c585b3b681
-	if timestamps bool is false, it should skip asking. should default store as NONE
 
-	arguments
-		add argument for song/playlist (default song)
-			when playlist, it should have the option to put everything into a subfolder for that album
-		argument to either split or timestamp
-			check for timestamps, handle accordingly
-			when splitting, it should have the option to put everything into a subfolder for that album
-		make sure to add an album argument
-
-	[feat] combine playlists into one file and timestamp each video
-
-	make a list of all youtube links used? maybe?
-	make lists separated by new line
-		dont forget about the replace timestamps list files on fail thing
-	handle this error:
-		ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
-		Error: Failed to fetch video info.
-		Stderr:
-		ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
-		Artist 'Unknown' is new. Add it to the known list?
-✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
-		need to do date still
-	
+✓	if timestamps bool is false, it should skip asking. should default store as NONE
