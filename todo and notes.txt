@@ -29,6 +29,10 @@
 	make an argument for download to default confirmations timeouts to true
 		so itll still send confirmations, but when they timeout itll be true instead of false
 
+	pull album covers from a database, check the
+		check this: https://github.com/TheQwertiest/foo_discord_rich
+			https://theqwertiest.github.io/foo_discord_rich/
+	
 
 
 [bugs]
@@ -54,6 +58,12 @@
 			probably just use yt link
 		let user know when its downloading
 		Send timestamps text file as a codeblock instead of a file upload
+	apply_manual_timestamps_to_file
+		make this parse better (so mirrored is still valid)
+			bidirectional, so [title][time] could also be valid
+		better errors, so invalid will actually get flagged
+		could have error checking in ask_for_timestamps() instead
+			if i do this, then add comment in apply_manual_timestamps_to_file() that it expects a specific format
 
 
 

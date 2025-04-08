@@ -30,7 +30,7 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
     """
     view = ConfirmView()
     await interaction.followup.send(
-        f"⚠️Please confirm the following details:\n{details}",
+        f"**Please confirm the following details:**\n{details}",
         view=view,
         ephemeral=True  # Only the command user sees this
     )

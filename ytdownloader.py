@@ -173,7 +173,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     
     #does the song already exist?
     if os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}{FILE_EXTENSION}")):
-        confirmation_str=f'"{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
+        confirmation_str=f'"⚠️{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
     else:
         confirmation_str=f'Arguments: {meta_args}'
     #confirm selection
