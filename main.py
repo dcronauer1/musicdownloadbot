@@ -7,7 +7,7 @@ from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
 from musicolet_timestamp_converter import extract_chapters
-from utils import ask_confirmation, ask_for_timestamps, find_file_case_insensitive, get_entries_from_json, apply_directory_permissions, apply_timestamps_to_file,apply_thumbnail_to_file,ask_for_thumbnail
+from utils import ask_confirmation, ask_for_something, find_file_case_insensitive, get_entries_from_json, apply_directory_permissions, apply_timestamps_to_file,apply_thumbnail_to_file
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
@@ -48,7 +48,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 
     timestamps = None
     if addtimestamps: #addtimestamps true, ask user for timestamps before downloading
-        timestamps = await ask_for_timestamps(interaction,"timestamps")  # Prompt user for timestamps
+        timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
     # Download the audio in a separate thread
     audio_file = await download_audio(interaction, link, title, artist, tags, album, addtimestamps)
     if not audio_file:
@@ -63,7 +63,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     if (timestamp_file == None) and (addtimestamps != False):
         #prompt user defined templates 
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
-            timestamps = await ask_for_timestamps(interaction,"timestamps")  # Prompt user for timestamps
+            timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
             await apply_timestamps_to_file(timestamps,audio_file)
             timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     
@@ -95,7 +95,7 @@ class ReplaceGroup(app_commands.Group):
             await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
             return
         
-        timestamps = await ask_for_timestamps(interaction, "timestamps")  # Prompt user for timestamps
+        timestamps = await ask_for_something(interaction, "timestamps")  # Prompt user for timestamps
         await apply_timestamps_to_file(timestamps,audio_file)
         timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
         if timestamp_file:
@@ -121,7 +121,7 @@ class ReplaceGroup(app_commands.Group):
             #NOTE: find a way to exclude .txt here
             await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
             return
-        thumbnail = await ask_for_thumbnail(interaction, "thumbnail")  # Prompt user for timestamps
+        thumbnail = await ask_for_something(interaction, "thumbnail")  # Prompt user for timestamps
         if (await apply_thumbnail_to_file(thumbnail,audio_file)):
             # Extract chapters using musicolet_timestamp_converter.py
             await interaction.followup.send("🎊Thumbnail saved!")

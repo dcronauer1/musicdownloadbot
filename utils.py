@@ -48,47 +48,32 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
 
     return view.value
 
-async def ask_for_thumbnail(interaction: discord.Interaction) -> str:
-    """Ask user for thumbnail (link or image)."""
-    # Only defer if interaction has not been responded to
+async def ask_for_something(interaction: discord.Interaction, something: str) -> tuple:
+    """Ask user for content (text or image)"""
     if not interaction.response.is_done():
         await interaction.response.defer()
-
+        
     await interaction.followup.send(
-        f"⏳ Please enter a thumbnail as either a link OR an attachment:"
+        f"⏳ Please send {something} (text or image attachment):"
     )
 
     def check(msg: discord.Message):
-        return msg.author == interaction.user and msg.channel == interaction.channel
+        return (msg.author == interaction.user and 
+                msg.channel == interaction.channel and 
+                (msg.content or msg.attachments))
 
     try:
-        response = await interaction.client.wait_for("message", check=check, timeout=120)  # 2-minute timeout
-        print(f"User provided image: {response.content}")
-        return response.content
+        response = await interaction.client.wait_for("message", check=check, timeout=120)
+        print(f"User provided {something}: {response.content}")
+        
+        # Return both text and first attachment
+        return (
+            response.content,
+            response.attachments[0].url if response.attachments else None
+        )
     except asyncio.TimeoutError:
-        await interaction.followup.send(f"❌ You took too long to respond. Skipping thumbnail entry.")
-        return None
-
-async def ask_for_timestamps(interaction: discord.Interaction) -> str:
-    """Ask user for timestamps."""
-    # Only defer if interaction has not been responded to
-    if not interaction.response.is_done():
-        await interaction.response.defer()
-
-    await interaction.followup.send(
-        f"⏳ Please enter timestamps in the format `min:sec \"title\"` (one per line):"
-    )
-
-    def check(msg: discord.Message):
-        return msg.author == interaction.user and msg.channel == interaction.channel
-
-    try:
-        response = await interaction.client.wait_for("message", check=check, timeout=120)  # 2-minute timeout
-        print(f"User provided timestamps: {response.content}")
-        return response.content
-    except asyncio.TimeoutError:
-        await interaction.followup.send(f"❌ You took too long to respond. Skipping timestamps entry.")
-        return None
+        await interaction.followup.send(f"❌ Timed out. Skipping {something} entry.")
+        return (None, None)
 
 async def get_audio_duration(audio_file: str) -> Optional[int]:
     """Get the duration of the audio file in milliseconds using ffprobe."""
