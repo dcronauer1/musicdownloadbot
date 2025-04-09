@@ -1,9 +1,14 @@
 import discord
 import asyncio
 import os
+import re
 import json
 import grp
+import sys
 from config_manager import config
+from typing import Optional
+
+FILE_EXTENSION = config["download_settings"]["file_extension"]
 
 # Confirmation view using Discord UI buttons
 class ConfirmView(discord.ui.View):
@@ -43,6 +48,27 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
 
     return view.value
 
+async def ask_for_thumbnail(interaction: discord.Interaction) -> str:
+    """Ask user for thumbnail (link or image)."""
+    # Only defer if interaction has not been responded to
+    if not interaction.response.is_done():
+        await interaction.response.defer()
+
+    await interaction.followup.send(
+        f"⏳ Please enter a thumbnail as either a link OR an attachment:"
+    )
+
+    def check(msg: discord.Message):
+        return msg.author == interaction.user and msg.channel == interaction.channel
+
+    try:
+        response = await interaction.client.wait_for("message", check=check, timeout=120)  # 2-minute timeout
+        print(f"User provided image: {response.content}")
+        return response.content
+    except asyncio.TimeoutError:
+        await interaction.followup.send(f"❌ You took too long to respond. Skipping thumbnail entry.")
+        return None
+
 async def ask_for_timestamps(interaction: discord.Interaction) -> str:
     """Ask user for timestamps."""
     # Only defer if interaction has not been responded to
@@ -50,7 +76,7 @@ async def ask_for_timestamps(interaction: discord.Interaction) -> str:
         await interaction.response.defer()
 
     await interaction.followup.send(
-        "⏳ Please enter the timestamps in the format `min:sec \"title\"` (one per line):"
+        f"⏳ Please enter timestamps in the format `min:sec \"title\"` (one per line):"
     )
 
     def check(msg: discord.Message):
@@ -61,8 +87,102 @@ async def ask_for_timestamps(interaction: discord.Interaction) -> str:
         print(f"User provided timestamps: {response.content}")
         return response.content
     except asyncio.TimeoutError:
-        await interaction.followup.send("❌ You took too long to respond. Skipping timestamp entry.")
-        return ""
+        await interaction.followup.send(f"❌ You took too long to respond. Skipping timestamps entry.")
+        return None
+
+async def get_audio_duration(audio_file: str) -> Optional[int]:
+    """Get the duration of the audio file in milliseconds using ffprobe."""
+    cmd = f'ffprobe -i "{audio_file}" -show_entries format=duration -v quiet -of csv="p=0"'
+    returncode, duration_str, error = await run_command(cmd)
+
+    if returncode != 0 or not duration_str.strip():
+        print(f"Error getting duration for {audio_file}: {error or 'Empty duration output'}")
+        return None
+
+    try:
+        return int(float(duration_str.strip()) * 1000)  # Convert seconds to milliseconds
+    except ValueError:
+        print(f"Failed to parse audio duration: {duration_str}")
+        return None
+
+async def apply_thumbnail_to_file(thumbnail: str, audio_file: str) -> bool:
+    """Apply a thumbnail to a file using FFMPEG
+    
+    :param thumbnail: _____
+    :return: True if success
+
+    """
+    
+    return 1
+
+async def apply_timestamps_to_file(timestamps: str, audio_file: str):
+    """Convert timestamps to FFmetadata and apply them to an audio file.
+    
+    :param timestamps: expected to be in the format of [min:sec]"title"
+    """
+    
+    metadata = [";FFMETADATA1"]
+    timebase = 1000  # FFmetadata timebase in milliseconds
+    chapter_times = []
+
+    # Improved regex to support optional milliseconds
+    timestamp_pattern = re.compile(r"(\d+):(\d+)(?:\.(\d+))?\s+(.+)")  
+
+    # Parse timestamps
+    for line in timestamps.strip().split("\n"):
+        match = timestamp_pattern.match(line.strip())
+        if match:
+            minutes, seconds, millis, title = int(match[1]), int(match[2]), match[3], match[4].strip()
+            millis = int(millis) if millis else 0
+            start_time = (minutes * 60 + seconds) * timebase + millis  # Convert to milliseconds
+            chapter_times.append((start_time, title))
+        else:
+            print(f"Skipping invalid format: {line}")
+
+    # Ensure at least one chapter exists
+    if not chapter_times:
+        print("No valid timestamps found.")
+        return
+
+    # Get total duration of audio file
+    total_duration = await get_audio_duration(audio_file)
+    if total_duration is None:
+        return
+
+    # Assign END times correctly
+    for i, (start_time, title) in enumerate(chapter_times):
+        metadata.append("[CHAPTER]")
+        metadata.append("TIMEBASE=1/1000")
+        metadata.append(f"START={start_time}")
+
+        # Set END to the start of the next chapter or the total duration for the last one
+        end_time = chapter_times[i + 1][0] if i < len(chapter_times) - 1 else total_duration
+        metadata.append(f"END={end_time}")
+        metadata.append(f"title={title.replace('\"', '\'')}")  # Escape quotes in titles
+
+    # Write metadata to file
+    metadata_file = "metadata.txt"
+    with open(metadata_file, "w") as f:
+        f.write("\n".join(metadata))
+
+    # Apply metadata with FFmpeg
+    ffmpeg_cmd = (
+        f'ffmpeg -i "{audio_file}" -i {metadata_file} '
+        f'-map_metadata 0 -map_chapters 1 '
+        f'-c copy -y "{audio_file}.tmp.{FILE_EXTENSION}" '
+        f'&& mv "{audio_file}.tmp.{FILE_EXTENSION}" "{audio_file}"'
+    )
+    print(f"ffmpeg_cmd = {ffmpeg_cmd}")
+    returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
+
+    if returncode != 0:
+        print(f"FFmpeg command failed: {error}")
+
+    # Cleanup metadata and temp.{FILE_EXTENSION} file
+    try:
+        os.remove(metadata_file)
+    except OSError as e:
+        print(f"Warning: Failed to delete metadata file: {e}")
 
 async def run_command(command, verbose=False):
     """Run a command asynchronously and optionally stream its output in real-time.
@@ -130,11 +250,6 @@ def get_entries_from_json(filename) -> str:
         return data
     except json.JSONDecodeError:
         return "file exists but contains invalid JSON"
-
-
-import os
-import sys
-from config_manager import config
 
 def apply_directory_permissions():
     """

@@ -36,6 +36,8 @@
 		sudo apt install npm #used for freyr-js
 		    npm install -g freyr
 		    https://github.com/miraclx/freyr-js
+	for replacement commands, add functionality to replace for an entire *split* album.
+		so if each track is a different file, either look in the sub dir (album/track.m4a), or look at the metadata for songs with that album name
 	
 
 
@@ -69,6 +71,10 @@
 		could have error checking in ask_for_timestamps() instead
 			if i do this, then add comment in apply_manual_timestamps_to_file() that it expects a specific format
 	make musicolet file optional in config.json
+	find a way to make the starting portion of replace commands be in one spot for the class
+	make list dir line a function, and make it exclude .txt (multiple instances of it in main)
+	make lists separated by new line
+		dont forget about the replace timestamps list files on fail thing
 
 
 
@@ -76,8 +82,6 @@
 	from mutagen.m4a import M4ATags
 		https://chat.deepseek.com/a/chat/s/55c9d945-bdd9-403c-8766-e5c585b3b681
 
-	make lists separated by new line
-		dont forget about the replace timestamps list files on fail thing
 	
 ✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
 		need to do date still

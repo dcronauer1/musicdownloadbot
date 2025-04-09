@@ -6,8 +6,8 @@ from discord import app_commands
 from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
-from musicolet_timestamp_converter import extract_chapters,apply_manual_timestamps_to_file
-from utils import ask_confirmation, ask_for_timestamps, run_command, find_file_case_insensitive, get_entries_from_json, apply_directory_permissions
+from musicolet_timestamp_converter import extract_chapters
+from utils import ask_confirmation, ask_for_timestamps, find_file_case_insensitive, get_entries_from_json, apply_directory_permissions, apply_timestamps_to_file,apply_thumbnail_to_file,ask_for_thumbnail
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
@@ -48,8 +48,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 
     timestamps = None
     if addtimestamps: #addtimestamps true, ask user for timestamps before downloading
-        timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
-
+        timestamps = await ask_for_timestamps(interaction,"timestamps")  # Prompt user for timestamps
     # Download the audio in a separate thread
     audio_file = await download_audio(interaction, link, title, artist, tags, album, addtimestamps)
     if not audio_file:
@@ -57,15 +56,15 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
         return
     
     if timestamps: #if timestamps exist, then user entered timestamps, so use those
-        await apply_manual_timestamps_to_file(timestamps,audio_file)
+        await apply_timestamps_to_file(timestamps,audio_file)
     timestamp_file = await extract_chapters(audio_file)    #get timestamps (either user or embedded in video)
 
     #if no timestamp file, then no timestamps exist, so prompt user. UNLESS user entered False for adding timestamps
     if (timestamp_file == None) and (addtimestamps != False):
         #prompt user defined templates 
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
-            timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
-            await apply_manual_timestamps_to_file(timestamps,audio_file)
+            timestamps = await ask_for_timestamps(interaction,"timestamps")  # Prompt user for timestamps
+            await apply_timestamps_to_file(timestamps,audio_file)
             timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     
     if timestamp_file:
@@ -80,7 +79,7 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
 """Replace commands"""
 class ReplaceGroup(app_commands.Group):
     def __init__(self):
-        super().__init__(name="replace", description="replace related commands")
+        super().__init__(name="replace", description="replace commands")
 
     @app_commands.command(name="timestamps", description="Replace timestamps on an already existing audio file")
     async def replace_timestamps(self, interaction: discord.Interaction, title: str):
@@ -94,17 +93,42 @@ class ReplaceGroup(app_commands.Group):
             #NOTE: could have an issue here with split playlists if i put them in sub directories (just add a variable ig?)
             await interaction.response.send_message("❗File does not exist")
             await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
-            ################# NOTE: add a check here for similar files
             return
         
-        timestamps = await ask_for_timestamps(interaction)  # Prompt user for timestamps
-        await apply_manual_timestamps_to_file(timestamps,audio_file)
+        timestamps = await ask_for_timestamps(interaction, "timestamps")  # Prompt user for timestamps
+        await apply_timestamps_to_file(timestamps,audio_file)
         timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
         if timestamp_file:
             # Extract chapters using musicolet_timestamp_converter.py
             await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
         else:   
             await interaction.followup.send("❗No timestamp file generated, something went wrong.")
+        apply_directory_permissions()    #update perms if enabled
+        return
+        
+    @app_commands.command(name="thumbnail", description="Replace thumbnail on an already existing audio file")
+    async def replace_thumbnail(self, interaction: discord.Interaction, title: str, usedatabase: bool = False):
+        """
+        Replace thumbnail/cover on an already existing audio file
+
+        :param title: Title of the output file. Case insensitive
+        :param usedatabase: pull the image from a database, instead of using the user's image. Default False
+        """
+        audio_file = find_file_case_insensitive(BASE_DIRECTORY,f"{title}{FILE_EXTENSION}") #get file, ignore casing of input
+        if audio_file == None:    #check if file exists
+            #NOTE: could have an issue here with split playlists if i put them in sub directories (just add a variable ig?)
+            await interaction.response.send_message("❗File does not exist")
+            #NOTE: find a way to exclude .txt here
+            await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
+            return
+        thumbnail = await ask_for_thumbnail(interaction, "thumbnail")  # Prompt user for timestamps
+        if (await apply_thumbnail_to_file(thumbnail,audio_file)):
+            # Extract chapters using musicolet_timestamp_converter.py
+            await interaction.followup.send("🎊Thumbnail saved!")
+        else:   
+            #NOTE: maybe pull ffmpeg output and send that instead of "something went wrong"?
+            await interaction.followup.send("❗Thumbnail did not apply properly: something went wrong.")
+
         apply_directory_permissions()    #update perms if enabled
         return
 
