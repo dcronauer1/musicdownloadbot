@@ -32,6 +32,10 @@
 	pull album covers from a database, check the
 		check this: https://github.com/TheQwertiest/foo_discord_rich
 			https://theqwertiest.github.io/foo_discord_rich/
+	add this *maybe* (quality was pretty shit, seems better to just rip from youtube manually)
+		sudo apt install npm #used for freyr-js
+		    npm install -g freyr
+		    https://github.com/miraclx/freyr-js
 	
 
 
@@ -64,6 +68,7 @@
 		better errors, so invalid will actually get flagged
 		could have error checking in ask_for_timestamps() instead
 			if i do this, then add comment in apply_manual_timestamps_to_file() that it expects a specific format
+	make musicolet file optional in config.json
 
 
 
