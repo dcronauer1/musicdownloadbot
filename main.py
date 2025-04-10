@@ -7,7 +7,7 @@ from discord.ext import commands
 from config_manager import config
 from ytdownloader import download_audio
 from musicolet_timestamp_converter import extract_chapters
-from utils import ask_confirmation, ask_for_something, find_file_case_insensitive, get_entries_from_json, apply_directory_permissions, apply_timestamps_to_file,apply_thumbnail_to_file
+from utils import ask_confirmation, ask_for_something, find_file_case_insensitive, get_entries_from_json, apply_directory_permissions, apply_timestamps_to_file,apply_thumbnail_to_file, run_command
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
@@ -121,14 +121,21 @@ class ReplaceGroup(app_commands.Group):
             #NOTE: find a way to exclude .txt here
             await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
             return
-        thumbnail = await ask_for_something(interaction, "thumbnail")  # Prompt user for timestamps
-        if (await apply_thumbnail_to_file(thumbnail,audio_file)):
-            # Extract chapters using musicolet_timestamp_converter.py
-            await interaction.followup.send("🎊Thumbnail saved!")
-        else:   
-            #NOTE: maybe pull ffmpeg output and send that instead of "something went wrong"?
-            await interaction.followup.send("❗Thumbnail did not apply properly: something went wrong.")
+        
+        text_input, image_url = await ask_for_something(interaction, "thumbnail")
+        if image_url:
+            # Download the image to a temporary file
+            temp_file = "temp_cover.jpg"
+            returncode, _, _ = await run_command(f'curl -o "{temp_file}" "{image_url}"')
+            if returncode == 0:
+                if (await apply_thumbnail_to_file(temp_file, audio_file)):
+                    await interaction.followup.send("🎊Thumbnail saved!")
+                else:   
+                    #NOTE: maybe pull ffmpeg output and send that instead of "something went wrong"?
+                    await interaction.followup.send("❗Thumbnail did not apply properly: something went wrong.")
 
+                os.remove(temp_file)   
+             
         apply_directory_permissions()    #update perms if enabled
         return
 

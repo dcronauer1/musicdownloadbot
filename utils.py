@@ -97,8 +97,21 @@ async def apply_thumbnail_to_file(thumbnail: str, audio_file: str) -> bool:
     :return: True if success
 
     """
+    # FFmpeg command (requires local files)
+    ffmpeg_cmd = (
+        f'ffmpeg -y -i "{audio_file}" -i "{thumbnail}" '
+        '-map 0 -map 1 -c copy -disposition:v:0 attached_pic '
+        f'"{audio_file}.tmp" && mv "{audio_file}.tmp" "{audio_file}"'
+    )
     
-    return 1
+    # Execute command using your existing run_command utility
+    returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
+    
+    if returncode == 0:
+        print("✅ Thumbnail updated successfully")
+        return True
+    print(f"❌ Thumbnail update failed: {error}")
+    return False
 
 async def apply_timestamps_to_file(timestamps: str, audio_file: str):
     """Convert timestamps to FFmetadata and apply them to an audio file.
