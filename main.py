@@ -39,7 +39,6 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     :param date: _____________
     :param type: (Song|Playlist): ____
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
-    
     The 'interaction' object is similar to 'ctx' in prefix commands, 
     containing information about the command invocation.
     """
@@ -122,13 +121,18 @@ class ReplaceGroup(app_commands.Group):
             await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
             return
         
-        thumbnail_url = await ask_for_something(interaction, "thumbnail")
+        if usedatabase:
+            await interaction.followup.send("coming soon")
+            #NOTE ################################
+        else:
+            thumbnail_url = await ask_for_something(interaction, "thumbnail")
+
         if thumbnail_url:
-            if (await apply_thumbnail_to_file(thumbnail_url, audio_file)):
+            error = await apply_thumbnail_to_file(thumbnail_url, audio_file)
+            if (error == True):
                 await interaction.followup.send("🎊Thumbnail saved!")
             else:   
-                #NOTE: maybe pull ffmpeg output and send that instead of "something went wrong"?
-                await interaction.followup.send("❗Thumbnail did not apply properly: something went wrong.")             
+                await interaction.followup.send(f"❗Thumbnail did not apply properly: {error}")             
         apply_directory_permissions()    #update perms if enabled
         return
 

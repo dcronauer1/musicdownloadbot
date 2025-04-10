@@ -29,6 +29,9 @@
 	make an argument for download to default confirmations timeouts to true
 		so itll still send confirmations, but when they timeout itll be true instead of false
 
+✓	ability to replace cover/thumbnail
+		add this to download command
+
 	pull album covers from a database, check the
 		check this: https://github.com/TheQwertiest/foo_discord_rich
 			https://theqwertiest.github.io/foo_discord_rich/
@@ -39,6 +42,14 @@
 	for replacement commands, add functionality to replace for an entire *split* album.
 		so if each track is a different file, either look in the sub dir (album/track.m4a), or look at the metadata for songs with that album name
 	
+	ability to download youtube videos as well
+		shouldnt be too hard, i can just ignore metadata and run the command raw
+		need extra configs (for directory)
+
+	ability to pull details from a database
+		including thumbnail
+		make another download command specifically for this
+			require the title parameter
 
 
 [bugs]

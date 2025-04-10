@@ -94,20 +94,20 @@ async def get_audio_duration(audio_file: str) -> Optional[int]:
         print(f"Failed to parse audio duration: {duration_str}")
         return None
 
-async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str) -> bool:
+async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
     """Apply a thumbnail to a file using FFMPEG
     
     :param thumbnail: pass in as a link
-    :return: True if success
+    :return: True if success, else send error or error code
 
     """
     # Download the image to a temporary file
     temp_file = "temp_cover.png"
-    returncode, _, _ = await run_command(f'curl -o "{temp_file}" "{thumbnail_url}"')
-    if returncode != 0:
-        print(f"❌Thumbnail update failed, run_command() returncode: {returncode}")
+    returncode, _, error = await run_command(f'curl -o "{temp_file}" "{thumbnail_url}"')
+    if returncode != 0:#failed
+        print(f"❌Thumbnail update failed, curl output: {error}")
         os.remove(temp_file)            
-        return False    #failed 
+        return f"Thumbnail update failed, curl output: {error}"
 
     # FFmpeg command (requires local files)
     ffmpeg_cmd = (
@@ -119,14 +119,17 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str) -> bool:
     os.remove(temp_file)        #remove temp picture
 
     if returncode == 0:
-        ffmpeg_cmd= f'mv "temp{FILE_EXTENSION}" "{audio_file}"'
-        returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
+        #replace file
+        returncode, _, error = await run_command(f'mv "temp{FILE_EXTENSION}" "{audio_file}"', verbose=True)
         if returncode == 0:
             print("✅Thumbnail updated successfully")
             return True
-    #else failed
-    print(f"❌Thumbnail update failed: {error}")
-    return False
+        else:
+            print(f"❌file replacement failed, error: {error}")
+            return f"file replacement failed, error: {error}"
+    else:
+        print(f"❌Thumbnail update failed: {error}")
+        return f"ffmpeg error code (error in console): {returncode}"
 
 async def apply_timestamps_to_file(timestamps: str, audio_file: str):
     """Convert timestamps to FFmetadata and apply them to an audio file.
@@ -201,7 +204,7 @@ async def run_command(command, verbose=False):
     """Run a command asynchronously and optionally stream its output in real-time.
     If verbose=True, then output will print to console
     
-    :return: returncode, "\n".join(stdout_lines), "\n".join(stderr_lines)
+    :return: returncode, stdout_lines, stderr_lines
     """
     process = await asyncio.create_subprocess_shell(
         command,
