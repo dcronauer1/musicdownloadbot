@@ -102,7 +102,7 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str) -> bool:
 
     """
     # Download the image to a temporary file
-    temp_file = "temp_cover.jpg"
+    temp_file = "temp_cover.png"
     returncode, _, _ = await run_command(f'curl -o "{temp_file}" "{thumbnail_url}"')
     if returncode != 0:
         print(f"❌Thumbnail update failed, run_command() returncode: {returncode}")
@@ -111,17 +111,20 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str) -> bool:
 
     # FFmpeg command (requires local files)
     ffmpeg_cmd = (
-        f'ffmpeg -y -i "{audio_file}" -i "{temp_file}" -map 0 -map 1 -c copy "temp{FILE_EXTENSION}" && mv "temp{FILE_EXTENSION}" "{audio_file}"'
-    )
-    
+        f'ffmpeg -y -i "{audio_file}" -i "{temp_file}" -map 0:0 -map 1 -c copy -disposition:v attached_pic "temp{FILE_EXTENSION}"'
+    )    
     # Execute command using your existing run_command utility
     returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
     
-    os.remove(temp_file)            
+    os.remove(temp_file)        #remove temp picture
 
     if returncode == 0:
-        print("✅Thumbnail updated successfully")
-        return True
+        ffmpeg_cmd= f'mv "temp{FILE_EXTENSION}" "{audio_file}"'
+        returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
+        if returncode == 0:
+            print("✅Thumbnail updated successfully")
+            return True
+    #else failed
     print(f"❌Thumbnail update failed: {error}")
     return False
 
