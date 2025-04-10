@@ -48,7 +48,7 @@ async def ask_confirmation(interaction: discord.Interaction, details: str) -> bo
 
     return view.value
 
-async def ask_for_something(interaction: discord.Interaction, something: str) -> tuple:
+async def ask_for_something(interaction: discord.Interaction, something: str) -> Optional[str]:
     """Ask user for content (text or image)"""
     if not interaction.response.is_done():
         await interaction.response.defer()
@@ -64,13 +64,17 @@ async def ask_for_something(interaction: discord.Interaction, something: str) ->
 
     try:
         response = await interaction.client.wait_for("message", check=check, timeout=120)
-        print(f"User provided {something}: {response.content}")
-        
-        # Return both text and first attachment
-        return (
-            response.content,
-            response.attachments[0].url if response.attachments else None
-        )
+        # Prioritize text first
+        if response.content:
+            print(f"User provided {something} (text): {response.content}")
+            return response.content.strip()
+
+        if response.attachments:
+            url = response.attachments[0].url
+            print(f"User provided {something} (attachment): {url}")
+            return url
+
+        return None
     except asyncio.TimeoutError:
         await interaction.followup.send(f"❌ Timed out. Skipping {something} entry.")
         return (None, None)
@@ -90,16 +94,24 @@ async def get_audio_duration(audio_file: str) -> Optional[int]:
         print(f"Failed to parse audio duration: {duration_str}")
         return None
 
-async def apply_thumbnail_to_file(thumbnail: str, audio_file: str) -> bool:
+async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str) -> bool:
     """Apply a thumbnail to a file using FFMPEG
     
-    :param thumbnail: _____
+    :param thumbnail: pass in as a link
     :return: True if success
 
     """
+    # Download the image to a temporary file
+    temp_file = "temp_cover.jpg"
+    returncode, _, _ = await run_command(f'curl -o "{temp_file}" "{thumbnail_url}"')
+    if returncode != 0:
+        print(f"❌Thumbnail update failed, run_command() returncode: {returncode}")
+        os.remove(temp_file)            
+        return False    #failed 
+
     # FFmpeg command (requires local files)
     ffmpeg_cmd = (
-        f'ffmpeg -y -i "{audio_file}" -i "{thumbnail}" '
+        f'ffmpeg -y -i "{audio_file}" -i "{temp_file}" '
         '-map 0 -map 1 -c copy -disposition:v:0 attached_pic '
         f'"{audio_file}.tmp" && mv "{audio_file}.tmp" "{audio_file}"'
     )
@@ -107,10 +119,12 @@ async def apply_thumbnail_to_file(thumbnail: str, audio_file: str) -> bool:
     # Execute command using your existing run_command utility
     returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
     
+    os.remove(temp_file)            
+
     if returncode == 0:
-        print("✅ Thumbnail updated successfully")
+        print("✅Thumbnail updated successfully")
         return True
-    print(f"❌ Thumbnail update failed: {error}")
+    print(f"❌Thumbnail update failed: {error}")
     return False
 
 async def apply_timestamps_to_file(timestamps: str, audio_file: str):

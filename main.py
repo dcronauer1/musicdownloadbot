@@ -122,20 +122,13 @@ class ReplaceGroup(app_commands.Group):
             await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
             return
         
-        text_input, image_url = await ask_for_something(interaction, "thumbnail")
-        if image_url:
-            # Download the image to a temporary file
-            temp_file = "temp_cover.jpg"
-            returncode, _, _ = await run_command(f'curl -o "{temp_file}" "{image_url}"')
-            if returncode == 0:
-                if (await apply_thumbnail_to_file(temp_file, audio_file)):
-                    await interaction.followup.send("🎊Thumbnail saved!")
-                else:   
-                    #NOTE: maybe pull ffmpeg output and send that instead of "something went wrong"?
-                    await interaction.followup.send("❗Thumbnail did not apply properly: something went wrong.")
-
-                os.remove(temp_file)   
-             
+        thumbnail_url = await ask_for_something(interaction, "thumbnail")
+        if thumbnail_url:
+            if (await apply_thumbnail_to_file(thumbnail_url, audio_file)):
+                await interaction.followup.send("🎊Thumbnail saved!")
+            else:   
+                #NOTE: maybe pull ffmpeg output and send that instead of "something went wrong"?
+                await interaction.followup.send("❗Thumbnail did not apply properly: something went wrong.")             
         apply_directory_permissions()    #update perms if enabled
         return
 
