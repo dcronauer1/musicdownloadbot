@@ -111,9 +111,7 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str) -> bool:
 
     # FFmpeg command (requires local files)
     ffmpeg_cmd = (
-        f'ffmpeg -y -i "{audio_file}" -i "{temp_file}" '
-        '-map 0 -map 1 -c copy -disposition:v:0 attached_pic '
-        f'"{audio_file}.tmp" && mv "{audio_file}.tmp" "{audio_file}"'
+        f'ffmpeg -y -i "{audio_file}" -i "{temp_file}" -map 0 -map 1 -c copy "temp{FILE_EXTENSION}" && mv "temp{FILE_EXTENSION}" "{audio_file}"'
     )
     
     # Execute command using your existing run_command utility
@@ -198,7 +196,10 @@ async def apply_timestamps_to_file(timestamps: str, audio_file: str):
 
 async def run_command(command, verbose=False):
     """Run a command asynchronously and optionally stream its output in real-time.
-    If verbose=True, then output will print to console"""
+    If verbose=True, then output will print to console
+    
+    :return: returncode, "\n".join(stdout_lines), "\n".join(stderr_lines)
+    """
     process = await asyncio.create_subprocess_shell(
         command,
         stdout=asyncio.subprocess.PIPE,
