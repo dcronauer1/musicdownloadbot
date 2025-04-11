@@ -23,7 +23,10 @@ def get_entries_from_json(filename) -> str:
         return "file exists but contains invalid JSON"
 
 def find_file_case_insensitive(directory, filename):
-    """function to find files of the same name, with different casing, and return the file in use"""
+    """function to find files of the same name, with different casing, and return the file in use
+    
+    :return: None: nothing was found
+    """
     #first check if exact casing exists already
     fullPath = os.path.join(directory,filename)
     if os.path.exists(fullPath):

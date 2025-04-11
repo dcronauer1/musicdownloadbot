@@ -16,7 +16,7 @@
 	commands:
 ✓		make a command to list artists
 ✓		command to list tags
-		command to add artists or tags
+		command to add/replace artists or tags
 ✓		generate timestamps for an already downloaded song
 
 	add ability to download playlists into albums
@@ -82,11 +82,7 @@
 		could have error checking in ask_for_timestamps() instead
 			if i do this, then add comment in apply_manual_timestamps_to_file() that it expects a specific format
 	make musicolet file optional in config.json
-	find a way to make the starting portion of replace commands be in one spot for the class
-	make list dir line a function, and make it exclude .txt (multiple instances of it in main)
-	make lists separated by new line
-		dont forget about the replace timestamps list files on fail thing
-
+	make json lists separated by new line
 
 
 [other]
@@ -101,6 +97,15 @@
 
 
 [Archive]
+
+
+	[improvements]
+	✓	find a way to make the starting portion of replace commands be in one spot for the class
+	✓	make list dir line a function, and make it exclude .txt (multiple instances of it in main)
+		make json lists separated by new line
+	✓		dont forget about the replace timestamps list files on fail thing
+
+
 
 ✓	add a confirm to add new artists if it doesnt exist, so seperate message
 ✓	maybe code to check if there are similar names?

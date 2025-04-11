@@ -1,15 +1,16 @@
 import discord
 import os
 import asyncio
+from typing import Optional
 
 from discord import app_commands
 from discord.ext import commands
 from config.config_manager import config
-from utils.ytdownloader import download_audio
-from utils.metadata import extract_chapters
-from utils.discord_helpers import ask_confirmation, ask_for_something
-from utils.metadata import apply_timestamps_to_file,apply_thumbnail_to_file
-from utils.file_handling import find_file_case_insensitive, get_entries_from_json, apply_directory_permissions
+from utils.ytdownloader import *
+from utils.metadata import *
+from utils.discord_helpers import *
+from utils.metadata import *
+from utils.file_handling import *
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
@@ -84,6 +85,16 @@ class ReplaceGroup(app_commands.Group):
     def __init__(self):
         super().__init__(name="replace", description="replace commands")
 
+    async def _get_audio_file(self, interaction: discord.Interaction, title: str) -> Optional[str]:
+        """Shared method to find audio file and handle missing files"""
+        audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
+        if not audio_file:    #check if file exists
+            await interaction.response.send_message("❗File does not exist")
+            files = [f for f in os.listdir(BASE_DIRECTORY) if not f.endswith('.txt')]
+            await interaction.followup.send(f"Available files: {'\n'.join(files)}")
+            return False
+        return audio_file
+
     @app_commands.command(name="timestamps", description="Replace timestamps on an already existing audio file")
     async def replace_timestamps(self, interaction: discord.Interaction, title: str):
         """
@@ -91,11 +102,9 @@ class ReplaceGroup(app_commands.Group):
 
         :param title: Title of the output file. Case insensitive
         """
-        audio_file = find_file_case_insensitive(BASE_DIRECTORY,f"{title}{FILE_EXTENSION}") #get file, ignore casing of input
-        if audio_file == None:    #check if file exists
-            #NOTE: could have an issue here with split playlists if i put them in sub directories (just add a variable ig?)
-            await interaction.response.send_message("❗File does not exist")
-            await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
+        #get audio file & check for existence
+        audio_file = await self._get_audio_file(interaction, title)
+        if audio_file == None:
             return
         
         timestamps = await ask_for_something(interaction, "timestamps")  # Prompt user for timestamps
@@ -117,12 +126,9 @@ class ReplaceGroup(app_commands.Group):
         :param title: Title of the output file. Case insensitive
         :param usedatabase: pull the image from a database, instead of using the user's image. Default False
         """
-        audio_file = find_file_case_insensitive(BASE_DIRECTORY,f"{title}{FILE_EXTENSION}") #get file, ignore casing of input
-        if audio_file == None:    #check if file exists
-            #NOTE: could have an issue here with split playlists if i put them in sub directories (just add a variable ig?)
-            await interaction.response.send_message("❗File does not exist")
-            #NOTE: find a way to exclude .txt here
-            await interaction.followup.send(f"List of files: {os.listdir(BASE_DIRECTORY)}")   #send all files to user
+        #get audio file & check for existence
+        audio_file = await self._get_audio_file(interaction, title)
+        if audio_file == None:
             return
         
         if usedatabase:
@@ -149,11 +155,11 @@ class ListGroup(app_commands.Group):
     async def list_music(self, interaction: discord.Interaction):
         """function to list all music"""
         # Use the initial response method
-        music_files = [f for f in os.listdir(BASE_DIRECTORY)]
+        music_files = [f for f in os.listdir(BASE_DIRECTORY) if not f.endswith('.txt')]
         if not music_files:
             await interaction.response.send_message("No music files found.")
         else:
-            await interaction.response.send_message(f"List of music: {', '.join(music_files)}")
+            await interaction.response.send_message(f"List of music: {'\n'.join(music_files)}")
 
     @app_commands.command(name="artists", description="list all authors in use")
     async def list_artists(self, interaction: discord.Interaction):
