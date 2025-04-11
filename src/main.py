@@ -109,16 +109,22 @@ class ReplaceGroup(app_commands.Group):
             return
         
         if remove:
-            timestamps = None
+            if(await apply_timestamps_to_file(None,audio_file,remove)):
+                chapter_file = audio_file.replace(f"{FILE_EXTENSION}", ".txt")
+                if os.path.exists(chapter_file):
+                    os.remove(chapter_file)
+                await interaction.followup.send("🎊Chapters removed successfully!")
+            else:
+                await interaction.followup.send("❗Failed to remove chapters!")            
         else:
             timestamps = await ask_for_something(interaction, "timestamps")  # Prompt user for timestamps
-        await apply_timestamps_to_file(timestamps,audio_file,remove)
-        timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
-        if timestamp_file:
-            # Extract chapters using musicolet_timestamp_converter.py
-            await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
-        else:   
-            await interaction.followup.send("❗No timestamp file generated, something went wrong.")
+            await apply_timestamps_to_file(timestamps,audio_file,remove)
+            timestamp_file = await extract_chapters(audio_file,remove)    #convert user provided timestamps to .txt
+            if timestamp_file:
+                # Extract chapters using musicolet_timestamp_converter.py
+                await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
+            else:   
+                await interaction.followup.send("❗No timestamp file generated, something went wrong.")
         apply_directory_permissions()    #update perms if enabled
         return
         

@@ -69,6 +69,8 @@ async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: 
     
     :param timestamps: expected to be in the format of [min:sec]"title"
     :param canRemove: if True, then timestamps can be wiped from the file.
+    
+    :return: True on success
     """
     
     if timestamps==None and canRemove:
