@@ -4,10 +4,12 @@ import asyncio
 
 from discord import app_commands
 from discord.ext import commands
-from config_manager import config
-from ytdownloader import download_audio
-from musicolet_timestamp_converter import extract_chapters
-from utils import ask_confirmation, ask_for_something, find_file_case_insensitive, get_entries_from_json, apply_directory_permissions, apply_timestamps_to_file,apply_thumbnail_to_file, run_command
+from config.config_manager import config
+from utils.ytdownloader import download_audio
+from utils.metadata import extract_chapters
+from utils.discord_helpers import ask_confirmation, ask_for_something
+from utils.metadata import apply_timestamps_to_file,apply_thumbnail_to_file
+from utils.file_handling import find_file_case_insensitive, get_entries_from_json, apply_directory_permissions
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]

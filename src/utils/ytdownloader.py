@@ -2,8 +2,9 @@ import os
 import json
 import difflib
 import re
-from config_manager import config
-from utils import ask_confirmation, run_command
+from config.config_manager import config
+from utils.core import run_command
+from utils.discord_helpers import ask_confirmation
 
 # Retrieve settings from the JSON configuration
 YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
