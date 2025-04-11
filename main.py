@@ -132,7 +132,7 @@ class ReplaceGroup(app_commands.Group):
             if (error == True):
                 await interaction.followup.send("🎊Thumbnail saved!")
             else:   
-                await interaction.followup.send(f"❗Thumbnail did not apply properly: {error}")             
+                await interaction.followup.send(f"❗Thumbnail did not apply properly:\n {error}")             
         apply_directory_permissions()    #update perms if enabled
         return
 

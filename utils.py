@@ -111,7 +111,7 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
         except OSError as e:
             print(f"Warning: Failed to delete temp file (can ignore this): {e}")
             
-        return f"Thumbnail update failed, curl output: {error}"
+        return f"Thumbnail update failed, curl output:\n{error}"
 
     # FFmpeg command (requires local files)
     ffmpeg_cmd = (
@@ -130,10 +130,10 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
             return True
         else:
             print(f"❌file replacement failed, error: {error}")
-            return f"file replacement failed, error: {error}"
+            return f"file replacement failed, error:\n{error}"
     else:
         print(f"❌Thumbnail update failed: {error}")
-        return f"ffmpeg error code (error in console): {returncode}"
+        return f"ffmpeg error code (error in console):\n{returncode}"
 
 async def apply_timestamps_to_file(timestamps: str, audio_file: str):
     """Convert timestamps to FFmetadata and apply them to an audio file.
