@@ -15,8 +15,10 @@ FILE_EXTENSION = config["download_settings"]["file_extension"]
 # Custom Bot class to sync slash commands on startup.
 class MyBot(commands.Bot):
     async def setup_hook(self):
-        # This will sync slash commands with Discord
-        await self.tree.sync()
+        # Add command groups BEFORE syncing
+        self.tree.add_command(ReplaceGroup())
+        self.tree.add_command(ListGroup())
+        await self.tree.sync()  # Sync with current command tree
 
 # Enable necessary intents
 intents = discord.Intents.default()
@@ -161,17 +163,11 @@ class ListGroup(app_commands.Group):
         """function to list all tags that are stored"""
         await interaction.response.send_message(f"List of tags: {get_entries_from_json('tags.json')}")
 
+
 @bot.event
 async def on_ready():
-    # Register groups with the command tree
-    bot.tree.add_command(ReplaceGroup())
-    bot.tree.add_command(ListGroup())
-    
-    #update perms if enabled
+    # Remove the command group additions and sync from here
     apply_directory_permissions()
-
-    # Sync the commands with Discord
-    await bot.tree.sync()  # Sync the commands with Discord
     print(f"Logged in as {bot.user}")
 
 bot.run(config["bot_settings"]["BOT_TOKEN"])
