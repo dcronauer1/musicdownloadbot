@@ -64,12 +64,30 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
         print(f"❌Thumbnail update failed: {error}")
         return f"ffmpeg error code (error in console):\n{returncode}"
 
-async def apply_timestamps_to_file(timestamps: str, audio_file: str):
+async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: bool = False):
     """Convert timestamps to FFmetadata and apply them to an audio file.
     
     :param timestamps: expected to be in the format of [min:sec]"title"
+    :param canRemove: if True, then timestamps can be wiped from the file.
     """
     
+    if timestamps==None and canRemove:
+        # Special case: Remove existing chapters
+        ffmpeg_cmd = (
+            f'ffmpeg -i "{audio_file}" '
+            f'-map_metadata 0 '  # Preserve existing metadata
+            f'-map_chapters -1 '  # Remove all chapters
+            f'-c copy -y "{audio_file}.tmp.{FILE_EXTENSION}" '
+            f'&& mv "{audio_file}.tmp.{FILE_EXTENSION}" "{audio_file}"'
+        )
+        print(f"Removal command: {ffmpeg_cmd}")
+        returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
+        
+        if returncode != 0:
+            print(f"Chapter removal failed: {error}")
+            return False
+        return True
+
     metadata = [";FFMETADATA1"]
     timebase = 1000  # FFmetadata timebase in milliseconds
     chapter_times = []
@@ -132,7 +150,6 @@ async def apply_timestamps_to_file(timestamps: str, audio_file: str):
         os.remove(metadata_file)
     except OSError as e:
         print(f"Warning: Failed to delete metadata file: {e}")
-
 
 async def extract_chapters(audio_file: str):
     """Extracts chapters from the audio file and saves them in a .txt file in the format musicolet uses."""

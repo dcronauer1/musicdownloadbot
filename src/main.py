@@ -96,19 +96,23 @@ class ReplaceGroup(app_commands.Group):
         return audio_file
 
     @app_commands.command(name="timestamps", description="Replace timestamps on an already existing audio file")
-    async def replace_timestamps(self, interaction: discord.Interaction, title: str):
+    async def replace_timestamps(self, interaction: discord.Interaction, title: str, remove: bool = False):
         """
         Replace timestamps on an already existing audio file
 
         :param title: Title of the output file. Case insensitive
+        :param remove: True: will remove timestamps from files
         """
         #get audio file & check for existence
         audio_file = await self._get_audio_file(interaction, title)
         if audio_file == None:
             return
         
-        timestamps = await ask_for_something(interaction, "timestamps")  # Prompt user for timestamps
-        await apply_timestamps_to_file(timestamps,audio_file)
+        if remove:
+            timestamps = None
+        else:
+            timestamps = await ask_for_something(interaction, "timestamps")  # Prompt user for timestamps
+        await apply_timestamps_to_file(timestamps,audio_file,remove)
         timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
         if timestamp_file:
             # Extract chapters using musicolet_timestamp_converter.py
