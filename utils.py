@@ -106,7 +106,11 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
     returncode, _, error = await run_command(f'curl -o "{temp_file}" "{thumbnail_url}"')
     if returncode != 0:#failed
         print(f"❌Thumbnail update failed, curl output: {error}")
-        os.remove(temp_file)            
+        try:
+            os.remove(temp_file)
+        except OSError as e:
+            print(f"Warning: Failed to delete temp file (can ignore this): {e}")
+            
         return f"Thumbnail update failed, curl output: {error}"
 
     # FFmpeg command (requires local files)
