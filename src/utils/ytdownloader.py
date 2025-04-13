@@ -96,8 +96,13 @@ async def check_and_update_tags(tags: str, interaction) -> list:
     save_known_list(filename, known_tags)
     return updated_tags
 
-async def get_video_info(video_url: str) -> dict:
-    """Fetch video info (as JSON) using yt-dlp and return the parsed dictionary. Used for defaulting parameters"""
+async def get_video_info(video_url: str) -> tuple[dict,str]:
+    """Fetch video info (as JSON) using yt-dlp and return the parsed dictionary. Used for defaulting parameters
+
+    :return dict: desired info from video (title, uploader, upload_date)
+    :return error_str: None if no error, string containing error if error
+
+    """
     yt_dlp_info_cmd = (
         f"{YT_DLP_PATH} --print 'title' --print 'uploader' --print 'upload_date' {video_url}"
     )
@@ -110,15 +115,16 @@ async def get_video_info(video_url: str) -> dict:
                 "title": title,
                 "uploader": uploader,
                 "upload_date": upload_date,
-            }
+            }, None
         except ValueError:
-            print(f"Error: Unexpected output format.\nRaw output:\n{output}")
-            return {}
-    
-    print(f"Error: Failed to fetch video info.\nStderr:\n{stderr}")
-    return {}
+            error_str = f"Error: Unexpected output format.\nRaw output:\n{output}"
+            print(error_str)
+            return {},error_str
+    error_str=f"Error: Failed to fetch video info.\nStderr:\n{stderr}"
+    print(error_str)
+    return {},error_str
 
-async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None, album: str = None, addtimestamps: bool = None) -> str:
+async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None, album: str = None, addtimestamps: bool = None) -> tuple:
     """
     Downloads a YouTube video as FILE_EXTENSION audio with embedded metadata.
     
@@ -129,12 +135,17 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     :param output_name: Base name for the output file. Defaults to video title.
     :param artist_name: Artist name to embed in metadata. Defaults to video uploader.
     :param tags: tags in a string.
-    :return: The path to the downloaded audio file (FILE_TYPE) or None if error. NOTE: returns as lowercase
+    :return audio_file: The path to the downloaded audio file (FILE_TYPE) or None if error.
+    :return error_str: None if no error, string containing error if error
+
     """
     # Get video info to set defaults if needed
     info = {}
     if not output_name or not artist_name:
-        info = await get_video_info(video_url)
+        info,error_str = await get_video_info(video_url)
+        if error_str != None:
+            print(error_str)
+            return None,error_str
     
     if not output_name:
         output_name = info.get("title", "Untitled")
@@ -144,7 +155,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     # Check against known lists. (authors and tags)
     artist_name = await check_and_update_artist(artist_name, interaction)
     if artist_name == False:  #user did not confirm addition of new author
-        return
+        return None,"User did not confirm addition of new author"
     if tags:
         # Split the tags by commas and semicolons, and strip extra spaces
         tags_list = [tag.strip() for tag in re.split(r"[,;]", tags) if tag.strip()]
@@ -152,7 +163,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
         # Process and update tags list
         tags_list = await check_and_update_tags(tags_list, interaction)
         if tags_list == False:  #user did not confirm addition of new tags
-            return
+            return None,"User did not confirm addition of new tags"
 
         # Join them back into a properly formatted string
         #NOTE: need to change this if other file types are expected
@@ -179,7 +190,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
         confirmation_str=f'Arguments: {meta_args}'
     #confirm selection
     if (await ask_confirmation(interaction, confirmation_str)) == False:
-        return
+        return None,"User did not confirm"
 
     #Update yt-dlp
     print("Updating yt-dlp...")
@@ -187,8 +198,9 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     returncode, _, stderr = await run_command(update_command, True)
     
     if returncode != 0:
-        print(f"Error updating yt-dlp: {stderr}")
-        return None
+        error_str=f"Error updating yt-dlp: {stderr}"
+        print(error_str)
+        return None,error_str
     
     #if user doesn't want chapters, dont include flag. 
     if addtimestamps == False:
@@ -209,7 +221,8 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
 
     if returncode == 0:
         print("Download complete.")
-        return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
+        return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}"), None
     else:
-        print(f"Error downloading: {stderr}")
-        return None
+        error_str = f"Error downloading: {stderr}"
+        print(error_str)
+        return None,error_str

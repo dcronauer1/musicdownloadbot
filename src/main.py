@@ -54,22 +54,29 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     if addtimestamps: #addtimestamps true, ask user for timestamps before downloading
         timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
     # Download the audio in a separate thread
-    audio_file = await download_audio(interaction, link, title, artist, tags, album, addtimestamps)
+    audio_file,error_str = await download_audio(interaction, link, title, artist, tags, album, addtimestamps)
     if not audio_file:
-        await interaction.followup.send("❗Failed to download audio.")
+        await interaction.followup.send(f"❗Failed to download audio. Error:\n{error_str}")
         return
     
     if timestamps: #if timestamps exist, then user entered timestamps, so use those
-        await apply_timestamps_to_file(timestamps,audio_file)
-    timestamp_file = await extract_chapters(audio_file)    #get timestamps (either user or embedded in video)
+        success, error_str = await apply_timestamps_to_file(timestamps,audio_file)
+        if(success == False):
+            await interaction.followup.send(f"❗Failed to apply chapters: {error_str}")
+            return            
+
+    timestamp_file,error_str = await extract_chapters(audio_file)    #get timestamps (either user or embedded in video)
 
     #if no timestamp file, then no timestamps exist, so prompt user. UNLESS user entered False for adding timestamps
     if (timestamp_file == None) and (addtimestamps != False):
         #prompt user defined templates 
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):
             timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
-            await apply_timestamps_to_file(timestamps,audio_file)
-            timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
+            success, error_str = await apply_timestamps_to_file(timestamps,audio_file)
+            if(success == False):
+                await interaction.followup.send(f"❗Failed to apply chapters: {error_str}")   
+                return
+            timestamp_file,error_str = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     
     if timestamp_file:
         # Extract chapters using musicolet_timestamp_converter.py
@@ -91,7 +98,7 @@ class ReplaceGroup(app_commands.Group):
         if not audio_file:    #check if file exists
             await interaction.response.send_message("❗File does not exist")
             files = [f for f in os.listdir(BASE_DIRECTORY) if not f.endswith('.txt')]
-            await interaction.followup.send(f"Available files: {'\n'.join(files)}")
+            await interaction.followup.send(f"Available songs:\n{'\n'.join(files)}")
             return False
         return audio_file
 
@@ -106,28 +113,37 @@ class ReplaceGroup(app_commands.Group):
         # Defer first to prevent interaction token expiration
         await interaction.response.defer()
         
-        #get audio file & check for existence
-        audio_file = await self._get_audio_file(interaction, title)
-        if audio_file == None:
-            return
-        
-        if remove:
-            if(await apply_timestamps_to_file(None,audio_file,remove)):
-                chapter_file = audio_file.replace(f"{FILE_EXTENSION}", ".txt")
-                if os.path.exists(chapter_file):
-                    os.remove(chapter_file)
-                await interaction.followup.send("🎊Chapters removed successfully!")
+        try:
+            #get audio file & check for existence
+            audio_file = await self._get_audio_file(interaction, title)
+            if audio_file == None:
+                return
+            
+            if remove:
+                success, error_str = await apply_timestamps_to_file(None,audio_file,remove)
+                if(success):
+                    chapter_file = audio_file.replace(f"{FILE_EXTENSION}", ".txt")
+                    if os.path.exists(chapter_file):
+                        os.remove(chapter_file)
+                    await interaction.followup.send("🎊Chapters removed successfully!")
+                else:
+                    await interaction.followup.send(f"❗Failed to remove chapters: {error_str}")  
+                    return          
             else:
-                await interaction.followup.send("❗Failed to remove chapters!")            
-        else:
-            timestamps = await ask_for_something(interaction, "timestamps")  # Prompt user for timestamps
-            await apply_timestamps_to_file(timestamps,audio_file,remove)
-            timestamp_file = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
-            if timestamp_file:
-                # Extract chapters using musicolet_timestamp_converter.py
-                await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
-            else:   
-                await interaction.followup.send("❗No timestamp file generated, something went wrong.")
+                timestamps = await ask_for_something(interaction, "timestamps")  # Prompt user for timestamps
+                success, error_str = await apply_timestamps_to_file(timestamps,audio_file,remove)
+                if(success):
+                    timestamp_file, err = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
+                    if timestamp_file:
+                        # Extract chapters using musicolet_timestamp_converter.py
+                        await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
+                    else:   
+                        await interaction.followup.send(f"❗No timestamp file generated: {err}")
+                        return
+                else:
+                    await interaction.followup.send(f"❗Failed to apply chapters: {error_str}")            
+        except Exception as e:
+            await interaction.followup.send(f"❌ Error: {str(e)}")
         apply_directory_permissions()    #update perms if enabled
         return
         
@@ -146,7 +162,7 @@ class ReplaceGroup(app_commands.Group):
         
         if usedatabase:
             await interaction.followup.send("coming soon")
-            #NOTE ################################
+            #NOTE implement this ################################
         else:
             thumbnail_url = await ask_for_something(interaction, "thumbnail")
 
@@ -172,7 +188,7 @@ class ListGroup(app_commands.Group):
         if not music_files:
             await interaction.response.send_message("No music files found.")
         else:
-            await interaction.response.send_message(f"List of music: {'\n'.join(music_files)}")
+            await interaction.response.send_message(f"List of music:\n{'\n'.join(music_files)}")
 
     @app_commands.command(name="artists", description="list all authors in use")
     async def list_artists(self, interaction: discord.Interaction):

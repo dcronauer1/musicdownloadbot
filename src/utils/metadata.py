@@ -64,13 +64,13 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
         print(f"❌Thumbnail update failed: {error}")
         return f"ffmpeg error code (error in console):\n{returncode}"
 
-async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: bool = False):
+async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: bool = False) ->tuple:
     """Convert timestamps to FFmetadata and apply them to an audio file.
     
     :param timestamps: expected to be in the format of [min:sec]"title"
     :param canRemove: if True, then timestamps can be wiped from the file.
     
-    :return: True on success
+    :return: bool for success/fail, err
     """
     
     if timestamps==None and canRemove:
@@ -86,10 +86,12 @@ async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: 
         returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
         
         if returncode != 0:
-            print(f"Chapter removal failed: {error}")
-            return False
-        return True
-
+            error = f"Chapter removal failed:\n{error}"
+            print(error)
+            return False, error
+        return True, None
+    
+    #not removing timestamps:
     metadata = [";FFMETADATA1"]
     timebase = 1000  # FFmetadata timebase in milliseconds
     chapter_times = []
@@ -110,13 +112,16 @@ async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: 
 
     # Ensure at least one chapter exists
     if not chapter_times:
-        print("No valid timestamps found.")
-        return
+        error = "No valid timestamps found."
+        print(error)
+        return False, error
 
     # Get total duration of audio file
     total_duration = await get_audio_duration(audio_file)
     if total_duration is None:
-        return
+        error = "Return Duration is None"
+        print(error)
+        return False, error
 
     # Assign END times correctly
     for i, (start_time, title) in enumerate(chapter_times):
@@ -144,47 +149,60 @@ async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: 
     print(f"ffmpeg_cmd = {ffmpeg_cmd}")
     returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
 
-    if returncode != 0:
-        print(f"FFmpeg command failed: {error}")
-
     # Cleanup metadata and temp.{FILE_EXTENSION} file
     try:
         os.remove(metadata_file)
     except OSError as e:
-        print(f"Warning: Failed to delete metadata file: {e}")
+        print(f"Warning: Failed to delete temp metadata file: {e}")
 
-async def extract_chapters(audio_file: str):
-    """Extracts chapters from the audio file and saves them in a .txt file in the format musicolet uses."""
+    if returncode != 0:
+        error = f"FFmpeg command failed:\n{error}"
+        print(error)
+        return False, error
+    return True, None
+    
+    
+
+async def extract_chapters(audio_file: str) -> tuple:
+    """Extracts chapters from the audio file and saves them in a .txt file in the format musicolet uses.
+
+    :return: chapter_file,err    
+    """
     chapter_file = audio_file.replace(f"{FILE_EXTENSION}", ".txt")
 
-    ffprobe_cmd = [
-        "ffprobe", "-i", audio_file,
-        "-print_format", "json", "-show_chapters", "-loglevel", "error"
-    ]
-    #################### use run_command() here
+    ffprobe_cmd = f'ffprobe -i "{audio_file}" -print_format json -show_chapters -loglevel error'
+
     print("Extracting chapter data...")
+    returncode, output, error = await run_command(ffprobe_cmd,verbose=True)
+     
+    if returncode != 0:
+        error_msg = f"FFprobe error ({returncode}):\n{error}"
+        print(error_msg)
+        return None, error_msg
+
     try:
-        result = subprocess.run(ffprobe_cmd, capture_output=True, text=True, check=True)
-        chapters = json.loads(result.stdout).get("chapters", [])
-    except subprocess.CalledProcessError as e:
-        print(f"Error: ffprobe failed with code {e.returncode}")
-        return None
+        chapters = json.loads(output).get("chapters", [])
+        result_file, error = format_timestamps_for_musicolet(chapters, chapter_file)
+        return result_file, error
+    except json.JSONDecodeError:
+        error_msg = "Failed to parse FFprobe output"
+        print(error_msg)
+        return None, error_msg
 
-    if chapters:
-        return format_timestamps_for_musicolet(chapters, chapter_file)
-    else:
-        print("No chapters found.")
-        return None
-
-def format_timestamps_for_musicolet(chapters, chapter_file):
+def format_timestamps_for_musicolet(chapters, chapter_file) -> tuple:
     """Converts json sorted timestamps into musicolet timestamps [mn:sc.ms]"""
-    with open(chapter_file, "w") as f:
-        for chapter in chapters:
-            start_time = float(chapter["start_time"])
-            minutes = int(start_time // 60)
-            seconds = int(start_time % 60)
-            milliseconds = int((start_time % 1) * 1000)
-            chapter_name = chapter["tags"].get("title", "Unknown")
-            f.write(f"[{minutes}:{seconds:02}.{milliseconds:03}]{chapter_name}\n")
-    print(f"Chapters saved to {chapter_file}")
-    return chapter_file  
+    try:
+        with open(chapter_file, "w") as f:
+            for chapter in chapters:
+                start_time = float(chapter["start_time"])
+                minutes = int(start_time // 60)
+                seconds = int(start_time % 60)
+                milliseconds = int((start_time % 1) * 1000)
+                chapter_name = chapter["tags"].get("title", "Unknown")
+                f.write(f"[{minutes}:{seconds:02}.{milliseconds:03}]{chapter_name}\n")
+        print(f"Chapters saved to {chapter_file}")
+        return chapter_file, None 
+    except Exception as e:
+        error_msg = f"Error formatting chapters: {str(e)}"
+        print(error_msg)
+        return None, error_msg
