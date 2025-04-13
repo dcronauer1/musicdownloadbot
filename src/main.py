@@ -172,8 +172,8 @@ class ReplaceGroup(app_commands.Group):
             if artist == None:
                 artist = metadata.get('artist', None)
             if artist == None:
-                interaction.followup.send("⚠️ Unknown artist, please supply one manually")
-            
+                await interaction.followup.send("⚠️ Unknown artist, please supply one manually")
+                return
             cover_url, _, error = await fetch_musicbrainz_data(artist, title)
             if error:
                 await interaction.followup.send(f"❌ Database lookup failed: {error}")
