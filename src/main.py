@@ -32,7 +32,7 @@ bot = MyBot(command_prefix="!", intents=intents)
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None,
-        album: str = None, date: str = None, type: str = "Song", addtimestamps: bool = None):
+        album: str = None, date: str = None, type: str = "Song", addtimestamps: bool = None, usedatabase: bool = False):
     """
     Slash command to download a video.
     
@@ -44,8 +44,9 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     :param date: _____________
     :param type: (Song|Playlist): ____
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
-    The 'interaction' object is similar to 'ctx' in prefix commands, 
-    containing information about the command invocation.
+    :param usedatabase: use database for metadata instead of youtube information
+    
+    The 'interaction' object is similar to 'ctx' in prefix commands, containing information about the command invocation.
     """
     # Send an initial response.
     await interaction.response.defer()  # Acknowledge the command first
@@ -148,21 +149,47 @@ class ReplaceGroup(app_commands.Group):
         return
         
     @app_commands.command(name="thumbnail", description="Replace thumbnail on an already existing audio file")
-    async def replace_thumbnail(self, interaction: discord.Interaction, title: str, usedatabase: bool = False):
+    async def replace_thumbnail(self, interaction: discord.Interaction, title: str, 
+                                usedatabase: bool = False, artist: str = None):
         """
         Replace thumbnail/cover on an already existing audio file
 
         :param title: Title of the output file. Case insensitive
         :param usedatabase: pull the image from a database, instead of using the user's image. Default False
+        :param artist: manual fill for usedatabase
+
         """
+        # Defer first to prevent interaction token expiration
+        await interaction.response.defer()
+
         #get audio file & check for existence
         audio_file = await self._get_audio_file(interaction, title)
         if audio_file == None:
             return
         
         if usedatabase:
-            await interaction.followup.send("coming soon")
-            #NOTE implement this ################################
+            metadata = await get_audio_metadata(audio_file)
+            if artist == None:
+                artist = metadata.get('artist', None)
+            if artist == None:
+                interaction.followup.send("⚠️ Unknown artist, please supply one manually")
+            
+            cover_url, _, error = await fetch_musicbrainz_data(artist, title)
+            if error:
+                await interaction.followup.send(f"❌ Database lookup failed: {error}")
+                return
+
+            if not cover_url:
+                await interaction.followup.send("❌ No artwork found in database")
+                return
+
+            result = await apply_thumbnail_to_file(cover_url, audio_file)
+            
+            if result is True:
+                await interaction.followup.send("🎊 Thumbnail updated from MusicBrainz!")
+            else:
+                await interaction.followup.send(f"❗ Error applying thumbnail: {result}")
+            return
         else:
             thumbnail_url = await ask_for_something(interaction, "thumbnail")
 

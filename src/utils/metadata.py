@@ -5,8 +5,85 @@ from config.config_manager import config
 import re
 from typing import Optional
 from utils.core import run_command
+import sys
+
+import musicbrainzngs
+import requests
+from mutagen import File
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]     
+
+
+try:
+    musicbrainzngs.set_useragent(
+        app=config["musicbrainz"]["app_name"],
+        version="1.0",
+        contact=config["musicbrainz"]["contact_email"]
+    )
+except KeyError as e:
+    print(f"❌ MusicBrainz configuration missing: {str(e)}")
+    print("Add these to your config.json under 'bot_settings':")
+    print("- app_name\n- contact_email")
+    sys.exit(1)
+
+async def get_audio_metadata(audio_file: str) -> dict:
+    """Get metadata from audio file using mutagen"""
+    try:
+        f = File(audio_file)
+        return {
+            'artist': f.get('\xa9ART', [None])[0],
+            'album': f.get('\xa9alb', [None])[0],
+            'title': f.get('\xa9nam', [None])[0],
+            'date': f.get('\xa9day', [None])[0],
+            'genre': f.get('\xa9gen', [None])[0]
+        }
+    except Exception as e:
+        print(f"Metadata read error: {str(e)}")
+        return {
+            'artist': None,
+            'album': None,
+            'title': None,
+            'date': None,
+            'genre': None
+        }
+
+async def fetch_musicbrainz_data(artist: str, title: str, type: str = "album") -> tuple:
+    """Fetch cover art URL from MusicBrainz with proper URL construction
+    
+    :param type: valid options include "album", "title"___. NOTE currently unused
+    
+    """
+    try:
+        result = musicbrainzngs.search_releases(
+            artist=artist,
+            release=title,
+            limit=5,
+            strict=False,
+        #    type="album"
+        )
+        
+        if not result.get('release-list'):
+            return None, None, "No matching releases found"
+
+        # Find first release with cover art
+        for release in result['release-list']:
+            mbid = release['id']
+            try:
+                # Get cover art information
+                coverart = musicbrainzngs.get_image_list(mbid)
+                for image in coverart.get('images', []):
+                    if image.get('front', False):
+                        # Construct proper URL
+                        return f"https://coverartarchive.org/release/{mbid}/{image['id']}.jpg", None, None
+            except musicbrainzngs.WebServiceError:
+                continue
+
+        return None, None, "No valid artwork URL found"
+
+    except musicbrainzngs.WebServiceError as e:
+        return None, None, f"MusicBrainz API Error: {str(e)}"
+    except Exception as e:
+        return None, None, f"Unexpected error: {str(e)}"
 
 async def get_audio_duration(audio_file: str) -> Optional[int]:
     """Get the duration of the audio file in milliseconds using ffprobe."""
@@ -30,6 +107,7 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
     :return: True if success, else send error or error code
 
     """
+    print(f"⚠️thumbnail_url: {thumbnail_url}")
     # Download the image to a temporary file
     temp_file = "temp_cover.png"
     returncode, _, error = await run_command(f'curl -o "{temp_file}" "{thumbnail_url}"')

@@ -18,6 +18,10 @@ DEFAULT_CONFIG = {
         "file_perms": 644,
         "directory_perms": 775,
         "group": "sambashare"
+    },
+    "musicbrainz": {
+        "app_name": "YourMusicBot",
+        "contact_email": "tempemail1732218732931@gmail.com"
     }
 }
 
