@@ -79,10 +79,10 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
             timestamp_file,error_str = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     
     if timestamp_file:
-        # Extract chapters using musicolet_timestamp_converter.py
+        # Chapters were extracted using extract_chapters()
         await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
     else:   
-        await interaction.followup.send("🎊Audio downloaded without chapters.")
+        await interaction.followup.send(f"🎊Audio downloaded without chapters:\n{error_str}")
     
     apply_directory_permissions()    #update perms if enabled
     return
