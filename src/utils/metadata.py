@@ -110,7 +110,7 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
     print(f"⚠️thumbnail_url: {thumbnail_url}")
     # Download the image to a temporary file
     temp_file = "temp_cover.png"
-    returncode, _, error = await run_command(f'curl -o "{temp_file}" "{thumbnail_url}"')
+    returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_url}"')
     if returncode != 0:#failed
         print(f"❌Thumbnail update failed, curl output: {error}")
         try:
