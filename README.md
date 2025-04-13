@@ -1,12 +1,7 @@
 # how to:
 sudo apt install python3 python3-pip samba ffmpeg atomicparsley python3-mutagen 
-*sudo apt install npm #used for freyr-js
-*    npm install -g freyr
-*    https://github.com/miraclx/freyr-js
 get runable for yt-dlp: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options
 set up samba (optional)
-
-
 
 set up directories accordingly in config.json
 

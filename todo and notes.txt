@@ -53,12 +53,7 @@
 
 
 [bugs]
-	handle this error: (happens when providing a bad link)
-		ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
-		Error: Failed to fetch video info.
-		Stderr:
-		ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
-		Artist 'Unknown' is new. Add it to the known list?
+
 	
 
 
@@ -102,9 +97,15 @@
 	[improvements]
 	✓	find a way to make the starting portion of replace commands be in one spot for the class
 	✓	make list dir line a function, and make it exclude .txt (multiple instances of it in main)
-		make json lists separated by new line
 	✓		dont forget about the replace timestamps list files on fail thing
 
+	[bugs]
+	✓	handle this error: (happens when providing a bad link)
+			ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
+			Error: Failed to fetch video info.
+			Stderr:
+			ERROR: [generic] 'a' is not a valid URL. Set --default-search "ytsearch" (or run  yt-dlp "ytsearch:a" ) to search YouTube
+			Artist 'Unknown' is new. Add it to the known list?
 
 
 ✓	add a confirm to add new artists if it doesnt exist, so seperate message
