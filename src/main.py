@@ -45,7 +45,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     :param date: *_____________
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
     :param usedatabase: *use database for metadata instead of youtube information
-    :param excludetracknumsforplaylist: when type=playlist, dont add track numbers if True
+    :param excludetracknumsforplaylist: applies when type=playlist: if True: dont add track numbers. Default=False
     
     The 'interaction' object is similar to 'ctx' in prefix commands, containing information about the command invocation.
     """

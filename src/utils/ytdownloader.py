@@ -142,7 +142,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     :param tags: tags in a string.
     :param album: album name. Must be supplied when type=playlist to get track numbers
     :param addtimestamps: if False, them chapters are not embedded
-    :param excludetracknumsforplaylist: when type=playlist, dont add track numbers if True
+    :param excludetracknumsforplaylist: applies when type=playlist: if True: dont add track numbers. Default=False
 
     :return audio_file: The path to the downloaded audio file (FILE_TYPE) or None if error.
     :return error_str: None if no error, string containing error if error

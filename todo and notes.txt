@@ -31,14 +31,19 @@
 		ability to replace only the timestamp titles (keep times the same)
 
 4	implement usedatabase
+		should do usedatabase cover,tracktimes,tracknames
+			instead of true/false
 		cover, timestamps, timestamp names
+		for song, everything should be replaced
+		for album_playlist, everything
+		for playlist, just song names should be replaced
 
 3	be able to cancel ⏳ Please send thumbnail (text or image attachment):
 
 
 [bugs]
 5	type=album_playlist should put playlist link in comments
-5	fix album_playlist thumbnail
+
 
 [improvements]
 2	bot message improvements
