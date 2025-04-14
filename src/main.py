@@ -32,7 +32,7 @@ bot = MyBot(command_prefix="!", intents=intents)
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, type: str = "Song", title: str = None, artist: str = None, tags: str = None,
-        album: str = None, date: str = None, addtimestamps: bool = None, usedatabase: str = None, excludetracknumsforplaylist: bool = False):
+        album: str = None, date: str = None, addtimestamps: bool = None, usedatabase: str = '', excludetracknumsforplaylist: bool = False):
     """
     Slash command to download a video.
     

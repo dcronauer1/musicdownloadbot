@@ -31,7 +31,8 @@ store a list of authors and tags so if names are very close, it will be stored a
 # Notes
     soundcloud works; however, without a soundcloud go subscription, downloads are automatically compressed (and it is easy to tell)
     - I do not plan on implementing this
-    https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
+    - https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
+    recommended to use opus, but alac & .m4a should also work
 
 # commands:
 ## download:
