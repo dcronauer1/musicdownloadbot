@@ -128,7 +128,7 @@ async def get_video_info(video_url: str) -> tuple[dict,str]:
     return {},error_str
 
 async def download_audio(interaction, video_url: str, type: str, output_name: str = None, artist_name: str = None, tags: list = None,
-                        album: str = None, addtimestamps: bool = None) -> tuple:
+                        album: str = None, addtimestamps: bool = None, excludetracknumsforplaylist: bool = False) -> tuple:
     """
     Downloads a YouTube video as FILE_EXTENSION audio with embedded metadata.
     
@@ -142,6 +142,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     :param tags: tags in a string.
     :param album: album name. Must be supplied when type=playlist to get track numbers
     :param addtimestamps: if False, them chapters are not embedded
+    :param excludetracknumsforplaylist: when type=playlist, dont add track numbers if True
 
     :return audio_file: The path to the downloaded audio file (FILE_TYPE) or None if error.
     :return error_str: None if no error, string containing error if error
@@ -202,6 +203,8 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     #does the song already exist?
     if os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}{FILE_EXTENSION}")):
         confirmation_str=f'"⚠️{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
+    elif os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}")):
+        confirmation_str=f'"⚠️{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
     else:
         confirmation_str=f'Arguments: {meta_args}'
     #confirm selection
@@ -247,10 +250,10 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         dir = os.path.join(BASE_DIRECTORY, f"{output_name}")
         os.makedirs(dir, exist_ok=True)
 
-        if album:
-            track_nums_arg=f'--parse-metadata "playlist_index:%(track_number)s" '
-        else: 
+        if excludetracknumsforplaylist:
             track_nums_arg=''
+        else: 
+            track_nums_arg=f'--parse-metadata "playlist_index:%(track_number)s" '
         # Download individual tracks with metadata
         track_template = os.path.join(dir, f"%(title)s.{FILE_TYPE}")
         yt_dlp_cmd = (

@@ -32,7 +32,7 @@ bot = MyBot(command_prefix="!", intents=intents)
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, type: str = "Song", title: str = None, artist: str = None, tags: str = None,
-        album: str = None, date: str = None, addtimestamps: bool = None, usedatabase: bool = False):
+        album: str = None, date: str = None, addtimestamps: bool = None, usedatabase: bool = False, excludetracknumsforplaylist: bool = False):
     """
     Slash command to download a video.
     
@@ -45,6 +45,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     :param date: *_____________
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
     :param usedatabase: *use database for metadata instead of youtube information
+    :param excludetracknumsforplaylist: when type=playlist, dont add track numbers if True
     
     The 'interaction' object is similar to 'ctx' in prefix commands, containing information about the command invocation.
     """
@@ -62,7 +63,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     if addtimestamps: #addtimestamps true, ask user for timestamps before downloading
         timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
     # Download the audio in a separate thread
-    audio_file,error_str = await download_audio(interaction, link, type, title, artist, tags, album, addtimestamps)
+    audio_file,error_str = await download_audio(interaction, link, type, title, artist, tags, album, addtimestamps,excludetracknumsforplaylist)
     if not audio_file:
         await interaction.followup.send(f"❗Failed to download audio. Error:\n{error_str}")
         return

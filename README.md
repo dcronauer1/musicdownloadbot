@@ -36,7 +36,8 @@ store a list of authors and tags so if names are very close, it will be stored a
 - album_playlist: downloads a playlist into a single file, where each song is timestampped
     - Note: no album cover will be downloaded for this option
     - `/replace thumbnail title:{title} usedatabase:True` should be used after
+    - "album" is also valid
 - playlist: downloads a playlist, but each song is an individual file inside a sub directory
     - Album covers are downloaded for each song individually
-    - Track numbers are only applied if an album name is <ins>manually</ins> supplied
+    - Track numbers are excluded if excludetracknumsforplaylist is True
     
