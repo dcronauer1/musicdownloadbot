@@ -10,8 +10,8 @@ DEFAULT_CONFIG = {
     "download_settings": {
         "yt_dlp_path": "/path/to/yt-dlp",
         "base_directory": "/path/to/music",
-        "file_type": "alac",
-        "file_extension": ".m4a"
+        "file_type": "opus",
+        "file_extension": ".opus"
     },
     "directory_settings":{
         "keep_perms_consistent": True,
