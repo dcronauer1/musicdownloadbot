@@ -41,7 +41,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     :param title: Custom title for the output file and metadata title
     :param artist: Artist name for metadata. Checked against a list to see if it already exists
     :param tags: Formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
-    :param album: album name
+    :param album: album name. Must be supplied when type=playlist for track numbers
     :param date: *_____________
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
     :param usedatabase: *use database for metadata instead of youtube information
@@ -165,7 +165,7 @@ class ReplaceGroup(app_commands.Group):
 
         :param title: Title of the output file. Case insensitive
         :param usedatabase: pull the image from a database, instead of using the user's image. Default False
-        :param artist: manual fill for usedatabase
+        :param artist: manual fill for usedatabase (ignore unless needed)
 
         """
         # Defer first to prevent interaction token expiration

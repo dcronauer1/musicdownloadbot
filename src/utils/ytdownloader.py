@@ -140,6 +140,9 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     :param output_name: Base name for the output file. Defaults to video title.
     :param artist_name: Artist name to embed in metadata. Defaults to video uploader.
     :param tags: tags in a string.
+    :param album: album name. Must be supplied when type=playlist to get track numbers
+    :param addtimestamps: if False, them chapters are not embedded
+
     :return audio_file: The path to the downloaded audio file (FILE_TYPE) or None if error.
     :return error_str: None if no error, string containing error if error
 
@@ -239,17 +242,20 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             error_str = f"Error downloading: {stderr}"
             print(error_str)
             return None,error_str
-    #need to add track metadata, remove title metadata, handle future calls of apply_timestamps
     elif type == "playlist":#download each song individually in a subfolder
         # Create directory
         dir = os.path.join(BASE_DIRECTORY, f"{output_name}")
         os.makedirs(dir, exist_ok=True)
 
+        if album:
+            track_nums_arg=f'--parse-metadata "playlist_index:%(track_number)s" '
+        else: 
+            track_nums_arg=''
         # Download individual tracks with metadata
         track_template = os.path.join(dir, f"%(title)s.{FILE_TYPE}")
         yt_dlp_cmd = (
             f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
-            f"--parse-metadata \"playlist_index:%(track_number)s\" "
+            f"{track_nums_arg}"
             f"--no-embed-chapters --postprocessor-args \"{meta_args}\" "
             f"-o \"{track_template}\" {video_url}"
         )
@@ -268,8 +274,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             return None, error_str
 
         print("Playlist download complete")
-        return dir, None
-        
+        return dir, None 
     elif type == "album_playlist":
         # Create temporary directory
         temp_dir = os.path.join(BASE_DIRECTORY, f"temp_{output_name}")
@@ -278,7 +283,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         # Download individual tracks with metadata
         track_template = os.path.join(temp_dir, f"%(playlist_index)s_%(title)s.{FILE_TYPE}")
         yt_dlp_cmd = (
-            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
+            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --add-metadata "
             f"--no-embed-chapters --postprocessor-args \"{meta_args}\" "
             f"-o \"{track_template}\" {video_url}"
         )
@@ -295,6 +300,19 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             key=lambda x: int(os.path.basename(x).split('_', 1)[0])
         )
 
+        # Get album from first track if not provided by user
+        from mutagen.mp4 import MP4
+        if not album and track_files:
+            try:
+                first_track = track_files[0]
+                audio = MP4(first_track)
+                if '\xa9alb' in audio.tags:
+                    album = audio.tags['\xa9alb'][0]
+                    # Update meta_args with discovered album
+                    meta_args += f" -metadata album='{album}'"
+            except Exception as e:
+                print(f"Error reading track metadata: {str(e)}")
+
         # Build chapters metadata
         chapters = []
         current_start = 0
@@ -302,7 +320,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             # Get duration from file
             duration = await get_audio_duration(track)
             if not duration:
-                duration = 0
+                duration = 0  # Fallback to 0 if duration can't be determined
             
             # Get title from filename
             title = os.path.basename(track).split('_', 1)[1].rsplit('.', 1)[0].replace("'", "\\'")
@@ -335,7 +353,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             for track in track_files:
                 f.write(f"file '{os.path.abspath(track)}'\n")
 
-        # Combine tracks
+        # Combine tracks with metadata
         combined_file = os.path.join(BASE_DIRECTORY, f"{output_name}_combined{FILE_EXTENSION}")
         ffmpeg_cmd = (
             f"ffmpeg -f concat -safe 0 -i \"{concat_file}\" "
@@ -353,24 +371,11 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             print(error_str)
             return None, error_str
 
-        # Apply thumbnail from first track
-        first_track = track_files[0] if track_files else None
-        if first_track and os.path.exists(first_track):
-            try:
-                # Use mutagen to copy thumbnail directly
-                source_audio = File(first_track)
-                target_audio = File(combined_file)
-                
-                if 'covr' in source_audio.tags:
-                    target_audio.tags['covr'] = source_audio.tags['covr']
-                    target_audio.save()
-                    print("✅ Thumbnail copied successfully")
-            except Exception as e:
-                print(f"❌ Thumbnail copy failed: {str(e)}")
-
         # Rename final file
         final_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
         os.rename(combined_file, final_file)
 
         print("Album playlist download complete")
         return final_file, None
+    else:
+        return None, f"Invalid type provided: {type}"

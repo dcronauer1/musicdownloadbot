@@ -1,68 +1,47 @@
 [big things]
 	Add other platforms
-		soundcloud
 		grabbing links raw (with wget or smthing)
-	implement type=playlist
+			this might work natively
 
 [features]
-	add more arguments
+2	add more arguments
 		date, year
 		add in a force: so if force is true then it uses inputted args exactly
-✓		add argument for song/playlist (default song)
-✓			when playlist, it should have the option to put everything into a subfolder for that album
-		argument to either split or timestamp
-			check for timestamps, handle accordingly
-			when splitting, it should have the option to put everything into a subfolder for that album
 
 	commands:
-✓		make a command to list artists
-✓		command to list tags
-		command to add/replace artists or tags
-✓		generate timestamps for an already downloaded song
+3		command to add/replace artists, tags, and title
 
 	add ability to download playlists into albums
 		combine playlists into one file and timestamp each video
+		
+1	When confirming download, have a loading gif or something
 
-	Custom thumbnail argument
-
-	When confirming download, affirm user that it is downloading
-
-	make an argument for download to default confirmations timeouts to true
+1	make an argument for download to default confirmations timeouts to true
 		so itll still send confirmations, but when they timeout itll be true instead of false
 
-✓	ability to replace cover/thumbnail
-		add this to download command
-
-	add this *maybe* (quality was pretty shit, seems better to just rip from youtube manually)
-		sudo apt install npm #used for freyr-js
-		    npm install -g freyr
-		    https://github.com/miraclx/freyr-js
-	for replacement commands, add functionality to replace for an entire *split* album.
+2	for replacement commands, add functionality to replace for an entire *split* album.
 		so if each track is a different file, either look in the sub dir (album/track.m4a), or look at the metadata for songs with that album name
 	
-	ability to download youtube videos as well
+3	ability to download youtube videos as well
 		shouldnt be too hard, i can just ignore metadata and run the command raw
 		need extra configs (for directory)
 
-✓	ability to pull details from a database
-✓		including thumbnail
+5	timestamps metadata from database
+		get timestamps (titles, or titles and times) from database
+		ability to replace only the timestamp titles (keep times the same)
 
-	be able to cancel ⏳ Please send thumbnail (text or image attachment):
+4	implement usedatabase
+		cover, timestamps, timestamp names
 
-
-	ability to replace only the timestamp titles (keep times the same)
-	get timestamps (titles, or titles and times) from database
-
-✓	for list music, list subdirectories as well (maybe run tree but exclude .txt files?)
+3	be able to cancel ⏳ Please send thumbnail (text or image attachment):
 
 
 [bugs]
-
-	
-
+5	type=album_playlist should put playlist link in comments
+5	fix album_playlist thumbnail
 
 [improvements]
-	bot message improvements
+2	bot message improvements
 		make bot cleanup its confirmation boxes
 	✓	add emojis for success/fail to make it more readable
 		make more specific errors
@@ -74,17 +53,16 @@
 			probably just use yt link
 		let user know when its downloading
 		Send timestamps text file as a codeblock instead of a file upload
-	apply_manual_timestamps_to_file
-		make this parse better (so mirrored is still valid)
-			bidirectional, so [title][time] could also be valid
+3	apply_manual_timestamps_to_file
+		make this bidirectional, so [title][time] could also be valid
 		better errors, so invalid will actually get flagged
 		could have error checking in ask_for_timestamps() instead
 			if i do this, then add comment in apply_manual_timestamps_to_file() that it expects a specific format
-	make musicolet file optional in config.json
-	make json lists separated by new line
+1	make musicolet file optional in config.json
+2	make json lists separated by new line
 
 
-[other]
+[notes]
 	from mutagen.m4a import M4ATags
 		https://chat.deepseek.com/a/chat/s/55c9d945-bdd9-403c-8766-e5c585b3b681
 
@@ -97,6 +75,18 @@
 
 [Archive]
 
+	[features]
+	✓	for list music, list subdirectories as well (maybe run tree but exclude .txt files?)
+		commands:
+	✓		make a command to list artists
+	✓		command to list tags
+	✓		generate timestamps for an already downloaded song
+	
+	✓	add argument for song/playlist (default song)
+	✓		when playlist, it should have the option to put everything into a subfolder for that album
+	
+	✓	ability to pull details from a database
+	✓		including thumbnail
 
 	[improvements]
 	✓	find a way to make the starting portion of replace commands be in one spot for the class
