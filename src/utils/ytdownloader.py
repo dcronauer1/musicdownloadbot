@@ -187,11 +187,12 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     
     # Build the metadata postprocessor args:
     meta_args = f"-metadata artist='{artist_name}'"
-    meta_args += f" -metadata title='{output_name}'"
+    if(type!="playlist"):
+        meta_args += f" -metadata title='{output_name}'"
 
     if tags_str:
         meta_args += f" -metadata genre='{tags_str}'"
-    if album:
+    if album or type=="playlist":
         meta_args += f" -metadata album='{album}'"
     
     #does the song already exist?
@@ -237,6 +238,36 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             error_str = f"Error downloading: {stderr}"
             print(error_str)
             return None,error_str
+    #need to add track metadata, remove title metadata, handle future calls of apply_timestamps
+    elif type == "playlist":#download each song individually in a subfolder
+        # Create directory
+        dir = os.path.join(BASE_DIRECTORY, f"{output_name}")
+        os.makedirs(dir, exist_ok=True)
+
+        # Download individual tracks with metadata
+        track_template = os.path.join(dir, f"%(title)s.{FILE_TYPE}")
+        yt_dlp_cmd = (
+            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
+            f"--parse-metadata \"playlist_index:%(track_number)s\" "
+            f"--no-embed-chapters --postprocessor-args \"{meta_args}\" "
+            f"-o \"{track_template}\" {video_url}"
+        )
+        returncode, _, stderr = await run_command(yt_dlp_cmd, True)
+        
+        if returncode != 0:
+            error_str = f"Playlist download failed: {stderr}"
+            print(error_str)
+            return None, error_str
+
+        if returncode != 0:
+            # Truncate error message for Discord
+            truncated_error = error[:1500] + "..." if len(error) > 1500 else error
+            error_str = f"Combination failed: {truncated_error}"
+            print(error_str)
+            return None, error_str
+
+        print("Playlist download complete")
+        return dir, None
         
     elif type == "album_playlist":
         # Create temporary directory
