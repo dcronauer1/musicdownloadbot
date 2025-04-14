@@ -34,20 +34,21 @@
 		should do usedatabase cover,tracktimes,tracknames
 			instead of true/false
 		cover, timestamps, timestamp names
-		for song, everything should be replaced
-		for album_playlist, everything
-		for playlist, just song names should be replaced
 
 3	be able to cancel ⏳ Please send thumbnail (text or image attachment):
 
 5	ability to exclude videos from playlists and album_playlist
 		check yt-dlp docs
 
+5	replace playlist covers code should be a seperate function so replace_thumbnail can use it
+
 
 [bugs]
 5	type=album_playlist should put playlist link in comments
 5	type=playlist if a track does not have an album cover, it will find a generic cover
 		should be able to set strict, and it should use album cover if track cover cant be found
+		probably first check with strict, then with album name (strict), then ask user to check non-strict?
+3	date/time is getting reset when running replace_thumbnail (and probably timestamps too)
 
 [improvements]
 2	bot message improvements
@@ -70,6 +71,10 @@
 1	make musicolet file optional in config.json
 2	make json lists separated by new line
 
+4	garbage code in apply_timestamps_to_file()
+3	download should say what was successful (metdata, timestamps, etc)
+5	compress thumbnails from database!!!!
+		add a parameter for this
 
 [notes]
 	from mutagen.m4a import M4ATags

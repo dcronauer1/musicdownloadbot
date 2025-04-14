@@ -11,6 +11,8 @@ import musicbrainzngs
 import requests
 from mutagen import File
 from mutagen.oggopus import OggOpus
+from mutagen.flac import Picture
+import base64
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]     
 
@@ -113,46 +115,58 @@ async def get_audio_duration(audio_file: str) -> Optional[int]:
         return None
 
 async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
-    """Apply a thumbnail to a file using FFMPEG
-    
-    :param thumbnail: pass in as a link
-    :return: True if success, else send error or error code
-
-    """
+    """Apply a thumbnail to a file using FFMPEG or mutagen for Opus files."""
     print(f"⚠️thumbnail_url: {thumbnail_url}")
-    # Download the image to a temporary file
     temp_file = "temp_cover.png"
-    returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_url}"')
-    if returncode != 0:#failed
-        try:
-            os.remove(temp_file)
-        except OSError as e:
-            print(f"Warning: Failed to delete temp file (can ignore this): {e}")
-        error_str=f"❌Thumbnail update failed, wget output:\n{error}"
-        print(error_str) 
-        return error_str
-
-    # FFmpeg command (requires local files)
-    ffmpeg_cmd = (
-        f'ffmpeg -y -i "{audio_file}" -i "{temp_file}" -map 0:0 -map 1 -c copy -disposition:v attached_pic "temp{FILE_EXTENSION}"'
-    )    
-    # Execute command using your existing run_command utility
-    returncode, _, error = await run_command(ffmpeg_cmd, verbose=True)
     
-    os.remove(temp_file)        #remove temp picture
+    # Download the thumbnail
+    returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_url}"')
+    if returncode != 0:
+        try: os.remove(temp_file)
+        except: pass
+        return f"❌Thumbnail download failed: {error}"
 
-    if returncode == 0:
-        #replace file
-        returncode, _, error = await run_command(f'mv "temp{FILE_EXTENSION}" "{audio_file}"', verbose=True)
-        if returncode == 0:
-            print("✅Thumbnail updated successfully")
+    try:
+        if audio_file.endswith('.opus'):
+            # Read image data
+            with open(temp_file, "rb") as f:
+                image_data = f.read()
+
+            # Create FLAC-style picture metadata
+            pic = Picture()
+            pic.data = image_data
+            pic.type = 3  # Cover (front)
+            pic.mime = "image/png"
+            pic.desc = "Cover art"
+            pic_data = base64.b64encode(pic.write()).decode()
+
+            # Embed in OPUS file
+            audio = OggOpus(audio_file)
+            audio["METADATA_BLOCK_PICTURE"] = [pic_data]
+            audio.save()
+            print("✅ Thumbnail updated (mutagen)")
             return True
+
         else:
-            print(f"❌file replacement failed, error: {error}")
-            return f"file replacement failed, error:\n{error}"
-    else:
-        print(f"❌Thumbnail update failed: {error}")
-        return f"ffmpeg error code (error in console):\n{returncode}"
+            # FFMPEG handling for m4a and others
+            ffmpeg_cmd = (
+                f'ffmpeg -y -i "{audio_file}" -i "{temp_file}" '
+                f'-map 0 -map 1 -c copy -disposition:v attached_pic "temp{FILE_EXTENSION}"'
+            )
+            returncode, _, error = await run_command(ffmpeg_cmd, True)
+            
+            if returncode == 0:
+                await run_command(f'mv "temp{FILE_EXTENSION}" "{audio_file}"')
+                print("✅ Thumbnail updated (ffmpeg)")
+                return True
+            return f"❌ FFmpeg failed: {error}"
+
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+        
+    finally:
+        try: os.remove(temp_file)
+        except: pass
 
 async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: bool = False) ->tuple:
     """Convert timestamps to FFmetadata and apply them to an audio file.
