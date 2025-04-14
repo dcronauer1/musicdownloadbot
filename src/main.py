@@ -58,6 +58,8 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     if type not in ["song", "album_playlist", "playlist"]:
         await interaction.followup.send(f'❗"{type}" is not a valid type. Valid types are either song, album_playlist, or playlist')
         return
+    
+    usedatabase = usedatabase.lower()
 
     timestamps = None
     if addtimestamps: #addtimestamps true, ask user for timestamps before downloading

@@ -10,6 +10,7 @@ import sys
 import musicbrainzngs
 import requests
 from mutagen import File
+from mutagen.oggopus import OggOpus
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]     
 
@@ -29,14 +30,26 @@ except KeyError as e:
 async def get_audio_metadata(audio_file: str) -> dict:
     """Get metadata from audio file using mutagen"""
     try:
-        f = File(audio_file)
-        return {
-            'artist': f.get('\xa9ART', [None])[0],
-            'album': f.get('\xa9alb', [None])[0],
-            'title': f.get('\xa9nam', [None])[0],
-            'date': f.get('\xa9day', [None])[0],
-            'genre': f.get('\xa9gen', [None])[0]
-        }
+        if audio_file.lower().endswith('.opus'):
+            # Handle OPUS files specifically
+            f = OggOpus(audio_file)
+            return {
+                'artist': f.get('artist', [None])[0],
+                'album': f.get('album', [None])[0],
+                'title': f.get('title', [None])[0],
+                'date': f.get('date', [None])[0],
+                'genre': f.get('genre', [None])[0]
+            }
+        else:
+            # Handle other file types (m4a, mp3, etc)
+            f = File(audio_file)
+            return {
+                'artist': f.get('\xa9ART', [None])[0],
+                'album': f.get('\xa9alb', [None])[0],
+                'title': f.get('\xa9nam', [None])[0],
+                'date': f.get('\xa9day', [None])[0],
+                'genre': f.get('\xa9gen', [None])[0]
+            }
     except Exception as e:
         print(f"Metadata read error: {str(e)}")
         return {

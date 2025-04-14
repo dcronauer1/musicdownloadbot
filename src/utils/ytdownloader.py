@@ -164,7 +164,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             print(error_str)
             return None,error_str
     
-    #usedatabase options
+    #usedatabase initialization
     usedb_options = usedatabase.split(',') if usedatabase else []
     embed_thumbnail = '--embed-thumbnail' if 'cover' not in usedb_options else ''
 
@@ -209,7 +209,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     if os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}{FILE_EXTENSION}")):
         confirmation_str=f'"⚠️{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
     elif os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}")):
-        confirmation_str=f'"⚠️{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
+        confirmation_str=f'"⚠️{output_name}" already exists, continue anyways?\nArguments: {meta_args}'
     else:
         confirmation_str=f'Arguments: {meta_args}'
     #confirm selection
