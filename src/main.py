@@ -67,13 +67,13 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     # Download the audio in a separate thread
     audio_file,error_str = await download_audio(interaction, link, type, title, artist, tags, album, addtimestamps, usedatabase, excludetracknumsforplaylist)
     if not audio_file:
-        await interaction.followup.send(f"❗Failed to download audio. Error:\n{error_str}")
+        await safe_send(interaction,f"❗Failed to download audio. Error:\n{error_str}")
         return
     
     if timestamps and (type != "playlist"): #if timestamps exist, then user entered timestamps, so use those
         success, error_str = await apply_timestamps_to_file(timestamps,audio_file)
         if(success == False):
-            await interaction.followup.send(f"❗Failed to apply chapters: {error_str}")
+            await safe_send(interaction,f"❗Failed to apply chapters: {error_str}")
             return    
                 
     if(type != "playlist"):
@@ -88,7 +88,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
             timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
             success, error_str = await apply_timestamps_to_file(timestamps,audio_file)
             if(success == False):
-                await interaction.followup.send(f"❗Failed to apply chapters: {error_str}")   
+                await safe_send(interaction,f"❗Failed to apply chapters: {error_str}")   
                 return
             timestamp_file,error_str = await extract_chapters(audio_file)    #convert user provided timestamps to .txt
     
@@ -96,7 +96,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
         # Chapters were extracted using extract_chapters()
         await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
     else:   
-        await interaction.followup.send(f"🎊Audio downloaded without chapters:\n{error_str}")
+        await safe_send(interaction,f"🎊Audio downloaded without chapters:\n{error_str}")
     
     apply_directory_permissions()    #update perms if enabled
     return
@@ -140,7 +140,7 @@ class ReplaceGroup(app_commands.Group):
                         os.remove(chapter_file)
                     await interaction.followup.send("🎊Chapters removed successfully!")
                 else:
-                    await interaction.followup.send(f"❗Failed to remove chapters: {error_str}")  
+                    await safe_send(interaction,f"❗Failed to remove chapters: {error_str}")  
                     return          
             else:
                 timestamps = await ask_for_something(interaction, "timestamps")  # Prompt user for timestamps
@@ -151,12 +151,12 @@ class ReplaceGroup(app_commands.Group):
                         # Extract chapters using musicolet_timestamp_converter.py
                         await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
                     else:   
-                        await interaction.followup.send(f"❗No timestamp file generated: {err}")
+                        await safe_send(interaction,f"❗No timestamp file generated: {err}")
                         return
                 else:
-                    await interaction.followup.send(f"❗Failed to apply chapters: {error_str}")            
+                    await safe_send(interaction,f"❗Failed to apply chapters: {error_str}")            
         except Exception as e:
-            await interaction.followup.send(f"❌ Error: {str(e)}")
+            await safe_send(interaction,f"❌Error: {str(e)}")
         apply_directory_permissions()    #update perms if enabled
         return
         
@@ -188,7 +188,7 @@ class ReplaceGroup(app_commands.Group):
                 return
             cover_url, _, error = await fetch_musicbrainz_data(artist, title)
             if error:
-                await interaction.followup.send(f"❌Database lookup failed: {error}")
+                await safe_send(interaction,f"❌Database lookup failed: {error}")
                 return
 
             if not cover_url:
@@ -200,7 +200,7 @@ class ReplaceGroup(app_commands.Group):
             if result is True:
                 await interaction.followup.send("🎊Thumbnail updated from MusicBrainz!")
             else:
-                await interaction.followup.send(f"❗Error applying thumbnail:\n{result}")
+                await safe_send(interaction,f"❗Error applying thumbnail:\n{result}")
                 return
         else:
             thumbnail_url = await ask_for_something(interaction, "thumbnail")
@@ -210,7 +210,7 @@ class ReplaceGroup(app_commands.Group):
                 if (error == True):
                     await interaction.followup.send("🎊Thumbnail saved!")
                 else:   
-                    await interaction.followup.send(f"❗Thumbnail did not apply properly:\n{error}")             
+                    await safe_send(interaction,f"❗Thumbnail did not apply properly:\n{error}")             
         
         apply_directory_permissions()    #update perms if enabled
         return

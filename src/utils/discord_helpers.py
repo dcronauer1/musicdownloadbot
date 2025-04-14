@@ -73,3 +73,12 @@ async def ask_for_something(interaction: discord.Interaction, something: str) ->
     except asyncio.TimeoutError:
         await interaction.followup.send(f"❌ Timed out. Skipping {something} entry.")
         return (None, None)
+    
+async def safe_send(interaction: discord.Interaction, content: str, **kwargs):
+    """Send messages with auto-truncation for Discord's 2000 character limit"""
+    max_length = 2000
+    if len(content) > max_length:
+        content = content[:max_length-3] + "..."  # Truncate and add ellipsis
+        print(f"Truncated message for {interaction.command.name} command")
+    
+    await interaction.followup.send(content=content, **kwargs)
