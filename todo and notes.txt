@@ -53,7 +53,7 @@
 	ability to replace only the timestamp titles (keep times the same)
 	get timestamps (titles, or titles and times) from database
 
-	for list music, list subdirectories as well (maybe run tree but exclude .txt files?)
+✓	for list music, list subdirectories as well (maybe run tree but exclude .txt files?)
 
 
 [bugs]

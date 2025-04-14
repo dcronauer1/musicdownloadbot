@@ -31,18 +31,18 @@ intents.message_content = True  # Enable message content intent
 bot = MyBot(command_prefix="!", intents=intents)
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
-async def download(interaction: discord.Interaction, link: str, title: str = None, artist: str = None, tags: str = None,
-        album: str = None, date: str = None, type: str = "Song", addtimestamps: bool = None, usedatabase: bool = False):
+async def download(interaction: discord.Interaction, link: str, type: str = "Song", title: str = None, artist: str = None, tags: str = None,
+        album: str = None, date: str = None, addtimestamps: bool = None, usedatabase: bool = False):
     """
     Slash command to download a video.
     
     :param link: The URL of the YouTube video.
+    :param type: (song|album_playlist|playlist) Default song. album_playlist downloads a playlist as one file
     :param title: Custom title for the output file and metadata title
     :param artist: Artist name for metadata. Checked against a list to see if it already exists
     :param tags: Formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
     :param album: album name
     :param date: *_____________
-    :param type: (song|album_playlist|playlist) Default song. album_playlist downloads a playlist as one file
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
     :param usedatabase: *use database for metadata instead of youtube information
     
@@ -221,12 +221,10 @@ class ListGroup(app_commands.Group):
     @app_commands.command(name="music", description="list all music files")
     async def list_music(self, interaction: discord.Interaction):
         """function to list all music"""
-        # Use the initial response method
-        music_files = [f for f in os.listdir(BASE_DIRECTORY) if not f.endswith('.txt')]
-        if not music_files:
-            await interaction.response.send_message("No music files found.")
-        else:
-            await interaction.response.send_message(f"List of music:\n{'\n'.join(music_files)}")
+        tree = save_music_tree(BASE_DIRECTORY)
+        
+        await interaction.response.send_message(file=discord.File(tree))
+        return
 
     @app_commands.command(name="artists", description="list all authors in use")
     async def list_artists(self, interaction: discord.Interaction):

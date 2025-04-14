@@ -77,3 +77,31 @@ def apply_directory_permissions():
                 print(f"⚠️Error processing {path}: {e}")
     print("✅Updated file permissions successfully")
     return True
+
+def save_music_tree(base_directory):
+    """
+    Function to build a tree of the given directory.
+    Excludes .txt files.
+    Saves as tree.txt in the root directory (directory main is being ran from)
+
+    :return file: path/to/tree.txt
+    
+    """
+    def build_and_format_tree(directory, indent=0):
+        lines = []
+        for entry in sorted(os.scandir(directory), key=lambda e: (not e.is_dir(), e.name.lower())):
+            if entry.is_dir():
+                lines.append('  ' * indent + f'{entry.name}/')
+                lines.extend(build_and_format_tree(entry.path, indent + 1))
+            elif not entry.name.endswith('.txt'):
+                lines.append('  ' * indent + f'{entry.name}')
+        return lines
+
+    tree_lines = build_and_format_tree(base_directory)
+
+    file_path = "tree.txt"
+
+    with open(file_path, 'w') as f:
+        f.write('\n'.join(tree_lines))
+
+    return file_path

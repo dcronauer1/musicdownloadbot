@@ -193,7 +193,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
 
     if tags_str:
         meta_args += f" -metadata genre='{tags_str}'"
-    if album or type=="playlist":
+    if album:
         meta_args += f" -metadata album='{album}'"
     
     #does the song already exist?
