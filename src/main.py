@@ -41,21 +41,28 @@ async def download(interaction: discord.Interaction, link: str, title: str = Non
     :param artist: Artist name for metadata. Checked against a list to see if it already exists
     :param tags: Formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
     :param album: album name
-    :param date: _____________
-    :param type: (Song|Playlist): ____
+    :param date: *_____________
+    :param type: (song|album_playlist|playlist) Default song. album_playlist downloads a playlist as one file
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
-    :param usedatabase: use database for metadata instead of youtube information
+    :param usedatabase: *use database for metadata instead of youtube information
     
     The 'interaction' object is similar to 'ctx' in prefix commands, containing information about the command invocation.
     """
     # Send an initial response.
     await interaction.response.defer()  # Acknowledge the command first
+    
+    type = type.lower()
+    if type == "album":
+        type = "album_playlist"
+    if type not in ["song", "album_playlist", "playlist"]:
+        await interaction.followup.send(f'❗"{type}" is not a valid type. Valid types are either song, album_playlist, or playlist')
+        return
 
     timestamps = None
     if addtimestamps: #addtimestamps true, ask user for timestamps before downloading
         timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
     # Download the audio in a separate thread
-    audio_file,error_str = await download_audio(interaction, link, title, artist, tags, album, addtimestamps)
+    audio_file,error_str = await download_audio(interaction, link, type, title, artist, tags, album, addtimestamps)
     if not audio_file:
         await interaction.followup.send(f"❗Failed to download audio. Error:\n{error_str}")
         return

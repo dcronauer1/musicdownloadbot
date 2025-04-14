@@ -2,6 +2,7 @@
 	Add other platforms
 		soundcloud
 		grabbing links raw (with wget or smthing)
+	implement type=playlist
 
 [features]
 	add more arguments
@@ -32,9 +33,6 @@
 ✓	ability to replace cover/thumbnail
 		add this to download command
 
-	pull album covers from a database, check the
-		check this: https://github.com/TheQwertiest/foo_discord_rich
-			https://theqwertiest.github.io/foo_discord_rich/
 	add this *maybe* (quality was pretty shit, seems better to just rip from youtube manually)
 		sudo apt install npm #used for freyr-js
 		    npm install -g freyr
@@ -46,10 +44,12 @@
 		shouldnt be too hard, i can just ignore metadata and run the command raw
 		need extra configs (for directory)
 
-	ability to pull details from a database
-		including thumbnail
-		make another download command specifically for this
-			require the title parameter
+✓	ability to pull details from a database
+✓		including thumbnail
+
+
+	ability to replace only the timestamp titles (keep times the same)
+	get timestamps (titles, or titles and times) from database
 
 
 [bugs]

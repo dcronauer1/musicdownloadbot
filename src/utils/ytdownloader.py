@@ -2,9 +2,11 @@ import os
 import json
 import difflib
 import re
+import shutil
 from config.config_manager import config
 from utils.core import run_command
 from utils.discord_helpers import ask_confirmation
+from utils.metadata import get_audio_duration,apply_thumbnail_to_file
 
 # Retrieve settings from the JSON configuration
 YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
@@ -124,7 +126,8 @@ async def get_video_info(video_url: str) -> tuple[dict,str]:
     print(error_str)
     return {},error_str
 
-async def download_audio(interaction, video_url: str, output_name: str = None, artist_name: str = None, tags: list = None, album: str = None, addtimestamps: bool = None) -> tuple:
+async def download_audio(interaction, video_url: str, type: str, output_name: str = None, artist_name: str = None, tags: list = None,
+                        album: str = None, addtimestamps: bool = None) -> tuple:
     """
     Downloads a YouTube video as FILE_EXTENSION audio with embedded metadata.
     
@@ -132,6 +135,7 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     Tags (if provided) are checked against known tags and added as a comma-separated metadata field.
     
     :param video_url: URL of the YouTube video.
+    :param type: song, album_playlist, or playlist. album_playlist downloads a playlist as one file
     :param output_name: Base name for the output file. Defaults to video title.
     :param artist_name: Artist name to embed in metadata. Defaults to video uploader.
     :param tags: tags in a string.
@@ -139,6 +143,13 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
     :return error_str: None if no error, string containing error if error
 
     """
+
+    type = type.lower()
+    if type not in ["song", "album_playlist", "playlist"]:
+        error_str = f'❗"{type}" is not a valid type. Valid types are either song, album_playlist, or playlist'
+        print(error_str)
+        return None,error_str
+    
     # Get video info to set defaults if needed
     info = {}
     if not output_name or not artist_name:
@@ -203,26 +214,126 @@ async def download_audio(interaction, video_url: str, output_name: str = None, a
         return None,error_str
     
     #if user doesn't want chapters, dont include flag. 
-    if addtimestamps == False:
+    if addtimestamps == False or type == "album_playlist":
         chapter_flag = "--no-embed-chapters"
     else:
         chapter_flag = "--embed-chapters "
 
     #Download video
     print("Download starting...")
-    # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
-    yt_dlp_cmd = (
-        f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
-        f"{chapter_flag} --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
-    )
-    
-    print(f"Full command: {yt_dlp_cmd}")
-    returncode, _, stderr = await run_command(yt_dlp_cmd, True)
+    if(type=="song"):
+        # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
+        yt_dlp_cmd = (
+            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
+            f"{chapter_flag} --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
+        )
+        print(f"Full command: {yt_dlp_cmd}")
+        returncode, _, stderr = await run_command(yt_dlp_cmd, True)
 
-    if returncode == 0:
-        print("Download complete.")
-        return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}"), None
-    else:
-        error_str = f"Error downloading: {stderr}"
-        print(error_str)
-        return None,error_str
+        if returncode == 0:
+            print("Download complete.")
+            return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}"), None
+        else:
+            error_str = f"Error downloading: {stderr}"
+            print(error_str)
+            return None,error_str
+        
+    elif type == "album_playlist":
+        # Create temporary directory
+        temp_dir = os.path.join(BASE_DIRECTORY, f"temp_{output_name}")
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Download individual tracks with metadata
+        track_template = os.path.join(temp_dir, f"%(playlist_index)s_%(title)s.{FILE_TYPE}")
+        yt_dlp_cmd = (
+            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
+            f"--no-embed-chapters --postprocessor-args \"{meta_args}\" "
+            f"-o \"{track_template}\" {video_url}"
+        )
+        returncode, _, stderr = await run_command(yt_dlp_cmd, True)
+        
+        if returncode != 0:
+            error_str = f"Playlist download failed: {stderr}"
+            print(error_str)
+            return None, error_str
+
+        # Collect and sort tracks
+        track_files = sorted(
+            [os.path.join(temp_dir, f) for f in os.listdir(temp_dir) if f.endswith(FILE_EXTENSION)],
+            key=lambda x: int(os.path.basename(x).split('_', 1)[0])
+        )
+
+        # Build chapters metadata
+        chapters = []
+        current_start = 0
+        for track in track_files:
+            # Get duration from file
+            duration = await get_audio_duration(track)
+            if not duration:
+                duration = 0  # Fallback to 0 if duration can't be determined
+            
+            # Get title from filename
+            title = os.path.basename(track).split('_', 1)[1].rsplit('.', 1)[0].replace("'", "\\'")
+            
+            chapters.append({
+                'start': current_start,
+                'end': current_start + duration,
+                'title': title
+            })
+            current_start += duration
+
+        # Generate FFmetadata
+        metadata = [";FFMETADATA1"]
+        for chapter in chapters:
+            metadata.extend([
+                "[CHAPTER]",
+                "TIMEBASE=1/1000",
+                f"START={chapter['start']}",
+                f"END={chapter['end']}",
+                f"title={chapter['title']}"
+            ])
+
+        metadata_file = os.path.join(temp_dir, "chapters.txt")
+        with open(metadata_file, 'w') as f:
+            f.write('\n'.join(metadata))
+
+        # Create concat list
+        concat_file = os.path.join(temp_dir, "concat.list")
+        with open(concat_file, 'w') as f:
+            for track in track_files:
+                f.write(f"file '{os.path.abspath(track)}'\n")
+
+        # Combine tracks
+        combined_file = os.path.join(BASE_DIRECTORY, f"{output_name}_combined{FILE_EXTENSION}")
+        ffmpeg_cmd = (
+            f"ffmpeg -f concat -safe 0 -i \"{concat_file}\" "
+            f"-i \"{metadata_file}\" -map_metadata 1 -c copy \"{combined_file}\""
+        )
+        returncode, _, error = await run_command(ffmpeg_cmd, True)
+
+        # Cleanup temp files
+        shutil.rmtree(temp_dir)
+
+        if returncode != 0:
+            error_str = f"Combination failed: {error}"
+            print(error_str)
+            return None, error_str
+
+        # Apply thumbnail from first track or database
+        first_track = track_files[0] if track_files else None
+        if first_track:
+            # Extract thumbnail from first track
+            thumbnail_cmd = (
+                f"ffmpeg -i \"{first_track}\" -map 0:v -c copy \"{temp_dir}/cover.jpg\""
+            )
+            await run_command(thumbnail_cmd)
+            
+            if os.path.exists(f"{temp_dir}/cover.jpg"):
+                await apply_thumbnail_to_file(f"{temp_dir}/cover.jpg", combined_file)
+
+        # Rename final file
+        final_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
+        os.rename(combined_file, final_file)
+
+        print("Album playlist download complete")
+        return final_file, None
