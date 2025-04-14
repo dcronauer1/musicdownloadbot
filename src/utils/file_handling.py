@@ -80,24 +80,24 @@ def apply_directory_permissions():
 
 def save_music_tree(base_directory):
     """
-    Function to build a tree of the given directory.
+    Function to recursively build a tree of the given directory.
     Excludes .txt files.
     Saves as tree.txt in the root directory (directory main is being ran from)
 
     :return file: path/to/tree.txt
     
     """
-    def build_and_format_tree(directory, indent=0):
+    def _build_and_format_tree(directory, indent=0):
         lines = []
         for entry in sorted(os.scandir(directory), key=lambda e: (not e.is_dir(), e.name.lower())):
             if entry.is_dir():
                 lines.append('  ' * indent + f'{entry.name}/')
-                lines.extend(build_and_format_tree(entry.path, indent + 1))
+                lines.extend(_build_and_format_tree(entry.path, indent + 1))
             elif not entry.name.endswith('.txt'):
                 lines.append('  ' * indent + f'{entry.name}')
         return lines
 
-    tree_lines = build_and_format_tree(base_directory)
+    tree_lines = _build_and_format_tree(base_directory)
 
     file_path = "tree.txt"
 

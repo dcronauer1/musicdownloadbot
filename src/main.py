@@ -107,10 +107,9 @@ class ReplaceGroup(app_commands.Group):
         """Shared method to find audio file and handle missing files"""
         audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
         if not audio_file:    #check if file exists
-            await interaction.followup.send("❗File does not exist")
-            files = [f for f in os.listdir(BASE_DIRECTORY) if not f.endswith('.txt')]
-            await interaction.followup.send(f"Available songs:\n{'\n'.join(files)}")
-            return False
+            tree = save_music_tree(BASE_DIRECTORY)
+            await interaction.followup.send("❗File does not exist. Available songs:",file=discord.File(tree))
+            return None
         return audio_file
 
     @app_commands.command(name="timestamps", description="Replace timestamps on an already existing audio file")
@@ -222,7 +221,6 @@ class ListGroup(app_commands.Group):
     async def list_music(self, interaction: discord.Interaction):
         """function to list all music"""
         tree = save_music_tree(BASE_DIRECTORY)
-        
         await interaction.response.send_message(file=discord.File(tree))
         return
 
