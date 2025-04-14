@@ -238,7 +238,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
         yt_dlp_cmd = (
             f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} {embed_thumbnail} --add-metadata "
-            f"{chapter_flag} --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
+            f"{chapter_flag} --force-overwrites --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
         )
         print(f"Full command: {yt_dlp_cmd}")
         returncode, _, stderr = await run_command(yt_dlp_cmd, True)
@@ -276,7 +276,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         yt_dlp_cmd = (
             f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} {embed_thumbnail} --add-metadata "
             f"{track_nums_arg}"
-            f"--no-embed-chapters --postprocessor-args \"{meta_args}\" "
+            f"--no-embed-chapters --force-overwrites --postprocessor-args \"{meta_args}\" "
             f"-o \"{track_template}\" {video_url}"
         )
         returncode, _, stderr = await run_command(yt_dlp_cmd, True)
@@ -318,7 +318,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         track_template = os.path.join(temp_dir, f"%(playlist_index)s_%(title)s.{FILE_TYPE}")
         yt_dlp_cmd = (
             f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --add-metadata "
-            f"--no-embed-chapters --postprocessor-args \"{meta_args}\" "
+            f"--no-embed-chapters --force-overwrites --postprocessor-args \"{meta_args}\" "
             f"-o \"{track_template}\" {video_url}"
         )
         returncode, _, stderr = await run_command(yt_dlp_cmd, True)

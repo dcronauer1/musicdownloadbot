@@ -75,7 +75,7 @@ def apply_directory_permissions():
                 print(f"⚠️Permission denied on {path}: {e}")
             except Exception as e:
                 print(f"⚠️Error processing {path}: {e}")
-    print("✅Updated file permissions successfully")
+    print("✅Updated file permissions successfully\n")
     return True
 
 def save_music_tree(base_directory):

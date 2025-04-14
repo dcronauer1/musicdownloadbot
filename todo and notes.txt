@@ -40,10 +40,14 @@
 
 3	be able to cancel ⏳ Please send thumbnail (text or image attachment):
 
+5	ability to exclude videos from playlists and album_playlist
+		check yt-dlp docs
+
 
 [bugs]
 5	type=album_playlist should put playlist link in comments
-
+5	type=playlist if a track does not have an album cover, it will find a generic cover
+		should be able to set strict, and it should use album cover if track cover cant be found
 
 [improvements]
 2	bot message improvements
