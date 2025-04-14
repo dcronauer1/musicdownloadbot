@@ -7,6 +7,7 @@ from config.config_manager import config
 from utils.core import run_command
 from utils.discord_helpers import ask_confirmation
 from utils.metadata import get_audio_duration,apply_thumbnail_to_file
+from mutagen import File
 
 # Retrieve settings from the JSON configuration
 YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
@@ -301,7 +302,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             # Get duration from file
             duration = await get_audio_duration(track)
             if not duration:
-                duration = 0  # Fallback to 0 if duration can't be determined
+                duration = 0
             
             # Get title from filename
             title = os.path.basename(track).split('_', 1)[1].rsplit('.', 1)[0].replace("'", "\\'")
@@ -338,8 +339,8 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         combined_file = os.path.join(BASE_DIRECTORY, f"{output_name}_combined{FILE_EXTENSION}")
         ffmpeg_cmd = (
             f"ffmpeg -f concat -safe 0 -i \"{concat_file}\" "
-            f"-i \"{metadata_file}\" -map 0:a -map_chapters 1 "  # Explicitly map audio only
-            f"-c copy \"{combined_file}\""
+            f"-i \"{metadata_file}\" -map_metadata 0 -map 0:a -map_chapters 1 "
+            f"-c copy {meta_args} \"{combined_file}\""
         )
         returncode, _, error = await run_command(ffmpeg_cmd, True)
 
@@ -347,23 +348,25 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         shutil.rmtree(temp_dir)
 
         if returncode != 0:
-            # Truncate error message for Discord
             truncated_error = error[:1500] + "..." if len(error) > 1500 else error
             error_str = f"Combination failed: {truncated_error}"
             print(error_str)
             return None, error_str
 
-        # Apply thumbnail from first track or database
+        # Apply thumbnail from first track
         first_track = track_files[0] if track_files else None
-        if first_track:
-            # Extract thumbnail from first track
-            thumbnail_cmd = (
-                f"ffmpeg -i \"{first_track}\" -map 0:v -c copy \"{temp_dir}/cover.jpg\""
-            )
-            await run_command(thumbnail_cmd)
-            
-            if os.path.exists(f"{temp_dir}/cover.jpg"):
-                await apply_thumbnail_to_file(f"{temp_dir}/cover.jpg", combined_file)
+        if first_track and os.path.exists(first_track):
+            try:
+                # Use mutagen to copy thumbnail directly
+                source_audio = File(first_track)
+                target_audio = File(combined_file)
+                
+                if 'covr' in source_audio.tags:
+                    target_audio.tags['covr'] = source_audio.tags['covr']
+                    target_audio.save()
+                    print("✅ Thumbnail copied successfully")
+            except Exception as e:
+                print(f"❌ Thumbnail copy failed: {str(e)}")
 
         # Rename final file
         final_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
