@@ -112,13 +112,13 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
     temp_file = "temp_cover.png"
     returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_url}"')
     if returncode != 0:#failed
-        print(f"❌Thumbnail update failed, curl output: {error}")
         try:
             os.remove(temp_file)
         except OSError as e:
             print(f"Warning: Failed to delete temp file (can ignore this): {e}")
-            
-        return f"Thumbnail update failed, curl output:\n{error}"
+        error_str=f"❌Thumbnail update failed, wget output:\n{error}"
+        print(error_str) 
+        return error_str
 
     # FFmpeg command (requires local files)
     ffmpeg_cmd = (

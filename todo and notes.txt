@@ -9,7 +9,7 @@
 		date, year
 		add in a force: so if force is true then it uses inputted args exactly
 ✓		add argument for song/playlist (default song)
-			when playlist, it should have the option to put everything into a subfolder for that album
+✓			when playlist, it should have the option to put everything into a subfolder for that album
 		argument to either split or timestamp
 			check for timestamps, handle accordingly
 			when splitting, it should have the option to put everything into a subfolder for that album
@@ -52,6 +52,8 @@
 
 	ability to replace only the timestamp titles (keep times the same)
 	get timestamps (titles, or titles and times) from database
+
+	for list music, list subdirectories as well (maybe run tree but exclude .txt files?)
 
 
 [bugs]

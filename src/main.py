@@ -186,29 +186,30 @@ class ReplaceGroup(app_commands.Group):
                 return
             cover_url, _, error = await fetch_musicbrainz_data(artist, title)
             if error:
-                await interaction.followup.send(f"❌ Database lookup failed: {error}")
+                await interaction.followup.send(f"❌Database lookup failed: {error}")
                 return
 
             if not cover_url:
-                await interaction.followup.send("❌ No artwork found in database")
+                await interaction.followup.send("❌No artwork found in database")
                 return
 
             result = await apply_thumbnail_to_file(cover_url, audio_file)
             
             if result is True:
-                await interaction.followup.send("🎊 Thumbnail updated from MusicBrainz!")
+                await interaction.followup.send("🎊Thumbnail updated from MusicBrainz!")
             else:
-                await interaction.followup.send(f"❗ Error applying thumbnail: {result}")
-            return
+                await interaction.followup.send(f"❗Error applying thumbnail:\n{result}")
+                return
         else:
             thumbnail_url = await ask_for_something(interaction, "thumbnail")
 
-        if thumbnail_url:
-            error = await apply_thumbnail_to_file(thumbnail_url, audio_file)
-            if (error == True):
-                await interaction.followup.send("🎊Thumbnail saved!")
-            else:   
-                await interaction.followup.send(f"❗Thumbnail did not apply properly:\n {error}")             
+            if thumbnail_url:
+                error = await apply_thumbnail_to_file(thumbnail_url, audio_file)
+                if (error == True):
+                    await interaction.followup.send("🎊Thumbnail saved!")
+                else:   
+                    await interaction.followup.send(f"❗Thumbnail did not apply properly:\n{error}")             
+        
         apply_directory_permissions()    #update perms if enabled
         return
 
