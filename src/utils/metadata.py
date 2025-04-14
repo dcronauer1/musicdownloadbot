@@ -47,11 +47,10 @@ async def get_audio_metadata(audio_file: str) -> dict:
             'genre': None
         }
 
-async def fetch_musicbrainz_data(artist: str, title: str, type: str = "album") -> tuple:
+async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None) -> tuple:
     """Fetch cover art URL from MusicBrainz with proper URL construction
     
-    :param type: valid options include "album", "title"___. NOTE currently unused
-    
+    :param release_type: valid MusicBrainz release type (e.g., "album")
     """
     try:
         result = musicbrainzngs.search_releases(
@@ -59,7 +58,7 @@ async def fetch_musicbrainz_data(artist: str, title: str, type: str = "album") -
             release=title,
             limit=5,
             strict=False,
-        #    type="album"
+            type=release_type  # Add release_type parameter
         )
         
         if not result.get('release-list'):

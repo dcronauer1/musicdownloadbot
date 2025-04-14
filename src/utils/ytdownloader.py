@@ -6,7 +6,7 @@ import shutil
 from config.config_manager import config
 from utils.core import run_command
 from utils.discord_helpers import ask_confirmation
-from utils.metadata import get_audio_duration,apply_thumbnail_to_file
+from utils.metadata import get_audio_duration,apply_thumbnail_to_file,get_audio_metadata,fetch_musicbrainz_data
 from mutagen import File
 
 # Retrieve settings from the JSON configuration
@@ -128,7 +128,7 @@ async def get_video_info(video_url: str) -> tuple[dict,str]:
     return {},error_str
 
 async def download_audio(interaction, video_url: str, type: str, output_name: str = None, artist_name: str = None, tags: list = None,
-                        album: str = None, addtimestamps: bool = None, excludetracknumsforplaylist: bool = False) -> tuple:
+                        album: str = None, addtimestamps: bool = None,usedatabase: str=None, excludetracknumsforplaylist: bool = False) -> tuple:
     """
     Downloads a YouTube video as FILE_EXTENSION audio with embedded metadata.
     
@@ -142,9 +142,10 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     :param tags: tags in a string.
     :param album: album name. Must be supplied when type=playlist to get track numbers
     :param addtimestamps: if False, them chapters are not embedded
+    :param usedatabase: options (comma separated): (cover|tracktimes|tracknames). Use database for metadata instead of youtube information
     :param excludetracknumsforplaylist: applies when type=playlist: if True: dont add track numbers. Default=False
 
-    :return audio_file: The path to the downloaded audio file (FILE_TYPE) or None if error.
+    :return audio_file: The path to the downloaded "{audio file}{FILE_TYPE}" or None if error.
     :return error_str: None if no error, string containing error if error
 
     """
@@ -163,6 +164,10 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             print(error_str)
             return None,error_str
     
+    #usedatabase options
+    usedb_options = usedatabase.split(',') if usedatabase else []
+    embed_thumbnail = '--embed-thumbnail' if 'cover' not in usedb_options else ''
+
     if not output_name:
         output_name = info.get("title", "Untitled")
     if not artist_name:
@@ -232,32 +237,44 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     if(type=="song"):
         # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
         yt_dlp_cmd = (
-            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
+            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} {embed_thumbnail} --add-metadata "
             f"{chapter_flag} --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
         )
         print(f"Full command: {yt_dlp_cmd}")
         returncode, _, stderr = await run_command(yt_dlp_cmd, True)
 
         if returncode == 0:
+            audio_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
             print("Download complete.")
-            return os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}"), None
+            if 'cover' in usedb_options:
+                metadata = await get_audio_metadata(audio_file)
+                artist = metadata.get('artist') or artist_name
+                title = metadata.get('title') or output_name
+                cover_url, _, error = await fetch_musicbrainz_data(artist, title)
+                if cover_url:
+                    await apply_thumbnail_to_file(cover_url, audio_file)
+                else:
+                    error_str = f"❗error has occurred when fetching database cover:\n{error}"
+                    print(error_str)
+                    return None,error_str
+            return audio_file, None
         else:
             error_str = f"Error downloading: {stderr}"
             print(error_str)
             return None,error_str
     elif type == "playlist":#download each song individually in a subfolder
         # Create directory
-        dir = os.path.join(BASE_DIRECTORY, f"{output_name}")
-        os.makedirs(dir, exist_ok=True)
+        subdir = os.path.join(BASE_DIRECTORY, f"{output_name}") # this is the subfolder
+        os.makedirs(subdir, exist_ok=True)
 
         if excludetracknumsforplaylist:
             track_nums_arg=''
         else: 
             track_nums_arg=f'--parse-metadata "playlist_index:%(track_number)s" '
         # Download individual tracks with metadata
-        track_template = os.path.join(dir, f"%(title)s.{FILE_TYPE}")
+        track_template = os.path.join(subdir, f"%(title)s.{FILE_TYPE}")
         yt_dlp_cmd = (
-            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --embed-thumbnail --add-metadata "
+            f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} {embed_thumbnail} --add-metadata "
             f"{track_nums_arg}"
             f"--no-embed-chapters --postprocessor-args \"{meta_args}\" "
             f"-o \"{track_template}\" {video_url}"
@@ -277,7 +294,21 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             return None, error_str
 
         print("Playlist download complete")
-        return dir, None 
+        if 'cover' in usedb_options:
+            for track_file in os.listdir(subdir):
+                if track_file.endswith(FILE_EXTENSION):
+                    track_path = os.path.join(subdir, track_file)
+                    metadata = await get_audio_metadata(track_path)
+                    artist = metadata.get('artist') or artist_name
+                    title = metadata.get('title') or os.path.splitext(track_file)[0]
+                    cover_url, _, error = await fetch_musicbrainz_data(artist, title)
+                    if cover_url:
+                        await apply_thumbnail_to_file(cover_url, track_path)
+                    else:
+                        error_str = f"❗error has occurred when fetching database cover:\n{error}"
+                        print(error_str)
+                        return None,error_str
+        return subdir, None 
     elif type == "album_playlist":
         # Create temporary directory
         temp_dir = os.path.join(BASE_DIRECTORY, f"temp_{output_name}")
@@ -379,6 +410,17 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         os.rename(combined_file, final_file)
 
         print("Album playlist download complete")
+        if 'cover' in usedb_options:
+            metadata = await get_audio_metadata(final_file)
+            artist = metadata.get('artist') or artist_name
+            album_name = metadata.get('album') or album
+            cover_url, _, error = await fetch_musicbrainz_data(artist, album_name, release_type="album")
+            if cover_url:
+                await apply_thumbnail_to_file(cover_url, final_file)
+            else:
+                error_str = f"❗error has occurred when fetching database cover:\n{error}"
+                print(error_str)
+                return None,error_str
         return final_file, None
     else:
         return None, f"Invalid type provided: {type}"

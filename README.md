@@ -28,6 +28,10 @@ add title, author, album title, tags, and more (year, date)
 store a list of authors and tags so if names are very close, it will be stored as the same artist/tag.
     user confirmations for adding new authors/tags
 
+# Notes
+    soundcloud works; however, without a soundcloud go subscription, downloads are automatically compressed (and it is easy to tell)
+    - I do not plan on implementing this
+    https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
 
 # commands:
 ## download:
