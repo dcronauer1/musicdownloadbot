@@ -307,7 +307,8 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         combined_file = os.path.join(BASE_DIRECTORY, f"{output_name}_combined{FILE_EXTENSION}")
         ffmpeg_cmd = (
             f"ffmpeg -f concat -safe 0 -i \"{concat_file}\" "
-            f"-i \"{metadata_file}\" -map_metadata 1 -c copy \"{combined_file}\""
+            f"-i \"{metadata_file}\" -map 0:a -map_chapters 1 "  # Explicitly map audio only
+            f"-c copy \"{combined_file}\""
         )
         returncode, _, error = await run_command(ffmpeg_cmd, True)
 
@@ -315,7 +316,9 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         shutil.rmtree(temp_dir)
 
         if returncode != 0:
-            error_str = f"Combination failed: {error}"
+            # Truncate error message for Discord
+            truncated_error = error[:1500] + "..." if len(error) > 1500 else error
+            error_str = f"Combination failed: {truncated_error}"
             print(error_str)
             return None, error_str
 

@@ -15,7 +15,7 @@ DEFAULT_CONFIG = {
     },
     "directory_settings":{
         "keep_perms_consistent": True,
-        "file_perms": 644,
+        "file_perms": 664,
         "directory_perms": 775,
         "group": "sambashare"
     },
