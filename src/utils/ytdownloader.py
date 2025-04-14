@@ -218,7 +218,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     if addtimestamps == False or type == "album_playlist":
         chapter_flag = "--no-embed-chapters"
     else:
-        chapter_flag = "--embed-chapters "
+        chapter_flag = "--embed-chapters"
 
     #Download video
     print("Download starting...")

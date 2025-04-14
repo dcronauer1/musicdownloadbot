@@ -107,7 +107,7 @@ class ReplaceGroup(app_commands.Group):
         """Shared method to find audio file and handle missing files"""
         audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
         if not audio_file:    #check if file exists
-            await interaction.response.send_message("❗File does not exist")
+            await interaction.followup.send("❗File does not exist")
             files = [f for f in os.listdir(BASE_DIRECTORY) if not f.endswith('.txt')]
             await interaction.followup.send(f"Available songs:\n{'\n'.join(files)}")
             return False

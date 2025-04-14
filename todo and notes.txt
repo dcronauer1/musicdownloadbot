@@ -47,6 +47,8 @@
 ✓	ability to pull details from a database
 ✓		including thumbnail
 
+	be able to cancel ⏳ Please send thumbnail (text or image attachment):
+
 
 	ability to replace only the timestamp titles (keep times the same)
 	get timestamps (titles, or titles and times) from database
