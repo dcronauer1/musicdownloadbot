@@ -42,14 +42,17 @@
 
 5	replace playlist covers code should be a seperate function so replace_thumbnail can use it
 
+4	replace timestamps should send the current timstamps to the user
 
 [bugs]
 5	type=album_playlist should put playlist link in comments
 5	type=playlist if a track does not have an album cover, it will find a generic cover
 		should be able to set strict, and it should use album cover if track cover cant be found
 		probably first check with strict, then with album name (strict), then ask user to check non-strict?
-3	date/time is getting reset when running replace_thumbnail (and probably timestamps too)
-
+3	date/time is getting reset when running replace_thumbnail (and probably replace_timestamps too)
+		seems like metadata is fine, so probably can ignore this
+1	tags from database or from link itself arent saved to tags.json
+		could probably just remove tags.json
 [improvements]
 2	bot message improvements
 		make bot cleanup its confirmation boxes
@@ -71,7 +74,6 @@
 1	make musicolet file optional in config.json
 2	make json lists separated by new line
 
-4	garbage code in apply_timestamps_to_file()
 3	download should say what was successful (metdata, timestamps, etc)
 5	compress thumbnails from database!!!!
 		add a parameter for this

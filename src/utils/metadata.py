@@ -264,17 +264,6 @@ async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: 
         print(error)
         return False, error
     return True, None
-    """Converts json sorted timestamps into musicolet timestamps [mn:sc.ms]"""
-    with open(chapter_file, "w") as f:
-        for chapter in chapters:
-            start_time = float(chapter["start_time"])
-            minutes = int(start_time // 60)
-            seconds = int(start_time % 60)
-            milliseconds = int((start_time % 1) * 1000)
-            chapter_name = chapter["tags"].get("title", "Unknown")
-            f.write(f"[{minutes}:{seconds:02}.{milliseconds:03}]{chapter_name}\n")
-    print(f"Chapters saved to {chapter_file}")
-    return chapter_file 
 
 async def extract_chapters(audio_file: str) -> tuple:
     """Extracts chapters from the audio file and saves them in a .txt file in the format musicolet uses.
