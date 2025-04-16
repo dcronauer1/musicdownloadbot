@@ -29,11 +29,12 @@ except KeyError as e:
     print("- app_name\n- contact_email")
     sys.exit(1)
 
-async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None, size: int = DEFAULT_COVER_SIZE) -> tuple:
-    """Fetch cover art URL from MusicBrainz with proper URL construction
+async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None, size: str = DEFAULT_COVER_SIZE) -> tuple:
+    """Fetch cover art binary data from MusicBrainz
     
     :param release_type: valid MusicBrainz release type (e.g., "album")
     :param size: cover size.
+    :return: (image_data, error)
     """
     try:
         result = musicbrainzngs.search_releases(
@@ -45,63 +46,76 @@ async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = No
         )
         
         if not result.get('release-list'):
-            return None, None, "No matching releases found"
+            return None, "No matching releases found"
 
         # Find first release with cover art
         for release in result['release-list']:
             mbid = release['id']
             try:
-                # Get cover art information
-                coverart = musicbrainzngs.get_image_list(mbid)
-                for image in coverart.get('images', []):
+                # Get list of images for this release
+                image_list = musicbrainzngs.get_image_list(mbid)
+                
+                for image in image_list.get('images', []):
                     if image.get('front', False):
-                        # Construct proper URL
-                        return f"https://coverartarchive.org/release/{mbid}/{image['id']}.jpg", None, None
-            except musicbrainzngs.WebServiceError:
+                        # Fetch actual image binary data
+                        image_data = musicbrainzngs.get_image(mbid, image['id'], size)
+                        
+                        # Convert to bytes if needed (API typically returns bytes directly)
+                        if isinstance(image_data, str):
+                            image_data = image_data.encode()
+                            
+                        return image_data, None
+                        
+            except musicbrainzngs.WebServiceError as e:
+                print(f"Error fetching images for {mbid}: {str(e)}")
                 continue
 
-        return None, None, "No valid artwork URL found"
+        return None, "No valid artwork found"
 
     except musicbrainzngs.WebServiceError as e:
-        return None, None, f"MusicBrainz API Error: {str(e)}"
+        return None, f"MusicBrainz API Error: {str(e)}"
     except Exception as e:
-        return None, None, f"Unexpected error: {str(e)}"
+        return None, f"Unexpected error: {str(e)}"
 
-async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
-    """Apply a thumbnail to a file using FFMPEG or mutagen for Opus files."""
-    print(f"⚠️thumbnail_url: {thumbnail_url}")
+async def apply_thumbnail_to_file(thumbnail_input: str | bytes, audio_file: str):
+    """Apply a thumbnail to a file using either binary data or a URL."""
     temp_file = "temp_cover.png"
     
-    # Download the thumbnail
-    returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_url}"')
-    if returncode != 0:
-        try: os.remove(temp_file)
-        except: pass
-        return f"❌Thumbnail download failed: {error}"
-
     try:
+        # Handle different input types
+        if isinstance(thumbnail_input, bytes):
+            # Write binary data directly to temp file
+            with open(temp_file, "wb") as f:
+                f.write(thumbnail_input)
+            print("✅ Using provided binary image data")
+        else:
+            # Assume it's a URL and download
+            print(f"⚠️ Downloading thumbnail from URL: {thumbnail_input}")
+            returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_input}"')
+            if returncode != 0:
+                return f"❌ Download failed: {error}"
+
+        # Common processing for both input types
         if audio_file.endswith('.opus'):
-            # Read image data
+            # OPUS handling with mutagen
             with open(temp_file, "rb") as f:
                 image_data = f.read()
 
             # Create FLAC-style picture metadata
             pic = Picture()
             pic.data = image_data
-            pic.type = 3  # Cover (front)
-            pic.mime = "image/png"
+            pic.type = 3    # Cover (front)
+            pic.mime = "image/png" if image_data.startswith(b'\x89PNG') else "image/jpeg"
             pic.desc = "Cover art"
-            pic_data = base64.b64encode(pic.write()).decode()
-
-            # Embed in OPUS file
+            
             audio = OggOpus(audio_file)
-            audio["METADATA_BLOCK_PICTURE"] = [pic_data]
+            audio["METADATA_BLOCK_PICTURE"] = [base64.b64encode(pic.write()).decode()]
             audio.save()
-            print("✅ Thumbnail updated (mutagen)")
+            print("✅ Thumbnail updated (OPUS)")
             return True
 
         else:
-            # FFMPEG handling for m4a and others
+            # FFmpeg handling for other formats
             ffmpeg_cmd = (
                 f'ffmpeg -y -i "{audio_file}" -i "{temp_file}" '
                 f'-map 0 -map 1 -c copy -disposition:v attached_pic "temp{FILE_EXTENSION}"'
@@ -110,13 +124,12 @@ async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
             
             if returncode == 0:
                 await run_command(f'mv "temp{FILE_EXTENSION}" "{audio_file}"')
-                print("✅ Thumbnail updated (ffmpeg)")
+                print("✅ Thumbnail updated (FFmpeg)")
                 return True
             return f"❌ FFmpeg failed: {error}"
 
     except Exception as e:
         return f"❌ Error: {str(e)}"
-        
     finally:
         try: os.remove(temp_file)
         except: pass

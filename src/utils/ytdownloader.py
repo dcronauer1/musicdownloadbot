@@ -250,7 +250,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
                 metadata = await get_audio_metadata(audio_file)
                 artist = metadata.get('artist') or artist_name
                 title = metadata.get('title') or output_name
-                cover_url, _, error = await fetch_musicbrainz_data(artist, title)
+                cover_url, error = await fetch_musicbrainz_data(artist, title)
                 if cover_url:
                     await apply_thumbnail_to_file(cover_url, audio_file)
                 else:
@@ -301,7 +301,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
                     metadata = await get_audio_metadata(track_path)
                     artist = metadata.get('artist') or artist_name
                     title = metadata.get('title') or os.path.splitext(track_file)[0]
-                    cover_url, _, error = await fetch_musicbrainz_data(artist, title)
+                    cover_url, error = await fetch_musicbrainz_data(artist, title)
                     if cover_url:
                         await apply_thumbnail_to_file(cover_url, track_path)
                     else:
@@ -414,7 +414,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             metadata = await get_audio_metadata(final_file)
             artist = metadata.get('artist') or artist_name
             album_name = metadata.get('album') or album
-            cover_url, _, error = await fetch_musicbrainz_data(artist, album_name, release_type="album")
+            cover_url, error = await fetch_musicbrainz_data(artist, album_name, release_type="album")
             if cover_url:
                 await apply_thumbnail_to_file(cover_url, final_file)
             else:

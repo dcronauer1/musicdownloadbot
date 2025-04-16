@@ -186,16 +186,15 @@ class ReplaceGroup(app_commands.Group):
             if artist == None:
                 await interaction.followup.send("⚠️ Unknown artist, please supply one manually")
                 return
-            cover_url, _, error = await fetch_musicbrainz_data(artist, title)
+            image_data, error = await fetch_musicbrainz_data(artist, title)
             if error:
                 await safe_send(interaction,f"❌Database lookup failed: {error}")
                 return
-
-            if not cover_url:
+            if not image_data:
                 await interaction.followup.send("❌No artwork found in database")
                 return
 
-            result = await apply_thumbnail_to_file(cover_url, audio_file)
+            result = await apply_thumbnail_to_file(image_data, audio_file)
             
             if result is True:
                 await interaction.followup.send("🎊Thumbnail updated from MusicBrainz!")
