@@ -6,7 +6,7 @@ import re
 from typing import Optional
 from utils.core import run_command
 import sys
-
+import asyncio
 import musicbrainzngs
 import requests
 from mutagen import File
@@ -14,8 +14,8 @@ from mutagen.oggopus import OggOpus
 from mutagen.flac import Picture
 import base64
 
-FILE_EXTENSION = config["download_settings"]["file_extension"]     
-
+FILE_EXTENSION = config["download_settings"]["file_extension"]
+DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
 
 try:
     musicbrainzngs.set_useragent(
@@ -29,43 +29,11 @@ except KeyError as e:
     print("- app_name\n- contact_email")
     sys.exit(1)
 
-async def get_audio_metadata(audio_file: str) -> dict:
-    """Get metadata from audio file using mutagen"""
-    try:
-        if audio_file.lower().endswith('.opus'):
-            # Handle OPUS files specifically
-            f = OggOpus(audio_file)
-            return {
-                'artist': f.get('artist', [None])[0],
-                'album': f.get('album', [None])[0],
-                'title': f.get('title', [None])[0],
-                'date': f.get('date', [None])[0],
-                'genre': f.get('genre', [None])[0]
-            }
-        else:
-            # Handle other file types (m4a, mp3, etc)
-            f = File(audio_file)
-            return {
-                'artist': f.get('\xa9ART', [None])[0],
-                'album': f.get('\xa9alb', [None])[0],
-                'title': f.get('\xa9nam', [None])[0],
-                'date': f.get('\xa9day', [None])[0],
-                'genre': f.get('\xa9gen', [None])[0]
-            }
-    except Exception as e:
-        print(f"Metadata read error: {str(e)}")
-        return {
-            'artist': None,
-            'album': None,
-            'title': None,
-            'date': None,
-            'genre': None
-        }
-
-async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None) -> tuple:
+async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None, size: int = DEFAULT_COVER_SIZE) -> tuple:
     """Fetch cover art URL from MusicBrainz with proper URL construction
     
     :param release_type: valid MusicBrainz release type (e.g., "album")
+    :param size: cover size.
     """
     try:
         result = musicbrainzngs.search_releases(
@@ -73,7 +41,7 @@ async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = No
             release=title,
             limit=5,
             strict=False,
-            type=release_type  # Add release_type parameter
+            type=release_type
         )
         
         if not result.get('release-list'):
@@ -98,21 +66,6 @@ async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = No
         return None, None, f"MusicBrainz API Error: {str(e)}"
     except Exception as e:
         return None, None, f"Unexpected error: {str(e)}"
-
-async def get_audio_duration(audio_file: str) -> Optional[int]:
-    """Get the duration of the audio file in milliseconds using ffprobe."""
-    cmd = f'ffprobe -i "{audio_file}" -show_entries format=duration -v quiet -of csv="p=0"'
-    returncode, duration_str, error = await run_command(cmd)
-
-    if returncode != 0 or not duration_str.strip():
-        print(f"Error getting duration for {audio_file}: {error or 'Empty duration output'}")
-        return None
-
-    try:
-        return int(float(duration_str.strip()) * 1000)  # Convert seconds to milliseconds
-    except ValueError:
-        print(f"Failed to parse audio duration: {duration_str}")
-        return None
 
 async def apply_thumbnail_to_file(thumbnail_url: str, audio_file: str):
     """Apply a thumbnail to a file using FFMPEG or mutagen for Opus files."""
@@ -313,3 +266,51 @@ def format_timestamps_for_musicolet(chapters, chapter_file) -> tuple:
         error_msg = f"Error formatting chapters: {str(e)}"
         print(error_msg)
         return None, error_msg
+
+async def get_audio_metadata(audio_file: str) -> dict:
+    """Get metadata from audio file using mutagen"""
+    try:
+        if audio_file.lower().endswith('.opus'):
+            # Handle OPUS files specifically
+            f = OggOpus(audio_file)
+            return {
+                'artist': f.get('artist', [None])[0],
+                'album': f.get('album', [None])[0],
+                'title': f.get('title', [None])[0],
+                'date': f.get('date', [None])[0],
+                'genre': f.get('genre', [None])[0]
+            }
+        else:
+            # Handle other file types (m4a, mp3, etc)
+            f = File(audio_file)
+            return {
+                'artist': f.get('\xa9ART', [None])[0],
+                'album': f.get('\xa9alb', [None])[0],
+                'title': f.get('\xa9nam', [None])[0],
+                'date': f.get('\xa9day', [None])[0],
+                'genre': f.get('\xa9gen', [None])[0]
+            }
+    except Exception as e:
+        print(f"Metadata read error: {str(e)}")
+        return {
+            'artist': None,
+            'album': None,
+            'title': None,
+            'date': None,
+            'genre': None
+        }
+
+async def get_audio_duration(audio_file: str) -> Optional[int]:
+    """Get the duration of the audio file in milliseconds using ffprobe."""
+    cmd = f'ffprobe -i "{audio_file}" -show_entries format=duration -v quiet -of csv="p=0"'
+    returncode, duration_str, error = await run_command(cmd)
+
+    if returncode != 0 or not duration_str.strip():
+        print(f"Error getting duration for {audio_file}: {error or 'Empty duration output'}")
+        return None
+
+    try:
+        return int(float(duration_str.strip()) * 1000)  # Convert seconds to milliseconds
+    except ValueError:
+        print(f"Failed to parse audio duration: {duration_str}")
+        return None

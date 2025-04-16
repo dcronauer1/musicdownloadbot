@@ -33,6 +33,8 @@ store a list of authors and tags so if names are very close, it will be stored a
     - I do not plan on implementing this
     - https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
     recommended to use opus, but alac & .m4a should also work
+    default cover size can be "250”, “500”, “1200” or None
+        *test if it can be other values
 
 # commands:
 ## download:

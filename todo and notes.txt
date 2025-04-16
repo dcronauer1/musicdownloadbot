@@ -77,6 +77,9 @@
 3	download should say what was successful (metdata, timestamps, etc)
 5	compress thumbnails from database!!!!
 		add a parameter for this
+		maybe theres a way to request specific sizes?
+			like request 1200x1200
+5	make a temp directory? so temp files should be stored in temp/{}
 
 [notes]
 	from mutagen.m4a import M4ATags

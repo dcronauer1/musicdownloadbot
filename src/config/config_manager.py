@@ -11,7 +11,8 @@ DEFAULT_CONFIG = {
         "yt_dlp_path": "/path/to/yt-dlp",
         "base_directory": "/path/to/music",
         "file_type": "opus",
-        "file_extension": ".opus"
+        "file_extension": ".opus",
+        "default_cover_size": "1200"
     },
     "directory_settings":{
         "keep_perms_consistent": True,
