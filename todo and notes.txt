@@ -40,12 +40,13 @@
 5	ability to exclude videos from playlists and album_playlist
 		check yt-dlp docs
 
-5	replace playlist covers code should be a seperate function so replace_thumbnail can use it
+5	replace playlist covers code should be a separate function so replace_thumbnail can use it
+		implement this too, use type variable
 
 4	replace timestamps should send the current timstamps to the user
 
 [bugs]
-5	type=album_playlist should put playlist link in comments
+4	type=album_playlist should put playlist link in comments
 5	type=playlist if a track does not have an album cover, it will find a generic cover
 		should be able to set strict, and it should use album cover if track cover cant be found
 		probably first check with strict, then with album name (strict), then ask user to check non-strict?
@@ -75,10 +76,6 @@
 2	make json lists separated by new line
 
 3	download should say what was successful (metdata, timestamps, etc)
-5	compress thumbnails from database!!!!
-		add a parameter for this
-		maybe theres a way to request specific sizes?
-			like request 1200x1200
 5	make a temp directory? so temp files should be stored in temp/{}
 
 [notes]
@@ -111,6 +108,11 @@
 	✓	find a way to make the starting portion of replace commands be in one spot for the class
 	✓	make list dir line a function, and make it exclude .txt (multiple instances of it in main)
 	✓		dont forget about the replace timestamps list files on fail thing
+
+	✓	compress thumbnails from database!!!!
+	✓		add a parameter for this
+	✓		maybe theres a way to request specific sizes?
+	✓			like request 1200x1200
 
 	[bugs]
 	✓	handle this error: (happens when providing a bad link)

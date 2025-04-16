@@ -14,6 +14,7 @@ from utils.file_handling import *
 
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
+DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
 
 # Custom Bot class to sync slash commands on startup.
 class MyBot(commands.Bot):
@@ -161,15 +162,16 @@ class ReplaceGroup(app_commands.Group):
         return
         
     @app_commands.command(name="thumbnail", description="Replace thumbnail on an already existing audio file")
-    async def replace_thumbnail(self, interaction: discord.Interaction, title: str, 
-                                usedatabase: bool = False, artist: str = None):
+    async def replace_thumbnail(self, interaction: discord.Interaction, title: str, usedatabase: bool = False,
+        type: str = "song", size: str = DEFAULT_COVER_SIZE, artist: str = None):
         """
         Replace thumbnail/cover on an already existing audio file
 
         :param title: Title of the output file. Case insensitive
         :param usedatabase: pull the image from a database, instead of using the user's image. Default False
+        :param type: ___
+        :param size: Cover size. Valid values are 250, 500, or 1200. Other values default to largest size (not recommended)
         :param artist: manual fill for usedatabase (ignore unless needed)
-
         """
         # Defer first to prevent interaction token expiration
         await interaction.response.defer()
@@ -186,7 +188,7 @@ class ReplaceGroup(app_commands.Group):
             if artist == None:
                 await interaction.followup.send("⚠️ Unknown artist, please supply one manually")
                 return
-            image_data, error = await fetch_musicbrainz_data(artist, title)
+            image_data, error = await fetch_musicbrainz_data(artist, title, type, size)
             if error:
                 await safe_send(interaction,f"❌Database lookup failed: {error}")
                 return
