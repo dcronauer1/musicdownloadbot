@@ -13,9 +13,11 @@ from mutagen import File
 from mutagen.oggopus import OggOpus
 from mutagen.flac import Picture
 import base64
+from utils.file_handling import find_file_case_insensitive
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
+BASE_DIRECTORY = config["download_settings"]["base_directory"]
 
 try:
     musicbrainzngs.set_useragent(
@@ -29,7 +31,7 @@ except KeyError as e:
     print("- app_name\n- contact_email")
     sys.exit(1)
 
-async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None, size: str = DEFAULT_COVER_SIZE) -> tuple:
+async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None, size: str = DEFAULT_COVER_SIZE, strict: bool=True) -> tuple:
     """Fetch cover art binary data from MusicBrainz
     
     :param release_type: valid MusicBrainz release type (e.g., "album")
@@ -37,14 +39,24 @@ async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = No
     :return: (image_data, error)
     """
     try:
-        result = musicbrainzngs.search_releases(
-            artist=artist,
-            release=title,
-            limit=5,
-            strict=False,
-            type=release_type
-        )
-        
+        if(release_type):
+            result = musicbrainzngs.search_releases(
+                artist=artist,
+                release=title,
+                limit=5,
+                type=release_type,
+                strict=strict
+            )
+        else:
+            result = musicbrainzngs.search_releases(
+                artist=artist,
+                release=title,
+                limit=5,
+                strict=strict
+            )
+        #NOTE: VALID_RELEASE_TYPES = ['nat', 'album', 'single', 'ep', 'broadcast', 'other', 'compilation', 'soundtrack', 'spokenword', 'interview', 'audiobook', 'live', 'remix', 'dj-mix', 'mixtape/street']
+        #https://python-musicbrainzngs.readthedocs.io/en/latest/api/#musicbrainzngs.musicbrainz.VALID_RELEASE_TYPES
+                
         if not result.get('release-list'):
             return None, "No matching releases found"
 
@@ -87,13 +99,13 @@ async def apply_thumbnail_to_file(thumbnail_input: str | bytes, audio_file: str)
             # Write binary data directly to temp file
             with open(temp_file, "wb") as f:
                 f.write(thumbnail_input)
-            print("✅ Using provided binary image data")
+            print(f"Temp thumbnail downloaded using binary image data for: {audio_file}")
         else:
             # Assume it's a URL and download
-            print(f"⚠️ Downloading thumbnail from URL: {thumbnail_input}")
+            print(f"⚠️Downloading thumbnail from URL: {thumbnail_input}")
             returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_input}"')
             if returncode != 0:
-                return f"❌ Download failed: {error}"
+                return f"❌Download failed: {error}"
 
         # Common processing for both input types
         if audio_file.endswith('.opus'):
@@ -111,7 +123,7 @@ async def apply_thumbnail_to_file(thumbnail_input: str | bytes, audio_file: str)
             audio = OggOpus(audio_file)
             audio["METADATA_BLOCK_PICTURE"] = [base64.b64encode(pic.write()).decode()]
             audio.save()
-            print("✅ Thumbnail updated (OPUS)")
+            print(f"✅Thumbnail updated (OPUS): {audio_file}")
             return True
 
         else:
@@ -124,12 +136,12 @@ async def apply_thumbnail_to_file(thumbnail_input: str | bytes, audio_file: str)
             
             if returncode == 0:
                 await run_command(f'mv "temp{FILE_EXTENSION}" "{audio_file}"')
-                print("✅ Thumbnail updated (FFmpeg)")
+                print(f"✅Thumbnail updated (FFmpeg): {audio_file}")
                 return True
-            return f"❌ FFmpeg failed: {error}"
+            return f"❌FFmpeg failed: {error}"
 
     except Exception as e:
-        return f"❌ Error: {str(e)}"
+        return f"❌apply_thumbnail_to_file() Error: {str(e)}"
     finally:
         try: os.remove(temp_file)
         except: pass
@@ -312,6 +324,98 @@ async def get_audio_metadata(audio_file: str) -> dict:
             'date': None,
             'genre': None
         }
+
+#replace_thumbnail(title,playlist=True,cover_URL=None, strict=True, releasetype = None, artist_name, album=None, size=None)
+async def replace_thumbnail(title: str,playlist:bool=False, cover_URL:str=None, strict:bool=True, releasetype: str = None,
+        artist:str=None, album:str=None, size: str = DEFAULT_COVER_SIZE) -> tuple: 
+    """
+    Helper function to apply thumbnails to a video, or an entire playlist
+    :param title: title of song or playlist (subdirectory songs are stored under)
+    :param playlist: True when using a playlist (ie subdir with songs). Default False.
+    
+    :param cover_URL: if None, then use database
+    :param strict: default True. strict database querying
+    :param releasetype: NOTE check replace_thumbnail_command() in main.py. change this comment when that is finished
+    :param artist: manual fill for usedatabase (ignore unless needed)
+    :param album: Use if thumbnail can't be found with strict & title. NOTE: will search metadata if None
+    
+    :param size: Cover size. Valid values are 250, 500, or 1200. Other values default to largest size (not recommended)
+
+    :return: Tuple: output str, err str. if output None then error. 
+            NOTE: can still return error str on success (failed database lookup) 
+            NOTE: if sending outputs to user, use safe_send()!
+    """
+    #default some of the params here (so if None is passed in then do default)
+    if size==None:
+        size=DEFAULT_COVER_SIZE
+    #etc
+    #NOTE todo above
+    
+    subdir = os.path.join(BASE_DIRECTORY, f"{title}")
+    if playlist:
+        subdir_list = os.listdir(subdir)    #get list of files in subdir       
+    else:
+        audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
+        subdir_list=[audio_file] #this is the single track in list form
+    
+    success_list = []
+    thumbnail_error = "" #dont stop execution on database errors, collect and continue
+    for audio_file in subdir_list:
+        #add extensions to each file if playlist
+        if audio_file.endswith(FILE_EXTENSION) and playlist:
+            title = audio_file
+            title = os.path.splitext(title)[0]
+            audio_file = os.path.join(subdir, audio_file)   #get full path of each playlist entry
+
+        if cover_URL == None: #cover_URL == None: (use database)
+            metadata = await get_audio_metadata(audio_file)
+            if artist == None:
+                artist = metadata.get('artist', None)
+            if artist == None:
+                thumbnail_error += f"⚠️Unknown artist for __{title}__, please supply one manually"
+                print(f"⚠️Unknown artist for {title}, please supply one manually")
+                continue    #keep checking other files, return this error later
+            if album == None:
+                album = metadata.get('album',None)
+            
+            #NOTE
+            #add album fallback here
+            #wait maybe only check album once and store that? then if below fails just set image_data to the stored image?
+            #would have an issue if playlist has different albums but idc
+            #check notes for bad temp code
+
+
+            image_data, error = await fetch_musicbrainz_data(artist, title, releasetype, size, strict)
+            if error:
+                thumbnail_error += f"❌Database lookup failed for __{title}__: {error[:40]}\n" #truncate error
+                print(f"❌Database lookup failed for {title}:\n{error}")
+                continue    #keep checking other files, return this error later
+            if not image_data:
+                thumbnail_error += f"❌No artwork found for __{title}__\n"
+                print(f"❌No artwork found for {title}")
+                continue    #keep checking other files, return this error later
+            
+            result = await apply_thumbnail_to_file(image_data, audio_file)
+            if result is True:
+                success_list.append(f"- {title}")
+            else:
+                thumbnail_error += f"❗Error applying thumbnail for __{title}__: {result[:40]}" #truncate error
+                print(f"❗Error applying thumbnail for {title}:\n{result}")
+        else: #cover_URL != None: (DONT use database)
+            result = await apply_thumbnail_to_file(cover_URL, audio_file)
+            if (result == True):
+                success_list.append(f"{title}")
+            else:   
+                thumbnail_error += f"❗Error applying thumbnail for __{title}__: {result[:40]}" #truncate error
+                print(f"❗Error applying thumbnail for {title}:\n{result}")
+    output = None
+    error_str = None
+    if(success_list != []):
+        success_string = "\n".join(success_list)
+        output = f"🎊Thumbnail(s) for:\n{success_string}\nupdated from MusicBrainz!"
+    if(thumbnail_error != ""):
+        error_str=f"❗Error(s): check console for more detail:\n{thumbnail_error}"
+    return output,error_str
 
 async def get_audio_duration(audio_file: str) -> Optional[int]:
     """Get the duration of the audio file in milliseconds using ffprobe."""

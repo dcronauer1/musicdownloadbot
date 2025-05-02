@@ -40,10 +40,17 @@
 5	ability to exclude videos from playlists and album_playlist
 		check yt-dlp docs
 
-5	replace playlist covers code should be a separate function so replace_thumbnail can use it
+✓	replace playlist covers code should be a separate function so replace_thumbnail can use it
 		implement this too, use type variable
 
 4	replace timestamps should send the current timstamps to the user
+
+5	ability to rename and modify tracks inside of playlists
+		just do a parameter playlist. then if one is provided make the song dir "base/playlist/song"
+		for existing entire playlist handling, make comment say "for modifying entire playlist" and "for singles inside playlists" for other param
+
+3	ability for commands to parse all valid audio types.
+		maybe make a list in config.json, then replace all checking code with a for loop for each type in that list
 
 [bugs]
 4	type=album_playlist should put playlist link in comments
@@ -54,6 +61,7 @@
 		seems like metadata is fine, so probably can ignore this
 1	tags from database or from link itself arent saved to tags.json
 		could probably just remove tags.json
+3	folder name of playlists doesnt default to album name when title is missing, but the name of the first song
 [improvements]
 2	bot message improvements
 		make bot cleanup its confirmation boxes
@@ -76,7 +84,8 @@
 2	make json lists separated by new line
 
 3	download should say what was successful (metdata, timestamps, etc)
-5	make a temp directory? so temp files should be stored in temp/{}
+3	make a temp directory? so temp files should be stored in temp/{}
+5	database handling for download() should take place in that command, NOT in download_audio()
 
 [notes]
 	from mutagen.m4a import M4ATags

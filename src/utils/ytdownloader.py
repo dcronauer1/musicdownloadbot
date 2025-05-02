@@ -6,7 +6,7 @@ import shutil
 from config.config_manager import config
 from utils.core import run_command
 from utils.discord_helpers import ask_confirmation
-from utils.metadata import get_audio_duration,apply_thumbnail_to_file,get_audio_metadata,fetch_musicbrainz_data
+from utils.metadata import get_audio_duration,apply_thumbnail_to_file,get_audio_metadata,fetch_musicbrainz_data,replace_thumbnail
 from mutagen import File
 
 # Retrieve settings from the JSON configuration
@@ -207,9 +207,9 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     
     #does the song already exist?
     if os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}{FILE_EXTENSION}")):
-        confirmation_str=f'"⚠️{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
+        confirmation_str=f'⚠️"{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
     elif os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}")):
-        confirmation_str=f'"⚠️{output_name}" already exists, continue anyways?\nArguments: {meta_args}'
+        confirmation_str=f'⚠️"{output_name}" already exists, continue anyways?\nArguments: {meta_args}'
     else:
         confirmation_str=f'Arguments: {meta_args}'
     #confirm selection
@@ -246,6 +246,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         if returncode == 0:
             audio_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
             print("Download complete.")
+            ######NOTE implement replace_thumbnail() here
             if 'cover' in usedb_options:
                 metadata = await get_audio_metadata(audio_file)
                 artist = metadata.get('artist') or artist_name
@@ -295,19 +296,11 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
 
         print("Playlist download complete")
         if 'cover' in usedb_options:
-            for track_file in os.listdir(subdir):
-                if track_file.endswith(FILE_EXTENSION):
-                    track_path = os.path.join(subdir, track_file)
-                    metadata = await get_audio_metadata(track_path)
-                    artist = metadata.get('artist') or artist_name
-                    title = metadata.get('title') or os.path.splitext(track_file)[0]
-                    cover_url, error = await fetch_musicbrainz_data(artist, title)
-                    if cover_url:
-                        await apply_thumbnail_to_file(cover_url, track_path)
-                    else:
-                        error_str = f"❗error has occurred when fetching database cover:\n{error}"
-                        print(error_str)
-                        return None,error_str
+            #replace_thumbnail(title,playlist=True,cover_URL=None, strict=True, releasetype = None, artist_name, album=None, size=None)
+            output, error_str = await replace_thumbnail(output_name,True,None, True, None, artist_name, album, None)
+#           error_str = playlist_database_covers(output_name,artist_name,True)
+            if error_str != None:
+                return output, error_str
         return subdir, None 
     elif type == "album_playlist":
         # Create temporary directory
@@ -410,6 +403,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         os.rename(combined_file, final_file)
 
         print("Album playlist download complete")
+        ########################NOTE implement replace_thumbnail() here
         if 'cover' in usedb_options:
             metadata = await get_audio_metadata(final_file)
             artist = metadata.get('artist') or artist_name

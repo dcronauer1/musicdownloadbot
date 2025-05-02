@@ -35,6 +35,7 @@ store a list of authors and tags so if names are very close, it will be stored a
     recommended to use opus, but alac & .m4a should also work
     default cover size can be "250”, “500”, “1200”. Anything else will default to max size, which is often much larger than 1200, so is not recommended.
         *test if it can be other values
+    when replacing thumbnail, if an album is provided OR there is one in the metadata, it will fallback to that if nothing is found for just the title
 
 # commands:
 ## download:
