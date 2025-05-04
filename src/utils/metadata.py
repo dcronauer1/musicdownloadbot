@@ -90,23 +90,31 @@ async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = No
     except Exception as e:
         return None, f"Unexpected error: {str(e)}"
 
-async def apply_thumbnail_to_file(thumbnail_input: str | bytes, audio_file: str):
-    """Apply a thumbnail to a file using either binary data or a URL."""
-    temp_file = "temp_cover.png"
-    
+async def apply_thumbnail_to_file(thumbnail_input: str | bytes, audio_file: str, isFile: bool = False):
+    """Apply a thumbnail to a file using either binary data or a URL.\n
+    :param thumbnail_input: either URL, raw binary data, or (if isFile==True) the full file path.
+    :param isFile: skip writing image file, use thumbnail_input as the file
+    :return result: True on success, else error string"""    
     try:
-        # Handle different input types
-        if isinstance(thumbnail_input, bytes):
-            # Write binary data directly to temp file
-            with open(temp_file, "wb") as f:
-                f.write(thumbnail_input)
-            print(f"Temp thumbnail downloaded using binary image data for: {audio_file}")
+        if isFile:
+            if os.path.exists(thumbnail_input):
+                temp_file = thumbnail_input
+            else:
+                return "isFile==True but thumbnail_input file does not exist"
         else:
-            # Assume it's a URL and download
-            print(f"⚠️Downloading thumbnail from URL: {thumbnail_input}")
-            returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_input}"')
-            if returncode != 0:
-                return f"❌Download failed: {error}"
+            title = os.path.basename(audio_file)
+            temp_file = os.path.join(TEMP_DIRECTORY,f"{title}_cover.png")
+            # Handle different input types
+            if isinstance(thumbnail_input, bytes): #binary data
+                # Write binary data directly to temp file
+                with open(temp_file, "wb") as f:
+                    f.write(thumbnail_input)
+                print(f"Temp thumbnail downloaded using binary image data for: {audio_file}")
+            else: #URL
+                print(f"⚠️Downloading thumbnail from URL: {thumbnail_input}")
+                returncode, _, error = await run_command(f'wget -O "{temp_file}" "{thumbnail_input}"')
+                if returncode != 0:
+                    return f"❌Download failed: {error}"
 
         # Common processing for both input types
         if audio_file.endswith('.opus'):
@@ -144,8 +152,9 @@ async def apply_thumbnail_to_file(thumbnail_input: str | bytes, audio_file: str)
     except Exception as e:
         return f"❌apply_thumbnail_to_file() Error: {str(e)}"
     finally:
-        try: os.remove(temp_file)
-        except: pass
+        if not isFile:
+            try: os.remove(temp_file)
+            except: pass
 
 async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: bool = False) ->tuple:
     """Convert timestamps to FFmetadata and apply them to an audio file.
