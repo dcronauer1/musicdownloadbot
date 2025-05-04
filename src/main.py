@@ -67,6 +67,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
         timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
     # Download the audio in a separate thread
     audio_file,error_str = await download_audio(interaction, link, type, title, artist, tags, album, addtimestamps, usedatabase, excludetracknumsforplaylist)
+    #TODO usedatabase handling should happen here
     if error_str:
         if audio_file:  #if here, then audio_file=output from replace_thumbnail() when handling playlists
             #NOTE: could technically keep going here (especially if subdir was returned in download_audio);
@@ -115,7 +116,7 @@ class ReplaceGroup(app_commands.Group):
     async def _get_audio_file(self, interaction: discord.Interaction, title: str, isDir:bool=False) -> Optional[str]:
         """Shared method to find audio file and handle missing files"""
         if(not isDir):
-            #NOTE: add handling for other files types here, check todo --> features
+            #TODO: add handling for other files types here, check todo --> features
             audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
         else:
             audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}")
@@ -183,7 +184,7 @@ class ReplaceGroup(app_commands.Group):
         :param playlist: True when using a playlist (ie subdir with songs). Default False.
         :param size: Cover size. Valid values are 250, 500, or 1200. Other values default to largest size (not recommended)
         :param artist: manual fill for usedatabase (ignore unless needed)
-        :param album: album title if searching for album 
+        :param album: Used as a fallback if nothing found for a track. If releasetype=album: only use album
         :param strict: default True. Recommended to leave alone
         """
         # Defer first to prevent interaction token expiration
@@ -197,7 +198,7 @@ class ReplaceGroup(app_commands.Group):
         if audio_file == None:
             return
 
-        #NOTE check here for valid release types
+        #TODO check here for valid release types
 
 
         #handling for passing in thumbnail

@@ -335,19 +335,34 @@ async def get_audio_metadata(audio_file: str) -> dict:
             'genre': None
         }
 
+async def get_audio_duration(audio_file: str) -> Optional[int]:
+    """Get the duration of the audio file in milliseconds using ffprobe."""
+    cmd = f'ffprobe -i "{audio_file}" -show_entries format=duration -v quiet -of csv="p=0"'
+    returncode, duration_str, error = await run_command(cmd)
+
+    if returncode != 0 or not duration_str.strip():
+        print(f"Error getting duration for {audio_file}: {error or 'Empty duration output'}")
+        return None
+
+    try:
+        return int(float(duration_str.strip()) * 1000)  # Convert seconds to milliseconds
+    except ValueError:
+        print(f"Failed to parse audio duration: {duration_str}")
+        return None
+
 #replace_thumbnail(title,playlist=True,cover_URL=None, strict=True, releasetype = None, artist_name, album=None, size=None)
 async def replace_thumbnail(title: str,playlist:bool=False, cover_URL:str=None, strict:bool=True, releasetype: str = None,
         artist:str=None, album:str=None, size: str = DEFAULT_COVER_SIZE) -> tuple: 
     """
-    Helper function to apply thumbnails to a video, or an entire playlist
-    :param title: title of song or playlist (subdirectory songs are stored under)
+    Function to apply thumbnails to a music/video file, or an entire playlist\n
+    :param title: title of song or playlist (subdirectory songs are stored under) NOTE: NOT CHECKED FOR EXISTENCE
     :param playlist: True when using a playlist (ie subdir with songs). Default False.
     
     :param cover_URL: if None, then use database
     :param strict: default True. strict database querying
-    :param releasetype: NOTE check replace_thumbnail_command() in main.py. change this comment when that is finished
+    :param releasetype: TODO check replace_thumbnail_command() in main.py. change this comment when that is finished
     :param artist: manual fill for usedatabase (ignore unless needed)
-    :param album: Use if thumbnail can't be found with strict & title. NOTE: will search metadata if None
+    :param album: Fallback, use if thumbnail can't be found with strict & title
     
     :param size: Cover size. Valid values are 250, 500, or 1200. Other values default to largest size (not recommended)
 
@@ -359,7 +374,7 @@ async def replace_thumbnail(title: str,playlist:bool=False, cover_URL:str=None, 
     if size==None:
         size=DEFAULT_COVER_SIZE
     #etc
-    #NOTE todo above
+    #TODO above
     
     subdir = os.path.join(BASE_DIRECTORY, f"{title}")
     if playlist:
@@ -426,18 +441,3 @@ async def replace_thumbnail(title: str,playlist:bool=False, cover_URL:str=None, 
     if(thumbnail_error != ""):
         error_str=f"❗Error(s): check console for more detail:\n{thumbnail_error}"
     return output,error_str
-
-async def get_audio_duration(audio_file: str) -> Optional[int]:
-    """Get the duration of the audio file in milliseconds using ffprobe."""
-    cmd = f'ffprobe -i "{audio_file}" -show_entries format=duration -v quiet -of csv="p=0"'
-    returncode, duration_str, error = await run_command(cmd)
-
-    if returncode != 0 or not duration_str.strip():
-        print(f"Error getting duration for {audio_file}: {error or 'Empty duration output'}")
-        return None
-
-    try:
-        return int(float(duration_str.strip()) * 1000)  # Convert seconds to milliseconds
-    except ValueError:
-        print(f"Failed to parse audio duration: {duration_str}")
-        return None

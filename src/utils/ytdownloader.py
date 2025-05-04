@@ -187,7 +187,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             return None,"User did not confirm addition of new tags"
 
         # Join them back into a properly formatted string
-        #NOTE: need to change this if other file types are expected
+        #TODO: need to change this if other file types are expected
         tags_str = "; ".join(tags_list)  #m4a uses semicolons
     else:
         tags_str = None
@@ -246,7 +246,8 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         if returncode == 0:
             audio_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
             print("Download complete.")
-            ######NOTE implement replace_thumbnail() here
+            ######TODO implement replace_thumbnail() here
+            ###TODO below should happen in download() (parent function) instead
             if 'cover' in usedb_options:
                 metadata = await get_audio_metadata(audio_file)
                 artist = metadata.get('artist') or artist_name
@@ -296,9 +297,9 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
 
         print("Playlist download complete")
         if 'cover' in usedb_options:
+            ###TODO below should happen in download() (parent function) instead
             #replace_thumbnail(title,playlist=True,cover_URL=None, strict=True, releasetype = None, artist_name, album=None, size=None)
             output, error_str = await replace_thumbnail(output_name,True,None, True, None, artist_name, album, None)
-#           error_str = playlist_database_covers(output_name,artist_name,True)
             if error_str != None:
                 return output, error_str
         return subdir, None 
@@ -403,7 +404,8 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         os.rename(combined_file, final_file)
 
         print("Album playlist download complete")
-        ########################NOTE implement replace_thumbnail() here
+        ########################TODO implement replace_thumbnail() here
+        ###TODO below should happen in download() (parent function) instead
         if 'cover' in usedb_options:
             metadata = await get_audio_metadata(final_file)
             artist = metadata.get('artist') or artist_name

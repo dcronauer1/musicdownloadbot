@@ -90,7 +90,6 @@ def initialize_config():
         program_dir = os.path.dirname(os.path.abspath(__file__))
     temp_dir = os.path.join(program_dir, "temp")
     config["directory_settings"]["temp_directory"] = temp_dir
-    print(f"temp_dir: {temp_dir}")
 
     # Create directory
     if not os.path.exists(temp_dir):
