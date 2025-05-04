@@ -18,6 +18,7 @@ from utils.file_handling import find_file_case_insensitive
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
 BASE_DIRECTORY = config["download_settings"]["base_directory"]
+TEMP_DIRECTORY = config["directory_settings"]["temp_directory"]
 
 try:
     musicbrainzngs.set_useragent(
@@ -217,7 +218,7 @@ async def apply_timestamps_to_file(timestamps: str, audio_file: str, canRemove: 
         metadata.append(f"title={title.replace('\"', '\'')}")  # Escape quotes in titles
 
     # Write metadata to file
-    metadata_file = "metadata.txt"
+    metadata_file = os.path.join(TEMP_DIRECTORY,"metadata.txt")
     with open(metadata_file, "w") as f:
         f.write("\n".join(metadata))
 

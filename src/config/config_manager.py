@@ -3,7 +3,7 @@ import json
 import sys
 import shutil
 
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on run, not saved to the file
     "bot_settings": {
         "BOT_TOKEN": "[your-token-here]"
     },
@@ -72,6 +72,32 @@ def initialize_config():
 
         print("Config updated. Restarting required.")
         sys.exit(0)
+    
+    # Validate critical paths
+    required_paths = {
+        "yt-dlp": config["download_settings"]["yt_dlp_path"],
+        "base directory": config["download_settings"]["base_directory"]
+    }
+    for name, path in required_paths.items():
+        if not os.path.exists(path):
+            print(f"ERROR: {name} path does not exist: {path}")
+            sys.exit(1)
+    
+    # Add temp directory to config
+    if getattr(sys, 'frozen', False):  # PyInstaller bundle
+        program_dir = os.path.dirname(sys.executable)
+    else:  # Running as Python script
+        program_dir = os.path.dirname(os.path.abspath(__file__))
+    temp_dir = os.path.join(program_dir, "temp")
+    config["directory_settings"]["temp_directory"] = temp_dir
+    print(f"temp_dir: {temp_dir}")
+
+    # Create directory
+    if not os.path.exists(temp_dir):
+        try:
+            os.makedirs(temp_dir, exist_ok=False)
+        except OSError as e:
+            print(f"ERROR: Failed to create temp directory: {e}")
 
     return config
 

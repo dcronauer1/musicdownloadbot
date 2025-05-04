@@ -9,6 +9,7 @@ from config.config_manager import config
 from typing import Optional
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]
+TEMP_DIRECTORY = config["directory_settings"]["temp_directory"]
 
 def get_entries_from_json(filename) -> str:
     """function to return all entries from a json file"""
@@ -82,7 +83,7 @@ def save_music_tree(base_directory):
     """
     Function to recursively build a tree of the given directory.
     Excludes .txt files.
-    Saves as tree.txt in the root directory (directory main is being ran from)
+    Saves as tree.txt in the temp directory (directory main is being ran from)
 
     :return file: path/to/tree.txt
     
@@ -99,7 +100,7 @@ def save_music_tree(base_directory):
 
     tree_lines = _build_and_format_tree(base_directory)
 
-    file_path = "tree.txt"
+    file_path = os.path.join(TEMP_DIRECTORY,"tree.txt")
 
     with open(file_path, 'w') as f:
         f.write('\n'.join(tree_lines))
