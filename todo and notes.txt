@@ -7,6 +7,27 @@
 		grabbing links raw (with wget or smthing)
 			this might work natively
 
+10	first, fix replace_thumbnail() for playlists (doesnt work for albums / doesnt replace). then make sure it works for albums
+		next, have it be called in download() in main
+		
+	in download_audio, could do elif album or playlist, do init stuff, then seperate for each of them?
+10	/replacethumbnail: works when title=turbo, but not when title=turbo and album=turbo
+
+10	allow musicolet timestamp formatting for replace timestamps
+
+10	replace_thumbnail_command(): make title fill in for album if releasetype=album. 
+		maybe only have title?
+		maybe rename releasetype to type?
+	
+	check todo in replacethumbnail about title != title metadata
+	
+exclude track nums code	
+make exclude keyword code (so i can exclude stuff like "feat ___")
+make thumbnail_error like success_list
+getting metadata for playlists should also be threaded
+already exists confirmation should come before manually searching for metadata
+make sure download() and replace_thumbnail() can accept just an album
+
 [features]
 2,3	add more arguments
 		date, year
@@ -63,15 +84,21 @@
 4,2	add a bool config for auto correct for artists
 
 [bugs]
-4	type=album_playlist should put playlist link in comments
+2	type=album_playlist should put playlist link in comments
+
 5	album_playlist cannot handle exception for single track being entered
 		/download link:https://youtu.be/LOxmj8QiIWA?si=erV6pJrUP2xq5BuW type:album title:Painkiller artist:Judas Preist album:Painkiller usedatabase:cover
 		this cannot handle singles. need to add an exception
+5	type=song doesnt get cover if its an album. should check if album title was supplied and handle accordingly
+
 3	date/time is getting reset when running replace_thumbnail (and probably replace_timestamps too)
 		seems like metadata is fine, so probably can ignore this
 1	tags from database or from link itself arent saved to tags.json
 		could probably just remove tags.json
 3	folder name of playlists doesnt default to album name when title is missing, but the name of the first song
+
+4	if link is a playlist, type should default to album
+
 [improvements]
 2	bot message improvements
 		make bot cleanup its confirmation boxes
@@ -101,6 +128,9 @@
 		...
 		await result
 		can also do x,y,z = await result if result is a tuple
+
+5	if title is too long, foldersync breaks. so limit title lenght
+		probably just truncate it
 
 4	example config in readme
 

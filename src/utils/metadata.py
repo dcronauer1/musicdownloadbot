@@ -350,19 +350,21 @@ async def get_audio_duration(audio_file: str) -> Optional[int]:
         print(f"Failed to parse audio duration: {duration_str}")
         return None
 
-#replace_thumbnail(title,playlist=True,cover_URL=None, strict=True, releasetype = None, artist_name, album=None, size=None)
-async def replace_thumbnail(title: str,playlist:bool=False, cover_URL:str=None, strict:bool=True, releasetype: str = None,
-        artist:str=None, album:str=None, size: str = DEFAULT_COVER_SIZE) -> tuple: 
+#replace_thumbnail(title,playlist=True,cover_URL=None, album=None, artist=None, strict=True, releasetype = None, size=None)
+async def replace_thumbnail(title: str, playlist:bool=False, cover_URL:str=None, album:str=None, artist:str=None,
+        strict:bool=True, releasetype: str = None, size: str = DEFAULT_COVER_SIZE) -> tuple: 
     """
     Function to apply thumbnails to a music/video file, or an entire playlist\n
-    :param title: title of song or playlist (subdirectory songs are stored under) NOTE: NOT CHECKED FOR EXISTENCE
+    :param title: Title of song or playlist (subdirectory songs are stored under).
+        Can set to None and use album instead
     :param playlist: True when using a playlist (ie subdir with songs). Default False.
     
     :param cover_URL: if None, then use database
+
+    :param album: Used if thumbnail can't be found with title, or if title is None.
+    :param artist: Use if not in metadata
     :param strict: default True. strict database querying
     :param releasetype: TODO check replace_thumbnail_command() in main.py. change this comment when that is finished
-    :param artist: manual fill for usedatabase (ignore unless needed)
-    :param album: Fallback, use if thumbnail can't be found with strict & title
     
     :param size: Cover size. Valid values are 250, 500, or 1200. Other values default to largest size (not recommended)
 
@@ -370,7 +372,50 @@ async def replace_thumbnail(title: str,playlist:bool=False, cover_URL:str=None, 
             NOTE: can still return error str on success (failed database lookup) 
             NOTE: if sending outputs to user, use safe_send()!
     """
+    async def _fetch_data(_artist,_title,_releasetype):
+        """Nested function to run fetch_musicbrainz_data() and handle errors
+
+        :return _image_data: None on error"""
+        nonlocal thumbnail_error
+        _image_data, error = await fetch_musicbrainz_data(_artist, _title, _releasetype, size, strict)
+        if error:
+            #database error truncated
+            thumbnail_error += f"⚠️Database lookup failed for __{_title}__:\n- {error[:40]}\n"
+            print(f"⚠️Database lookup failed for {_title}:\n{error}")
+            return None    #keep checking other files, return this error later
+        if not _image_data:
+            temp_error = f"❌No artwork found for {_title}"
+            thumbnail_error += temp_error+"\n"
+            print(temp_error)
+            return None    #keep checking other files, return this error later
+        return _image_data
+    async def _apply_thumbnail(_image,_audio_file):
+        """Nested function to run apply_thumbnail_to_file() and handle errors\n
+        :param _image: either image_data or cover_URL
+        :param _audio_file: full path of audio file
+        :return result: True on success, else error"""
+        nonlocal thumbnail_error
+        nonlocal title
+
+        result = await apply_thumbnail_to_file(_image, _audio_file)
+        if result == True:
+            success_list.append(f"- {title}")
+        else:#error
+            thumbnail_error += f"❗Error applying thumbnail for __{title}__:\n- {result[:40]}\n" #truncate error
+            print(f"❗Error applying thumbnail for {title}:\n{result}")
+        return result
+
+    #if album specified, get fallback data
+    if album:
+        print(f"Searching for album cover")
+        image_data_album_task = asyncio.create_task(_fetch_data(artist, album,"album"))  #put this on a different thread
+    else:
+        image_data_album = None
+        print(f"Album not provided")
+    
     #default some of the params here (so if None is passed in then do default)
+    if title == None or title == "":
+        title = album   #use album as title
     if size==None:
         size=DEFAULT_COVER_SIZE
     #etc
@@ -381,63 +426,74 @@ async def replace_thumbnail(title: str,playlist:bool=False, cover_URL:str=None, 
         subdir_list = os.listdir(subdir)    #get list of files in subdir       
     else:
         audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
-        subdir_list=[audio_file] #this is the single track in list form
+        subdir_list=[audio_file] #this is the single track's *full directory* in list form
     
     success_list = []
     thumbnail_error = "" #dont stop execution on database errors, collect and continue
+
+    if subdir_list == [] or subdir_list == None:
+        if album: image_data_album.cancel() #cancel task on early return
+        error_str = "❗File/Playlist does not exist"
+        print(error_str)
+        return None, error_str
+    
+    if album: 
+        image_data_album = await image_data_album_task #wait for image_data_album_task if there is an album
+        if image_data_album:
+            print(f"Album cover found!")
+        else:
+            temp_error = f"⚠️No album cover found"
+            thumbnail_error += temp_error+"\n"
+            print(temp_error)
+
+    #TODO: make each iteration async
     for audio_file in subdir_list:
+        print(f"\nStarting download for {audio_file}")
         #add extensions to each file if playlist
         if audio_file.endswith(FILE_EXTENSION) and playlist:
             title = audio_file
             title = os.path.splitext(title)[0]
             audio_file = os.path.join(subdir, audio_file)   #get full path of each playlist entry
-
-        if cover_URL == None: #cover_URL == None: (use database)
-            metadata = await get_audio_metadata(audio_file)
-            if artist == None:
-                artist = metadata.get('artist', None)
-            if artist == None:
-                thumbnail_error += f"⚠️Unknown artist for __{title}__, please supply one manually"
-                print(f"⚠️Unknown artist for {title}, please supply one manually")
-                continue    #keep checking other files, return this error later
-            if album == None:
-                album = metadata.get('album',None)
-            
-            #NOTE
-            #add album fallback here
-            #wait maybe only check album once and store that? then if below fails just set image_data to the stored image?
-            #would have an issue if playlist has different albums but idc
-            #check notes for bad temp code
-
-
-            image_data, error = await fetch_musicbrainz_data(artist, title, releasetype, size, strict)
-            if error:
-                thumbnail_error += f"❌Database lookup failed for __{title}__: {error[:40]}\n" #truncate error
-                print(f"❌Database lookup failed for {title}:\n{error}")
-                continue    #keep checking other files, return this error later
-            if not image_data:
-                thumbnail_error += f"❌No artwork found for __{title}__\n"
-                print(f"❌No artwork found for {title}")
-                continue    #keep checking other files, return this error later
-            
-            result = await apply_thumbnail_to_file(image_data, audio_file)
-            if result is True:
-                success_list.append(f"- {title}")
+        #title is already title for singles
+        if cover_URL == None: #use database
+            #if its an album and releasetype is album, then just use the already gotten album cover
+            if album and releasetype == "album": #album provided and releasetype is album, so only use album cover (even if None)
+                image_data = image_data_album
             else:
-                thumbnail_error += f"❗Error applying thumbnail for __{title}__: {result[:40]}" #truncate error
-                print(f"❗Error applying thumbnail for {title}:\n{result}")
+                metadata = await get_audio_metadata(audio_file)
+
+                if artist:
+                    metadata_artist = artist
+                else:
+                    metadata_artist = metadata.get('artist', None)
+                
+                if metadata_artist == None:  #check if there is an artist, throw warn if not
+                    temp_error = f"⚠️Unknown artist for __{title}__, please supply one manually"
+                    thumbnail_error += temp_error+"\n"
+                    print(temp_error)
+                
+                metadata_title = metadata.get('title', None)
+                #get cover:
+                image_data = await _fetch_data(metadata_artist,title,releasetype)
+                if image_data == None and metadata_title and title != metadata_title:
+                    #not same, try metadata title instead
+                    image_data = await _fetch_data(metadata_artist,metadata_title,releasetype)
+
+            if image_data == None:
+                if image_data_album:    #album cover was found, so use that as fallback
+                    await _apply_thumbnail(image_data_album,audio_file)
+                else:
+                    continue    #no image data, continue with other tracks
+            else:
+                await _apply_thumbnail(image_data,audio_file)
         else: #cover_URL != None: (DONT use database)
-            result = await apply_thumbnail_to_file(cover_URL, audio_file)
-            if (result == True):
-                success_list.append(f"{title}")
-            else:   
-                thumbnail_error += f"❗Error applying thumbnail for __{title}__: {result[:40]}" #truncate error
-                print(f"❗Error applying thumbnail for {title}:\n{result}")
+            await _apply_thumbnail(cover_URL,audio_file)
+
     output = None
     error_str = None
-    if(success_list != []):
+    if(success_list != []): #updated in _apply_thumbnail
         success_string = "\n".join(success_list)
-        output = f"🎊Thumbnail(s) for:\n{success_string}\nupdated from MusicBrainz!"
+        output = f"🎊Thumbnails for:\n{success_string}\nupdated from MusicBrainz!"
     if(thumbnail_error != ""):
         error_str=f"❗Error(s): check console for more detail:\n{thumbnail_error}"
     return output,error_str

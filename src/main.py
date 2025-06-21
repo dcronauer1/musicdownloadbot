@@ -42,7 +42,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     :param title: Custom title for the output file and metadata title
     :param artist: Artist name for metadata. Checked against a list to see if it already exists
     :param tags: Formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
-    :param album: album name. Must be supplied when type=playlist for track numbers
+    :param album: album name. Must be supplied when type=playlist for metadata track numbers
     :param date: *_____________
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
     :param usedatabase: options (comma separated): (cover|tracktimes|tracknames). Use database for metadata instead of youtube information
@@ -172,20 +172,20 @@ class ReplaceGroup(app_commands.Group):
         return
         
     @app_commands.command(name="thumbnail", description="Replace thumbnail on an already existing audio file")
-    async def replace_thumbnail_command(self, interaction: discord.Interaction, title: str, usedatabase: bool = False,
-        releasetype: str = None, playlist:bool=False, size: str = DEFAULT_COVER_SIZE, artist: str = None, album: str=None,
-        strict: bool=True):
+    async def replace_thumbnail_command(self, interaction: discord.Interaction, title: str, playlist:bool=False,
+        album: str=None, releasetype: str = None, size: str = DEFAULT_COVER_SIZE, artist: str = None, 
+        strict: bool=True, customimage: bool = False):
         """
         Replace thumbnail/cover on an already existing audio file
 
-        :param title: Title of the output file or playlist. Case insensitive
-        :param usedatabase: pull the image from a database, instead of using the user's image. Default False
+        :param title: Title of the file or playlist. Case insensitive
+        :param playlist: Use if working with multiple files (ie subdir with individual songs). Default False.
+        :param album: Fallback if nothing is found for a track. Unused if releasetype=album
         :param releasetype: For database parsing. Leave alone for any. Valid options here are "album", __________.
-        :param playlist: True when using a playlist (ie subdir with songs). Default False.
         :param size: Cover size. Valid values are 250, 500, or 1200. Other values default to largest size (not recommended)
-        :param artist: manual fill for usedatabase (ignore unless needed)
-        :param album: Used as a fallback if nothing found for a track. If releasetype=album: only use album
-        :param strict: default True. Recommended to leave alone
+        :param artist: Manual fill, ignore unless needed
+        :param strict: Recommended to leave alone. Default True
+        :param customimage: Dont use database, instead send your own image. playlist is the only parameter that matters here. Default False
         """
         # Defer first to prevent interaction token expiration
         await interaction.response.defer()
@@ -203,11 +203,11 @@ class ReplaceGroup(app_commands.Group):
 
         #handling for passing in thumbnail
         thumbnail_url = None
-        if not usedatabase:
+        if not customimage:
             thumbnail_url = await ask_for_something(interaction, "thumbnail")
         
-        #replace_thumbnail(title,playlist=True,cover_URL=None, strict=True, releasetype = None, artist_name, album=None, size=None)
-        output_str, error_str = await replace_thumbnail(title,playlist,thumbnail_url,strict,releasetype,artist,album,size)
+        #replace_thumbnail(title,playlist=True,cover_URL=None, album=None, artist=None, strict=True, releasetype = None, size=None)
+        output_str, error_str = await replace_thumbnail(title,playlist,thumbnail_url,album,artist,strict,releasetype,size)
 
         if(output_str):
             await safe_send(interaction,output_str)

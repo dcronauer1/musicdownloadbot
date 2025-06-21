@@ -298,8 +298,8 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         print("Playlist download complete")
         if 'cover' in usedb_options:
             ###TODO below should happen in download() (parent function) instead
-            #replace_thumbnail(title,playlist=True,cover_URL=None, strict=True, releasetype = None, artist_name, album=None, size=None)
-            output, error_str = await replace_thumbnail(output_name,True,None, True, None, artist_name, album, None)
+            #replace_thumbnail(title,playlist=True,cover_URL=None, album=None, artist=None, strict=True, releasetype = None, size=None)
+            output, error_str = await replace_thumbnail(output_name,True,None,album,artist_name, True, None, None)
             if error_str != None:
                 return output, error_str
         return subdir, None 
