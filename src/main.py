@@ -22,7 +22,6 @@ class MyBot(commands.Bot):
         # Add command groups BEFORE syncing
         self.tree.add_command(ReplaceGroup())
         self.tree.add_command(ListGroup())
-        self.tree.add_command(HelpGroup())
         await self.tree.sync()  # Sync with current command tree
 
 # Enable necessary intents
@@ -248,56 +247,65 @@ class ListGroup(app_commands.Group):
         """function to list all tags that are stored"""
         await interaction.response.send_message(f"List of tags: {get_entries_from_json('tags.json')}")
 
+@bot.tree.command(name="help", description="Shows a paginated help menu")
+async def help_commands(interaction: discord.Interaction):
+    pages = [
+        discord.Embed(title="🎵 Music Commands", description=
+            "/download:\n" \
+            "-TODO\n" \
+            "/replace_thumbnail:\n"\
+            "- Must provide either title, album, or both:\n" \
+            "  - Use title if working with a single, or a playlist where you don't want a fallback cover\n" \
+            "  - Use album if working with an album, and you would like a fallback cover.\n" \
+            "  - Use both if title != album. title will be used for the name of the folder/file\n" \
+            "- TODO\n" \
+            "/replace_timestamps:\n"\
+            "- TODO\n",
+            color=discord.Color.blurple()),
+        discord.Embed(title="📂 List Commands", description=
+            "/list music\n/list artists\n/list tags",
+            color=discord.Color.blurple()),
+        discord.Embed(title="🛠 Utilities", description=
+            "- Auto chaptering\n- Thumbnail replacement",
+            color=discord.Color.blurple())
+    ]
 
-class HelpGroup(app_commands.Group):
-    def __init__(self):
-        super().__init__(name="help", description="Show help information")
+    current_page = 0
+    await interaction.response.defer()
+    message = await interaction.followup.send(embed=pages[current_page], wait=True)
 
-    @app_commands.command(name="commands", description="Shows a paginated help menu")
-    async def help_commands(self, interaction: discord.Interaction):
-        pages = [
-            discord.Embed(title="Help Page 1", description="🎵 Music Commands\n- /download\n- /replace", color=discord.Color.blurple()),
-            discord.Embed(title="Help Page 2", description="📂 List Commands\n- /list music\n- /list artists\n- /list tags", color=discord.Color.blurple()),
-            discord.Embed(title="Help Page 3", description="🛠 Utilities\n- Auto chaptering\n- Thumbnail replacement", color=discord.Color.blurple())
-        ]
+    await message.add_reaction("⬅️")
+    await message.add_reaction("➡️")
 
-        current_page = 0
-        await interaction.response.defer()
-        message = await interaction.followup.send(embed=pages[current_page], wait=True)
+    def check(reaction: discord.Reaction, user: discord.User):
+        return (
+            user.id == interaction.user.id
+            and reaction.message.id == message.id
+            and str(reaction.emoji) in ["⬅️", "➡️"]
+        )
 
-        await message.add_reaction("⬅️")
-        await message.add_reaction("➡️")
-
-        def check(reaction: discord.Reaction, user: discord.User):
-            return (
-                user.id == interaction.user.id
-                and reaction.message.id == message.id
-                and str(reaction.emoji) in ["⬅️", "➡️"]
-            )
-
+    try:
         while True:
+            reaction, user = await interaction.client.wait_for("reaction_add", timeout=300.0, check=check)
+
+            # Remove user's reaction to keep UI clean
             try:
-                reaction, user = await interaction.client.wait_for("reaction_add", timeout=60.0, check=check)
+                await message.remove_reaction(reaction.emoji, user)
+            except discord.Forbidden:
+                pass
 
-                # Remove user's reaction to keep UI clean
-                try:
-                    await message.remove_reaction(reaction.emoji, user)
-                except discord.Forbidden:
-                    pass
+            if str(reaction.emoji) == "➡️":
+                current_page = (current_page + 1) % len(pages)
+            elif str(reaction.emoji) == "⬅️":
+                current_page = (current_page - 1) % len(pages)
 
-                if str(reaction.emoji) == "➡️":
-                    current_page = (current_page + 1) % len(pages)
-                elif str(reaction.emoji) == "⬅️":
-                    current_page = (current_page - 1) % len(pages)
+            await message.edit(embed=pages[current_page])
 
-                await message.edit(embed=pages[current_page])
-
-            except asyncio.TimeoutError:
-                try:
-                    await message.clear_reactions()
-                except discord.Forbidden:
-                    pass
-                break
+    except asyncio.TimeoutError:
+        try:
+            await message.delete()
+        except discord.Forbidden:
+            pass
 
 @bot.event
 async def on_ready():

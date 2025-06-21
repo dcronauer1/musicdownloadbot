@@ -84,6 +84,10 @@ make sure download() and replace_thumbnail() can accept just an album
 
 4,2	add a bool config for auto correct for artists
 
+5,5 make messages more clean. 
+	auto delete some of them (or only send to user)
+	update messages as things are happing (like when it finishes downloading and starts replacing thumbnails
+
 [improvements]
 2	bot message improvements
 		make bot cleanup its confirmation boxes
