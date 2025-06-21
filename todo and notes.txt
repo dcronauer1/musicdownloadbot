@@ -21,6 +21,7 @@
 	
 	check todo in replacethumbnail about title != title metadata
 	
+make a help function
 exclude track nums code	
 make exclude keyword code (so i can exclude stuff like "feat ___")
 make thumbnail_error like success_list
@@ -83,22 +84,6 @@ make sure download() and replace_thumbnail() can accept just an album
 
 4,2	add a bool config for auto correct for artists
 
-[bugs]
-2	type=album_playlist should put playlist link in comments
-
-5	album_playlist cannot handle exception for single track being entered
-		/download link:https://youtu.be/LOxmj8QiIWA?si=erV6pJrUP2xq5BuW type:album title:Painkiller artist:Judas Preist album:Painkiller usedatabase:cover
-		this cannot handle singles. need to add an exception
-5	type=song doesnt get cover if its an album. should check if album title was supplied and handle accordingly
-
-3	date/time is getting reset when running replace_thumbnail (and probably replace_timestamps too)
-		seems like metadata is fine, so probably can ignore this
-1	tags from database or from link itself arent saved to tags.json
-		could probably just remove tags.json
-3	folder name of playlists doesnt default to album name when title is missing, but the name of the first song
-
-4	if link is a playlist, type should default to album
-
 [improvements]
 2	bot message improvements
 		make bot cleanup its confirmation boxes
@@ -133,6 +118,25 @@ make sure download() and replace_thumbnail() can accept just an album
 		probably just truncate it
 
 4	example config in readme
+
+[bugs]
+2	type=album_playlist should put playlist link in comments
+
+5	album_playlist cannot handle exception for single track being entered
+		/download link:https://youtu.be/LOxmj8QiIWA?si=erV6pJrUP2xq5BuW type:album title:Painkiller artist:Judas Preist album:Painkiller usedatabase:cover
+		this cannot handle singles. need to add an exception
+5	type=song doesnt get cover if its an album. should check if album title was supplied and handle accordingly
+
+3	date/time is getting reset when running replace_thumbnail (and probably replace_timestamps too)
+		seems like metadata is fine, so probably can ignore this
+1	tags from database or from link itself arent saved to tags.json
+		could probably just remove tags.json
+3	folder name of playlists doesnt default to album name when title is missing, but the name of the first song
+
+4	if link is a playlist, type should default to album
+
+4,2	replace_thumbnail makes bot lose connection. (only in console)
+
 
 [notes]
 	from mutagen.m4a import M4ATags

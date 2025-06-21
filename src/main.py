@@ -2,9 +2,9 @@ import discord
 import os
 import asyncio
 from typing import Optional
-
 from discord import app_commands
 from discord.ext import commands
+
 from config.config_manager import config
 from utils.ytdownloader import *
 from utils.metadata import *
@@ -42,12 +42,12 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     :param type: (song|album_playlist|playlist) Default song. album_playlist downloads a playlist as one file
     :param title: Custom title for the output file and metadata title
     :param artist: Artist name for metadata. Checked against a list to see if it already exists
-    :param tags: Formatted as tag1,tag2,..., with .strip() being used (so tag1, tag2,... is fine) Checked against a list to see if they already exist
-    :param album: album name. Must be supplied when type=playlist for metadata track numbers
-    :param date: *_____________
+    :param tags: Formatted as tag1,tag2,... Checked against a list to see if they already exist
+    :param album: album name. Must be supplied when type=playlist for track numbers in metadata
+    :param date: TODO *_____________
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
     :param usedatabase: options (comma separated): (cover|tracktimes|tracknames). Use database for metadata instead of youtube information
-    :param excludetracknumsforplaylist: applies when type=playlist: if True: dont add track numbers. Default=False
+    :param excludetracknumsforplaylist: TODO applies when type=playlist: if True: dont add track numbers. Default=False
     
     The 'interaction' object is similar to 'ctx' in prefix commands, containing information about the command invocation.
     """
@@ -173,15 +173,15 @@ class ReplaceGroup(app_commands.Group):
         return
         
     @app_commands.command(name="thumbnail", description="Replace thumbnail on an already existing audio file")
-    async def replace_thumbnail_command(self, interaction: discord.Interaction, title: str, playlist:bool=False,
-        album: str=None, releasetype: str = None, size: str = DEFAULT_COVER_SIZE, artist: str = None, 
+    async def replace_thumbnail_command(self, interaction: discord.Interaction, title: str=None, album: str=None,
+        playlist:bool=False, releasetype: str = None, size: str = DEFAULT_COVER_SIZE, artist: str = None, 
         strict: bool=True, customimage: bool = False):
         """
-        Replace thumbnail/cover on an already existing audio file
+        Replace thumbnail/cover on an already existing audio file. Either title, album, or both must be provided.\n
 
-        :param title: Title of the file or playlist. Case insensitive
+        :param title: Title of file/playlist. Case insensitive
+        :param album: Use for album cover fallback (all files with no cover will use album cover). Case insensitive
         :param playlist: Use if working with multiple files (ie subdir with individual songs). Default False.
-        :param album: Fallback if nothing is found for a track. Unused if releasetype=album
         :param releasetype: For database parsing. Leave alone for any. Valid options here are "album", __________.
         :param size: Cover size. Valid values are 250, 500, or 1200. Other values default to largest size (not recommended)
         :param artist: Manual fill, ignore unless needed
@@ -190,6 +190,12 @@ class ReplaceGroup(app_commands.Group):
         """
         # Defer first to prevent interaction token expiration
         await interaction.response.defer()
+
+        if title == None or title == "":
+            if album == None or album == "":
+                await interaction.followup.send("❌Neither title nor album provided. Must provide at least one!")
+                return
+            title = album   #use album as title
 
         #get audio file & check for existence
         if(not playlist):
@@ -203,12 +209,14 @@ class ReplaceGroup(app_commands.Group):
 
 
         #handling for passing in thumbnail
-        thumbnail_url = None
-        if not customimage:
-            thumbnail_url = await ask_for_something(interaction, "thumbnail")
+        cover_url = None
+        if customimage:
+            cover_url = await ask_for_something(interaction, "thumbnail")
+            if cover_url == None:
+                return
         
         #replace_thumbnail(title,playlist=True,cover_URL=None, album=None, artist=None, strict=True, releasetype = None, size=None)
-        output_str, error_str = await replace_thumbnail(title,playlist,thumbnail_url,album,artist,strict,releasetype,size)
+        output_str, error_str = await replace_thumbnail(title,playlist,cover_url,album,artist,strict,releasetype,size)
 
         if(output_str):
             await safe_send(interaction,output_str)

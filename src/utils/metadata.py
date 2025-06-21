@@ -351,10 +351,15 @@ async def get_audio_duration(audio_file: str) -> Optional[int]:
         return None
 
 #replace_thumbnail(title,playlist=True,cover_URL=None, album=None, artist=None, strict=True, releasetype = None, size=None)
-async def replace_thumbnail(title: str, playlist:bool=False, cover_URL:str=None, album:str=None, artist:str=None,
+async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=None, album:str=None, artist:str=None,
         strict:bool=True, releasetype: str = None, size: str = DEFAULT_COVER_SIZE) -> tuple: 
     """
     Function to apply thumbnails to a music/video file, or an entire playlist\n
+    Either title, album, or both must be provided:
+    * Use title if working with a single, or a playlist where you don't want a fallback cover
+    * Use album if working with an album, and you would like a fallback cover.
+    * Use both if title != album. title will be used for the name of the folder/file
+
     :param title: Title of song or playlist (subdirectory songs are stored under).
         Can set to None and use album instead
     :param playlist: True when using a playlist (ie subdir with songs). Default False.
@@ -380,7 +385,7 @@ async def replace_thumbnail(title: str, playlist:bool=False, cover_URL:str=None,
         _image_data, error = await fetch_musicbrainz_data(_artist, _title, _releasetype, size, strict)
         if error:
             #database error truncated
-            thumbnail_error += f"⚠️Database lookup failed for __{_title}__:\n- {error[:40]}\n"
+            thumbnail_error += f"⚠️Database lookup failed for __{_title}__: {error[:40]}\n"
             print(f"⚠️Database lookup failed for {_title}:\n{error}")
             return None    #keep checking other files, return this error later
         if not _image_data:
@@ -389,32 +394,25 @@ async def replace_thumbnail(title: str, playlist:bool=False, cover_URL:str=None,
             print(temp_error)
             return None    #keep checking other files, return this error later
         return _image_data
-    async def _apply_thumbnail(_image,_audio_file):
+    async def _apply_thumbnail(_image,_audio_file,_title):
         """Nested function to run apply_thumbnail_to_file() and handle errors\n
         :param _image: either image_data or cover_URL
         :param _audio_file: full path of audio file
         :return result: True on success, else error"""
         nonlocal thumbnail_error
-        nonlocal title
 
         result = await apply_thumbnail_to_file(_image, _audio_file)
         if result == True:
-            success_list.append(f"- {title}")
+            success_list.append(f"- {_title}")
         else:#error
-            thumbnail_error += f"❗Error applying thumbnail for __{title}__:\n- {result[:40]}\n" #truncate error
-            print(f"❗Error applying thumbnail for {title}:\n{result}")
+            thumbnail_error += f"❗Error applying thumbnail for __{_title}__:\n- {result[:40]}\n" #truncate error
+            print(f"❗Error applying thumbnail for {_title}:\n{result}")
         return result
-
-    #if album specified, get fallback data
-    if album:
-        print(f"Searching for album cover")
-        image_data_album_task = asyncio.create_task(_fetch_data(artist, album,"album"))  #put this on a different thread
-    else:
-        image_data_album = None
-        print(f"Album not provided")
     
     #default some of the params here (so if None is passed in then do default)
     if title == None or title == "":
+        if album == None or album == "":
+            return None, "replace_thumbnail(): Title and album can't both be None. At least one must be provided."
         title = album   #use album as title
     if size==None:
         size=DEFAULT_COVER_SIZE
@@ -423,29 +421,42 @@ async def replace_thumbnail(title: str, playlist:bool=False, cover_URL:str=None,
     
     subdir = os.path.join(BASE_DIRECTORY, f"{title}")
     if playlist:
-        subdir_list = os.listdir(subdir)    #get list of files in subdir       
+        #get list of files in subdir (only file.ext, not full path)
+        subdir_list = [f for f in os.listdir(subdir) if not f.endswith('.txt')] 
     else:
         audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
         subdir_list=[audio_file] #this is the single track's *full directory* in list form
-    
-    success_list = []
-    thumbnail_error = "" #dont stop execution on database errors, collect and continue
 
     if subdir_list == [] or subdir_list == None:
-        if album: image_data_album.cancel() #cancel task on early return
         error_str = "❗File/Playlist does not exist"
         print(error_str)
         return None, error_str
-    
-    if album: 
-        image_data_album = await image_data_album_task #wait for image_data_album_task if there is an album
+        
+    if album:
+        if artist == None:
+            #get artist from metadata
+            if playlist:
+                audio_file_temp = os.path.join(subdir, subdir_list[0])
+                metadata = await get_audio_metadata(audio_file_temp)
+            else:
+                metadata = await get_audio_metadata(subdir_list[0])
+            album_artist = metadata.get('artist', None)
+        else:
+            album_artist = artist
+        print(f"Searching for album cover")
+        image_data_album = await _fetch_data(album_artist, album,"album")
         if image_data_album:
             print(f"Album cover found!")
         else:
             temp_error = f"⚠️No album cover found"
             thumbnail_error += temp_error+"\n"
             print(temp_error)
+    else:
+        image_data_album = None
+        print(f"Album not provided")
 
+    success_list = []
+    thumbnail_error = "" #dont stop execution on database errors, collect and continue
     #TODO: make each iteration async
     for audio_file in subdir_list:
         print(f"\nStarting download for {audio_file}")
@@ -481,13 +492,13 @@ async def replace_thumbnail(title: str, playlist:bool=False, cover_URL:str=None,
 
             if image_data == None:
                 if image_data_album:    #album cover was found, so use that as fallback
-                    await _apply_thumbnail(image_data_album,audio_file)
+                    await _apply_thumbnail(image_data_album,audio_file,title)
                 else:
                     continue    #no image data, continue with other tracks
             else:
-                await _apply_thumbnail(image_data,audio_file)
+                await _apply_thumbnail(image_data,audio_file,title)
         else: #cover_URL != None: (DONT use database)
-            await _apply_thumbnail(cover_URL,audio_file)
+            await _apply_thumbnail(cover_URL,audio_file,title)
 
     output = None
     error_str = None
