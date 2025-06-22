@@ -379,6 +379,7 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
     """
     success_list = []
     thumbnail_error = "" #dont stop execution on database errors, collect and continue
+    album_cover_found_str = "not "
     async def _fetch_data(_artist,_title,_releasetype):
         """Nested function to run fetch_musicbrainz_data() and handle errors
 
@@ -387,7 +388,7 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
         _image_data, error = await fetch_musicbrainz_data(_artist, _title, _releasetype, size, strict)
         if error:
             #database error truncated
-            thumbnail_error += f"⚠️DB lookup failed for __{_title}__: {error[:40]}\n"
+            thumbnail_error += f"⚠️DB lookup failed for __{_title}__: {error[:80]}\n"
             print(f"⚠️DB lookup failed for {_title}:\n{error}")
             return None    #keep checking other files, return this error later
         if not _image_data:
@@ -460,9 +461,8 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
                 thumbnail_error += temp_error+"\n"
                 print(temp_error)
         if image_data_album:
-            temp = "Album cover found!, will use as a fallback"
-            print(temp)
-            thumbnail_error += temp
+            album_cover_found_str = ""
+            print("Album cover found")
             if releasetype == None and playlist == False: 
                 #since using album, use album release type if one wasnt provided, so the album cover is used instead of one from title.
                 releasetype = "album"   
@@ -499,7 +499,7 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
                 metadata_title = metadata.get('title', None)
                 #get cover:
                 image_data = await _fetch_data(metadata_artist,metadata_title,releasetype)
-                if image_data == None and metadata_title and title != metadata_title:
+                if image_data == None and title != metadata_title:
                     #not same, try file title instead
                     print("Trying file title:")
                     image_data = await _fetch_data(metadata_artist,title,releasetype)
@@ -520,5 +520,5 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
         success_string = "\n".join(success_list)
         output = f"🎊Thumbnails for:\n{success_string}\nupdated from MusicBrainz!"
     if(thumbnail_error != ""):
-        error_str=f"❗Error(s): check console for more detail:\n{thumbnail_error}"
+        error_str=f"Album cover was {album_cover_found_str}found:\n❗Error(s): check console for more detail:\n{thumbnail_error}"
     return output,error_str
