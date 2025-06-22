@@ -26,69 +26,90 @@ try:
         version="1.0",
         contact=config["musicbrainz"]["contact_email"]
     )
+    musicbrainzngs.set_rate_limit(limit_or_interval=1.0, new_requests=1)
 except KeyError as e:
     print(f"❌ MusicBrainz configuration missing: {str(e)}")
     print("Add these to your config.json under 'bot_settings':")
     print("- app_name\n- contact_email")
     sys.exit(1)
 
-async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None, size: str = DEFAULT_COVER_SIZE, strict: bool=True) -> tuple:
-    """Fetch cover art binary data from MusicBrainz
-    
-    :param release_type: valid MusicBrainz release type (e.g., "album")
-    :param size: cover size.
-    :return: (image_data, error)
-    """
+async def fetch_musicbrainz_data(artist: str, title: str, release_type: str = None, 
+                                 size: str = DEFAULT_COVER_SIZE, strict: bool = True) -> tuple:
+    """Fetch cover art with improved reliability and direct Cover Art Archive access"""
     try:
-        if(release_type):
-            result = musicbrainzngs.search_releases(
-                artist=artist,
-                release=title,
-                limit=5,
-                type=release_type,
-                strict=strict
-            )
-        else:
-            result = musicbrainzngs.search_releases(
-                artist=artist,
-                release=title,
-                limit=5,
-                strict=strict
-            )
-        #NOTE: VALID_RELEASE_TYPES = ['nat', 'album', 'single', 'ep', 'broadcast', 'other', 'compilation', 'soundtrack', 'spokenword', 'interview', 'audiobook', 'live', 'remix', 'dj-mix', 'mixtape/street']
-        #https://python-musicbrainzngs.readthedocs.io/en/latest/api/#musicbrainzngs.musicbrainz.VALID_RELEASE_TYPES
-                
-        if not result.get('release-list'):
-            return None, "No matching releases found"
+        # Try release groups first with direct CAA access
+        rg_result = musicbrainzngs.search_release_groups(
+            artist=artist,
+            releasegroup=title,
+            limit=5,
+            strict=strict
+        )
+        
+        for rg in rg_result.get('release-group-list', []):
+            rg_id = rg['id']
+            try:
+                # Direct Cover Art Archive access
+                cover_data = await fetch_from_coverartarchive(rg_id, size, "release-group")
+                return cover_data, None
+            except Exception as e:
+                print(f"RG Direct CAA failed {rg_id}: {str(e)}")
 
-        # Find first release with cover art
-        for release in result['release-list']:
+        # Then try individual releases with direct CAA access
+        search_params = {"artist": artist, "release": title, "limit": 10, "strict": strict}
+        if release_type:
+            search_params["type"] = release_type
+            
+        result = musicbrainzngs.search_releases(**search_params)
+        
+        for release in result.get('release-list', []):
             mbid = release['id']
             try:
-                # Get list of images for this release
-                image_list = musicbrainzngs.get_image_list(mbid)
-                
-                for image in image_list.get('images', []):
-                    if image.get('front', False):
-                        # Fetch actual image binary data
-                        image_data = musicbrainzngs.get_image(mbid, image['id'], size)
-                        
-                        # Convert to bytes if needed (API typically returns bytes directly)
-                        if isinstance(image_data, str):
-                            image_data = image_data.encode()
-                            
-                        return image_data, None
-                        
-            except musicbrainzngs.WebServiceError as e:
-                print(f"Error fetching images for {mbid}: {str(e)}")
-                continue
+                # Direct Cover Art Archive access
+                cover_data = await fetch_from_coverartarchive(mbid, size, "release")
+                return cover_data, None
+            except Exception as e:
+                print(f"Release Direct CAA failed {mbid}: {str(e)}")
 
-        return None, "No valid artwork found"
+        return None, "No artwork found via direct methods"
 
-    except musicbrainzngs.WebServiceError as e:
-        return None, f"MusicBrainz API Error: {str(e)}"
     except Exception as e:
         return None, f"Unexpected error: {str(e)}"
+
+async def fetch_from_coverartarchive(mbid: str, size: str, entity_type: str) -> bytes:
+    """Directly fetch cover art from Cover Art Archive"""
+    # Size mapping - Cover Art Archive supports these sizes
+    size_map = {
+        "250": "250",
+        "500": "500",
+        "1200": "1200",
+        "large": "1200"
+    }
+    size_str = size_map.get(size, "1200")  # Default to large
+    
+    # First try with specific size
+    url = f"https://coverartarchive.org/{entity_type}/{mbid}/front-{size_str}.jpg"
+    response = requests.get(url, timeout=10)
+    
+    if response.status_code == 200:
+        return response.content
+    
+    # Then try without size parameter
+    print("Trying without size parameter")
+    url = f"https://coverartarchive.org/{entity_type}/{mbid}/front.jpg"
+    response = requests.get(url, timeout=10)
+    
+    if response.status_code == 200:
+        return response.content
+    
+    # Try with different size if original failed
+    if size_str != "1200":
+        print("Trying size 1200 parameter")
+        url = f"https://coverartarchive.org/{entity_type}/{mbid}/front-1200.jpg"
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            return response.content
+    
+    raise Exception(f"Cover Art Archive error: HTTP {response.status_code}")
 
 async def apply_thumbnail_to_file(thumbnail_input: str | bytes, audio_file: str, isFile: bool = False):
     """Apply a thumbnail to a file using either binary data or a URL.\n
