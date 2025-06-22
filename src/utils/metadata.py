@@ -387,8 +387,8 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
         _image_data, error = await fetch_musicbrainz_data(_artist, _title, _releasetype, size, strict)
         if error:
             #database error truncated
-            thumbnail_error += f"⚠️Database lookup failed for __{_title}__: {error[:40]}\n"
-            print(f"⚠️Database lookup failed for {_title}:\n{error}")
+            thumbnail_error += f"⚠️DB lookup failed for __{_title}__: {error[:40]}\n"
+            print(f"⚠️DB lookup failed for {_title}:\n{error}")
             return None    #keep checking other files, return this error later
         if not _image_data:
             temp_error = f"❌No artwork found for {_title}"
@@ -460,7 +460,9 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
                 thumbnail_error += temp_error+"\n"
                 print(temp_error)
         if image_data_album:
-            print(f"Album cover found!")
+            temp = "Album cover found!, will use as a fallback"
+            print(temp)
+            thumbnail_error += temp
             if releasetype == None and playlist == False: 
                 #since using album, use album release type if one wasnt provided, so the album cover is used instead of one from title.
                 releasetype = "album"   

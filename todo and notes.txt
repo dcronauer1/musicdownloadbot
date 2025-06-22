@@ -7,10 +7,13 @@
 		grabbing links raw (with wget or smthing)
 			this might work natively
 
-10	first, fix replace_thumbnail() for playlists (doesnt work for albums / doesnt replace). then make sure it works for albums
-		next, have it be called in download() in main
+
 		
-	in download_audio, could do elif album or playlist, do init stuff, then seperate for each of them?
+	in download_audio, could do elif (album or playlist), do init stuff, then seperate for each of them?
+
+1000 /replace thumbnail title:Nevermind album:Nevermind artist:Nirvana
+		doesnt work???
+		https://musicbrainz.org/release-group/1b022e01-4da6-387b-8658-8678046e4cef
 
 10	allow musicolet timestamp formatting for replace timestamps
 	
@@ -19,6 +22,7 @@ make thumbnail_error like success_list
 getting metadata for playlists should also be threaded
 already exists confirmation should come before manually searching for metadata
 make sure download() and replace_thumbnail() can accept just an album
+exclude tracks
 
 [features]
 2,3	add more arguments

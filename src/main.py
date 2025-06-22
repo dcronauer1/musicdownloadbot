@@ -33,7 +33,7 @@ bot = MyBot(command_prefix="!", intents=intents)
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, type: str = "Song", title: str = None, artist: str = None, tags: str = None,
-        album: str = None, date: str = None, addtimestamps: bool = None, usedatabase: str = '', excludetracknumsforplaylist: bool = False):
+        album: str = None, date: str = None, addtimestamps: bool = None, usedatabase: bool=False, excludetracknumsforplaylist: bool = False):
     """
     Slash command to download a video.
     
@@ -45,7 +45,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     :param album: album name. Must be supplied when type=playlist for track numbers in metadata
     :param date: TODO *_____________
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
-    :param usedatabase: options (comma separated): (cover|tracktimes|tracknames). Use database for metadata instead of youtube information
+    :param usedatabase: for cover(s)
     :param excludetracknumsforplaylist: TODO applies when type=playlist: if True: dont add track numbers. Default=False
     
     The 'interaction' object is similar to 'ctx' in prefix commands, containing information about the command invocation.
@@ -59,23 +59,27 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     if type not in ["song", "album_playlist", "playlist"]:
         await interaction.followup.send(f'❗"{type}" is not a valid type. Valid types are either song, album_playlist, or playlist')
         return
-    
-    usedatabase = usedatabase.lower()
 
     timestamps = None
     if addtimestamps: #addtimestamps true, ask user for timestamps before downloading
         timestamps = await ask_for_something(interaction,"timestamps")  # Prompt user for timestamps
     # Download the audio in a separate thread
-    audio_file,error_str = await download_audio(interaction, link, type, title, artist, tags, album, addtimestamps, usedatabase, excludetracknumsforplaylist)
-    #TODO usedatabase handling should happen here
+    audio_file,error_str,output_name = await download_audio(interaction, link, type, title, artist, tags, album, addtimestamps, usedatabase, excludetracknumsforplaylist)
     if error_str:
-        if audio_file:  #if here, then audio_file=output from replace_thumbnail() when handling playlists
-            #NOTE: could technically keep going here (especially if subdir was returned in download_audio);
-            # however, there is no point since timestamps arent applicable to playlists.
-            #NOTE 2: this will be irrelevant soon, since usedatabase handling should happen before this if block, not inside download_audio()
-            await safe_send(interaction,f"{audio_file}")
         await safe_send(interaction,f"❗Failed to download audio. Error:\n{error_str}")
         return
+
+    if usedatabase: #run replace_thumbnail here
+        if type == "playlist":
+            playlist = True
+        else:
+            playlist = False
+        #replace_thumbnail(title,playlist=True,cover_URL=None, album=None, artist=None, strict=True, releasetype = None, size=None)
+        output_str, error_str = await replace_thumbnail(output_name,playlist,None,album,artist, True, None, None)
+        if(output_str):
+            await safe_send(interaction,output_str)
+        if(error_str):
+            await safe_send(interaction,error_str)
     
     if timestamps and (type != "playlist"): #if timestamps exist, then user entered timestamps, so use those
         success, error_str = await apply_timestamps_to_file(timestamps,audio_file)
