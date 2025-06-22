@@ -11,18 +11,9 @@
 		next, have it be called in download() in main
 		
 	in download_audio, could do elif album or playlist, do init stuff, then seperate for each of them?
-10	/replacethumbnail: works when title=turbo, but not when title=turbo and album=turbo
 
 10	allow musicolet timestamp formatting for replace timestamps
-
-10	replace_thumbnail_command(): make title fill in for album if releasetype=album. 
-		maybe only have title?
-		maybe rename releasetype to type?
 	
-	check todo in replacethumbnail about title != title metadata
-	
-make a help function
-exclude track nums code	
 make exclude keyword code (so i can exclude stuff like "feat ___")
 make thumbnail_error like success_list
 getting metadata for playlists should also be threaded
@@ -73,9 +64,6 @@ make sure download() and replace_thumbnail() can accept just an album
 		-I, --playlist-items ITEM_SPEC
 			check docs for formatting: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#video-selection
 
-*✓	replace playlist covers code should be a separate function so replace_thumbnail can use it
-		implement this too, use type variable
-
 4,3	replace timestamps should send the current timstamps to the user
 
 3,3	ability for commands to parse all valid audio types.
@@ -110,13 +98,12 @@ make sure download() and replace_thumbnail() can accept just an album
 2	make json lists separated by new line
 
 3	download should say what was successful (metdata, timestamps, etc)
-*5	database handling for download() should take place in that command, NOT in download_audio()
 
 	add multithreading
-		result = asyncio.create_task(func)
+		result_task = asyncio.create_task(func)
 		...
-		await result
-		can also do x,y,z = await result if result is a tuple
+		await result = result_task
+		can also do x,y,z = await result_task if result is a tuple
 
 5	if title is too long, foldersync breaks. so limit title lenght
 		probably just truncate it
@@ -124,12 +111,9 @@ make sure download() and replace_thumbnail() can accept just an album
 4	example config in readme
 
 [bugs]
-2	type=album_playlist should put playlist link in comments
-
 5	album_playlist cannot handle exception for single track being entered
 		/download link:https://youtu.be/LOxmj8QiIWA?si=erV6pJrUP2xq5BuW type:album title:Painkiller artist:Judas Preist album:Painkiller usedatabase:cover
 		this cannot handle singles. need to add an exception
-5	type=song doesnt get cover if its an album. should check if album title was supplied and handle accordingly
 
 3	date/time is getting reset when running replace_thumbnail (and probably replace_timestamps too)
 		seems like metadata is fine, so probably can ignore this

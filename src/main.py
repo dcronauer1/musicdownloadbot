@@ -257,7 +257,10 @@ async def help_commands(interaction: discord.Interaction):
             "- Must provide either title, album, or both:\n" \
             "  - Use title if working with a single, or a playlist where you don't want a fallback cover\n" \
             "  - Use album if working with an album, and you would like a fallback cover.\n" \
-            "  - Use both if title != album. title will be used for the name of the folder/file\n" \
+            "  - Use both if title != album. Title will be used for the name of the folder/file, while album will be used to find an album cover\n" \
+            "  - **Note**: File searching is case-insensitive, but musicbrainz is case-__sensitive__, so sometimes different casing will return different covers." \
+            "  - You can pass in title=/playlist/track_name."
+            "- release_type: if \"album\", it will replace all covers with the album cover, regardless of if track covers exist \n" \
             "- TODO\n" \
             "/replace_timestamps:\n"\
             "- TODO\n",

@@ -358,7 +358,7 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
     Either title, album, or both must be provided:
     * Use title if working with a single, or a playlist where you don't want a fallback cover
     * Use album if working with an album, and you would like a fallback cover.
-    * Use both if title != album. title will be used for the name of the folder/file
+    * Use both if title != album. title will be used for the name of the folder/file, while album will be used to find an album cover
 
     :param title: Title of song or playlist (subdirectory songs are stored under).
         Can set to None and use album instead
@@ -377,6 +377,8 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
             NOTE: can still return error str on success (failed database lookup) 
             NOTE: if sending outputs to user, use safe_send()!
     """
+    success_list = []
+    thumbnail_error = "" #dont stop execution on database errors, collect and continue
     async def _fetch_data(_artist,_title,_releasetype):
         """Nested function to run fetch_musicbrainz_data() and handle errors
 
@@ -433,30 +435,39 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
         return None, error_str
         
     if album:
-        if artist == None:
-            #get artist from metadata
-            if playlist:
-                audio_file_temp = os.path.join(subdir, subdir_list[0])
-                metadata = await get_audio_metadata(audio_file_temp)
-            else:
-                metadata = await get_audio_metadata(subdir_list[0])
-            album_artist = metadata.get('artist', None)
+        #get metadata from first track 
+        if playlist:
+            audio_file_temp = os.path.join(subdir, subdir_list[0])
+            metadata = await get_audio_metadata(audio_file_temp)
         else:
+            metadata = await get_audio_metadata(subdir_list[0])
+
+        if artist:
             album_artist = artist
+        else:
+            #get artist from metadata
+            album_artist = metadata.get('artist', None)
+
         print(f"Searching for album cover")
         image_data_album = await _fetch_data(album_artist, album,"album")
+        if image_data_album == None:
+            #get album title from metadata and try again
+            print("Trying metadata album title:")
+            album_metadata = metadata.get('album', None)
+            image_data_album = await _fetch_data(album_artist, album_metadata,"album")
+            if image_data_album == None:
+                temp_error = f"⚠️No album cover found"
+                thumbnail_error += temp_error+"\n"
+                print(temp_error)
         if image_data_album:
             print(f"Album cover found!")
-        else:
-            temp_error = f"⚠️No album cover found"
-            thumbnail_error += temp_error+"\n"
-            print(temp_error)
+            if releasetype == None and playlist == False: 
+                #since using album, use album release type if one wasnt provided, so the album cover is used instead of one from title.
+                releasetype = "album"   
     else:
         image_data_album = None
         print(f"Album not provided")
 
-    success_list = []
-    thumbnail_error = "" #dont stop execution on database errors, collect and continue
     #TODO: make each iteration async
     for audio_file in subdir_list:
         print(f"\nStarting download for {audio_file}")
@@ -485,10 +496,11 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
                 
                 metadata_title = metadata.get('title', None)
                 #get cover:
-                image_data = await _fetch_data(metadata_artist,title,releasetype)
+                image_data = await _fetch_data(metadata_artist,metadata_title,releasetype)
                 if image_data == None and metadata_title and title != metadata_title:
-                    #not same, try metadata title instead
-                    image_data = await _fetch_data(metadata_artist,metadata_title,releasetype)
+                    #not same, try file title instead
+                    print("Trying file title:")
+                    image_data = await _fetch_data(metadata_artist,title,releasetype)
 
             if image_data == None:
                 if image_data_album:    #album cover was found, so use that as fallback
