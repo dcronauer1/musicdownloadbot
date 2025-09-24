@@ -1,45 +1,40 @@
-# how to:
-sudo apt install python3 python3-pip samba ffmpeg atomicparsley python3-mutagen 
-get runable for yt-dlp: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options
-set up samba (optional)
+# How To Setup:
+`sudo apt install python3 python3-pip samba ffmpeg atomicparsley python3-mutagen`  
+get runable for yt-dlp: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options  
 
-set up directories accordingly in config.json
+set up directories accordingly in config.json  
 
-# on phone:
-get foobar2000 or musicolet
-    both are "supported"
-    Foobar2000 will automatically split files with timestamps into separate songs
-    musicolet needs a seperate txt file for timestamps (which is generated).
-        need to enable timestamp file generation in config. also need to tell musicolet to use .LRC file. will auto-apply for each song
-set up foldersync with sftp or smb2 to auto copy (recommended sftp)
+## Environment Setup:
+### On Phone:
+* Get foobar2000 or musicolet
+  * Both are supported
+  * Foobar2000 will automatically split files with timestamps into separate songs
+  * Musicolet needs a seperate txt file for timestamps (which is generated).  
+    * ~~Need to enable timestamp file generation in config.~~ Also need to tell musicolet to use .LRC file. Will auto-apply for each song.
+* Get FolderSync app. Set up with ssh keys to auto sync music to phone.
+    * Unknown if there is an IOS alternative.
 
-# on client pc(s):
-foobar2000 recommended
-get rsync & cwRsync (latter is for windows)
-    can sync music over sftp
+### On Client PC(s):
+* Foobar2000 recommended  
+* Will add sync script in the future
 
-# common commands:
-ffmpeg -i [name].m4a
-
-
-# features:
-download youtube videos as .m4a (ALAC so lossless)
-add title, author, album title, tags, and more (year, date)
-store a list of authors and tags so if names are very close, it will be stored as the same artist/tag.
-    user confirmations for adding new authors/tags
+# Features:
+* Download music from YouTube as .opus. .m4a is partially supported.  
+* Add title, author, album title, tags, and more ~~(year, date)~~  
+* Store a list of authors and tags. 
+  * If names are very close, it will be stored as the same artist/tag.
+    * Todo: add config to disable this
+* 
 
 # Notes
-    soundcloud works; however, without a soundcloud go subscription, downloads are automatically compressed (and it is easy to tell)
-    - I do not plan on implementing this
-    - https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
-    recommended to use opus, but alac & .m4a should also work
-    default cover size can be "250”, “500”, “1200”. Anything else will default to max size, which is often much larger than 1200, so is not recommended.
-        *test if it can be other values
-    when replacing thumbnail, if an album is provided OR there is one in the metadata, it will fallback to that if nothing is found for just the title
+* Soundcloud "works"; however, without a Soundcloud Go subscription, downloads are heavily compressed.
+  * Resource for adding soundcloud go token: https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
+* Default cover size can be "250”, “500”, “1200”. Anything else will default to max size, which is often much larger than 1200, so is not recommended.
 
-# commands:
-## download:
-### types:
+# Commands:
+TODO: add more
+## Download:
+### Types:
 - Default: Song: behaves as expected.
 - album_playlist: downloads a playlist into a single file, where each song is timestampped
     - Note: no album cover will be downloaded for this option

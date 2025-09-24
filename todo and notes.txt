@@ -24,6 +24,8 @@ make sure download() and replace_thumbnail() can accept just an album
 exclude tracks
 
 [features]
+2,10 auto updater
+
 2,3	add more arguments
 		add in a force: so if force is true then it uses inputted args exactly
 
@@ -79,6 +81,11 @@ exclude tracks
 	update messages as things are happing (like when it finishes downloading and starts replacing thumbnails
 
 [improvements]
+3   config stuff:
+        set up defaults
+            usedatabase, album and title handling so only one needs to be provided
+        disable "autocorrect"
+
 2	bot message improvements
 		make bot cleanup its confirmation boxes
 	✓	add emojis for success/fail to make it more readable
