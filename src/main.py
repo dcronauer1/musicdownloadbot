@@ -33,7 +33,7 @@ bot = MyBot(command_prefix="!", intents=intents)
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, type: str = "Song", title: str = None, artist: str = None, tags: str = None,
-        album: str = None, date: str = None, addtimestamps: bool = None, usedatabase: bool=False, excludetracknumsforplaylist: bool = False):
+        album: str = None, addtimestamps: bool = None, usedatabase: bool=False, excludetracknumsforplaylist: bool = False):
     """
     Slash command to download a video.
     
@@ -43,7 +43,6 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     :param artist: Artist name for metadata. Checked against a list to see if it already exists
     :param tags: Formatted as tag1,tag2,... Checked against a list to see if they already exist
     :param album: album name. Must be supplied when type=playlist for track numbers in metadata
-    :param date: TODO *_____________
     :param addtimestamps: True: add custom timestamps. False: Do not add timestamps (even if included in video). Default None
     :param usedatabase: for cover(s)
     :param excludetracknumsforplaylist: TODO applies when type=playlist: if True: dont add track numbers. Default=False

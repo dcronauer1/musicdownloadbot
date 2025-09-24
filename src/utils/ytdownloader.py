@@ -8,6 +8,7 @@ from utils.core import run_command
 from utils.discord_helpers import ask_confirmation
 from utils.metadata import get_audio_duration,apply_thumbnail_to_file,get_audio_metadata,fetch_musicbrainz_data,replace_thumbnail
 from mutagen import File
+from mutagen.mp4 import MP4
 
 # Retrieve settings from the JSON configuration
 YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
@@ -141,11 +142,11 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     :param artist_name: Artist name to embed in metadata. Defaults to video uploader.
     :param tags: tags in a string.
     :param album: album name. Must be supplied when type=playlist to get track numbers
-    :param addtimestamps: if False, them chapters are not embedded
+    :param addtimestamps: if False, then chapters are not embedded
     :param usedatabase: for cover(s)
     :param excludetracknumsforplaylist: applies when type=playlist: if True: dont add track numbers. Default=False
 
-    :return audio_file: The path to the downloaded "{audio file}{FILE_TYPE}" or None if error.
+    :return audio_file: The path to the downloaded "{audio file}{FILE_EXTENSION}" or None if error.
     :return error_str: None if no error, string containing error if error
     :return output_name: either same as pass in, or title from get_video_info()
     """
@@ -154,8 +155,8 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     if type not in ["song", "album_playlist", "playlist"]:
         error_str = f'❗"{type}" is not a valid type. Valid types are either song, album_playlist, or playlist'
         print(error_str)
-        return None,error_str, None
-    
+        return None, error_str, None
+
     # Get video info to set defaults if needed
     info = {}
     if not output_name or not artist_name:
@@ -193,27 +194,29 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
 
     # Construct the output file template; yt-dlp will append the proper extension.
     output_file_template = os.path.join(BASE_DIRECTORY, f"{output_name}.%(ext)s")
-    
-    # Build the metadata postprocessor args:
-    meta_args = f"-metadata artist='{artist_name}'"
-    if(type!="playlist"):
-        meta_args += f" -metadata title='{output_name}'"
 
+    # Build the metadata postprocessor args for single/playlist mode:
+    # NOTE: we will override title only for final combined file in album_playlist.
+    meta_args = f"-metadata artist='{artist_name}'"
     if tags_str:
         meta_args += f" -metadata genre='{tags_str}'"
     if album:
         meta_args += f" -metadata album='{album}'"
-    
+    # For song or playlist (individual downloads), we include title override:
+    #   song: title = output_name
+    #   playlist: title override per-file is handled by yt-dlp --add-metadata (it embeds per-video metadata).
+    # But for album_playlist, we do NOT override title for individual tracks.
+
     #does the song already exist?
-    if os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}{FILE_EXTENSION}")):
-        confirmation_str=f'⚠️"{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
-    elif os.path.exists(os.path.join(BASE_DIRECTORY,f"{output_name}")):
-        confirmation_str=f'⚠️"{output_name}" already exists, continue anyways?\nArguments: {meta_args}'
+    if os.path.exists(os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")):
+        confirmation_str = f'⚠️"{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
+    elif os.path.exists(os.path.join(BASE_DIRECTORY, f"{output_name}")):
+        confirmation_str = f'⚠️"{output_name}" already exists, continue anyways?\nArguments: {meta_args}'
     else:
-        confirmation_str=f'Arguments: {meta_args}'
-    #confirm selection
+        confirmation_str = f'Arguments: {meta_args}'
+    # confirm selection
     if (await ask_confirmation(interaction, confirmation_str)) == False:
-        return None,"User did not confirm", None
+        return None, "User did not confirm", None
 
     #Update yt-dlp
     print("Updating yt-dlp...")
@@ -221,11 +224,11 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     returncode, _, stderr = await run_command(update_command, True)
     
     if returncode != 0:
-        error_str=f"Error updating yt-dlp: {stderr}"
+        error_str = f"Error updating yt-dlp: {stderr}"
         print(error_str)
-        return None,error_str, None
-    
-    #if user doesn't want chapters, dont include flag. 
+        return None, error_str, None
+
+    # if user doesn't want chapters, don't include flag.
     if addtimestamps == False or type == "album_playlist":
         chapter_flag = "--no-embed-chapters"
     else:
@@ -233,56 +236,58 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
 
     #Download video
     print("Download starting...")
-    if(type=="song"):
-        # Wrap the output file template in quotes to prevent shell misinterpretation of %(ext)s
+    if type == "song":
+        # Download single song, override title to output_name
+        meta_args_song = meta_args + f" -metadata title='{output_name}'"
         yt_dlp_cmd = (
             f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} {embed_thumbnail} --add-metadata "
-            f"{chapter_flag} --force-overwrites --postprocessor-args \"{meta_args}\" -o \"{output_file_template}\" {video_url}"
+            f"{chapter_flag} --force-overwrites --postprocessor-args \"{meta_args_song}\" -o \"{output_file_template}\" {video_url}"
         )
         print(f"Full command: {yt_dlp_cmd}")
         returncode, _, stderr = await run_command(yt_dlp_cmd, True)
-
         if returncode != 0:
             error_str = f"Error downloading: {stderr}"
             print(error_str)
-            return None,error_str, None
+            return None, error_str, None
         else:
             audio_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
             print("Song Download complete.")
             return audio_file, None, output_name
 
-    elif type == "playlist":#download each song individually in a subfolder
-        # Create directory
-        subdir = os.path.join(BASE_DIRECTORY, f"{output_name}") # this is the subfolder
+    elif type == "playlist":
+        # Download each track individually into subfolder; let yt-dlp embed per-video title via --add-metadata.
+        subdir = os.path.join(BASE_DIRECTORY, f"{output_name}")
         os.makedirs(subdir, exist_ok=True)
-
         if excludetracknumsforplaylist:
             track_nums_arg=''
-        else: 
+        else:
             track_nums_arg=f'--parse-metadata "playlist_index:%(track_number)s" '
-        # Download individual tracks with metadata
-        track_template = os.path.join(subdir, f"%(title)s.{FILE_TYPE}")
+        # Use meta_args + no title override, since yt-dlp's --add-metadata embeds each video’s title automatically.
         yt_dlp_cmd = (
             f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} {embed_thumbnail} --add-metadata "
             f"{track_nums_arg}"
-            f"--no-embed-chapters --force-overwrites --postprocessor-args \"{meta_args}\" "
-            f"-o \"{track_template}\" {video_url}"
+            f"{chapter_flag} --force-overwrites --postprocessor-args \"{meta_args}\" "
+            f"-o \"{os.path.join(subdir, '%(title)s.' + FILE_TYPE)}\" {video_url}"
         )
         returncode, _, stderr = await run_command(yt_dlp_cmd, True)
-        
         if returncode != 0:
             error_str = f"Playlist download failed: {stderr}"
             print(error_str)
             return None, error_str, None
-
         print("Playlist download complete")
-        return subdir, None, output_name 
+        return subdir, None, output_name
+
     elif type == "album_playlist":
-        # Create temporary directory
+        # Download all tracks, then concatenate into one file with chapters
+        # Key: do NOT override title per track here; let --add-metadata embed actual track title.
+        # Later, for the combined file, we will override title to output_name.
+
+        # 1. Create temporary directory
         temp_dir = os.path.join(BASE_DIRECTORY, f"temp_{output_name}")
         os.makedirs(temp_dir, exist_ok=True)
 
-        # Download individual tracks with metadata
+        # 2. Download individual tracks with metadata into temp_dir
+        # No title override; use meta_args only (so yt-dlp --add-metadata embeds per-video metadata).
         track_template = os.path.join(temp_dir, f"%(playlist_index)s_%(title)s.{FILE_TYPE}")
         yt_dlp_cmd = (
             f"{YT_DLP_PATH} -x --audio-format {FILE_TYPE} --add-metadata "
@@ -290,93 +295,139 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             f"-o \"{track_template}\" {video_url}"
         )
         returncode, _, stderr = await run_command(yt_dlp_cmd, True)
-        
         if returncode != 0:
             error_str = f"Playlist download failed: {stderr}"
             print(error_str)
             return None, error_str, None
 
-        # Collect and sort tracks
+        # 3. Collect and sort track files by playlist index prefix
         track_files = sorted(
-            [os.path.join(temp_dir, f) for f in os.listdir(temp_dir) if f.endswith(FILE_EXTENSION)],
+            [
+                os.path.join(temp_dir, f)
+                for f in os.listdir(temp_dir)
+                if f.endswith(FILE_EXTENSION)
+            ],
             key=lambda x: int(os.path.basename(x).split('_', 1)[0])
         )
 
-        # Get album from first track if not provided by user
-        from mutagen.mp4 import MP4
+        # 4. Sanitize filenames: remove apostrophes from filenames so ffmpeg concat won't break.
+        sanitized_track_files = []
+        for track_path in track_files:
+            dirname, basename = os.path.split(track_path)
+            if "'" in basename:
+                # New filename without apostrophes
+                new_basename = basename.replace("'", "")
+                new_path = os.path.join(dirname, new_basename)
+                try:
+                    os.replace(track_path, new_path)
+                except Exception:
+                    os.rename(track_path, new_path)
+                sanitized_track_files.append(new_path)
+            else:
+                sanitized_track_files.append(track_path)
+        # Use sanitized list for next steps
+        track_files = sanitized_track_files
+
+        # 5. (Optional) Get album name from first track metadata if not provided
         if not album and track_files:
             try:
                 first_track = track_files[0]
                 audio = MP4(first_track)
                 if '\xa9alb' in audio.tags:
                     album = audio.tags['\xa9alb'][0]
-                    # Update meta_args with discovered album
-                    meta_args += f" -metadata album='{album}'"
+                    # Update meta_args for final combined file
+                    # (we'll apply in meta_args_combined below)
             except Exception as e:
                 print(f"Error reading track metadata: {str(e)}")
 
-        # Build chapters metadata
+        # 6. Build chapters metadata using embedded metadata titles (so apostrophes preserved in display)
         chapters = []
         current_start = 0
         for track in track_files:
-            # Get duration from file
+            # Get duration from file in milliseconds
             duration = await get_audio_duration(track)
-            if not duration:
-                duration = 0  # Fallback to 0 if duration can't be determined
-            
-            # Get title from filename
-            title = os.path.basename(track).split('_', 1)[1].rsplit('.', 1)[0].replace("'", "\\'")
-            
+            if duration is None:
+                duration = 0
+
+            # Get the title from embedded metadata, falling back to filename if missing
+            metadata = await get_audio_metadata(track)
+            title_meta = metadata.get('title') or ""
+            if title_meta:
+                chapter_title = title_meta
+            else:
+                # Fallback: extract from filename after index_
+                basename = os.path.basename(track)
+                try:
+                    title_part = basename.split('_', 1)[1]
+                except IndexError:
+                    title_part = os.path.splitext(basename)[0]
+                chapter_title = os.path.splitext(title_part)[0]
+            # Escape single quotes in chapter title for FFmetadata syntax:
+            chapter_title_escaped = chapter_title.replace("'", r"\'")
+
             chapters.append({
                 'start': current_start,
                 'end': current_start + duration,
-                'title': title
+                'title': chapter_title_escaped
             })
             current_start += duration
 
-        # Generate FFmetadata
-        metadata = [";FFMETADATA1"]
+        # Generate FFmetadata file
+        metadata_lines = [";FFMETADATA1"]
         for chapter in chapters:
-            metadata.extend([
+            metadata_lines.extend([
                 "[CHAPTER]",
                 "TIMEBASE=1/1000",
                 f"START={chapter['start']}",
                 f"END={chapter['end']}",
                 f"title={chapter['title']}"
             ])
-
         metadata_file = os.path.join(temp_dir, "chapters.txt")
         with open(metadata_file, 'w') as f:
-            f.write('\n'.join(metadata))
+            f.write('\n'.join(metadata_lines))
 
-        # Create concat list
+        # 7. Generate concat.list now that filenames have no apostrophes
         concat_file = os.path.join(temp_dir, "concat.list")
         with open(concat_file, 'w') as f:
             for track in track_files:
-                f.write(f"file '{os.path.abspath(track)}'\n")
+                abs_path = os.path.abspath(track)
+                # Surround with single quotes so ffmpeg sees: file '/path/name.opus'
+                f.write(f"file '{abs_path}'\n")
 
-        # Combine tracks with metadata
+        # 8. Combine tracks with metadata for final file
+        # Build meta_args for combined file: include artist, album (if any), and override title to output_name
+        meta_args_combined = f"-metadata artist='{artist_name}'"
+        if tags_str:
+            meta_args_combined += f" -metadata genre='{tags_str}'"
+        if album:
+            meta_args_combined += f" -metadata album='{album}'"
+        meta_args_combined += f" -metadata title='{output_name}'"
+
         combined_file = os.path.join(BASE_DIRECTORY, f"{output_name}_combined{FILE_EXTENSION}")
         ffmpeg_cmd = (
             f"ffmpeg -f concat -safe 0 -i \"{concat_file}\" "
             f"-i \"{metadata_file}\" -map_metadata 0 -map 0:a -map_chapters 1 "
-            f"-c copy {meta_args} \"{combined_file}\""
+            f"-c copy {meta_args_combined} \"{combined_file}\""
         )
         returncode, _, error = await run_command(ffmpeg_cmd, True)
 
-        # Cleanup temp files
-        shutil.rmtree(temp_dir)
+        # 9. Cleanup temp files
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
         if returncode != 0:
             error_str = f"Combination failed: {error}"
             print(error_str)
             return None, error_str, None
 
-        # Rename final file
+        # 10. Rename/move final file to desired name.ext
         final_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
-        os.rename(combined_file, final_file)
+        try:
+            os.replace(combined_file, final_file)
+        except Exception:
+            os.rename(combined_file, final_file)
 
         print("Album playlist download complete")
         return final_file, None, output_name
+
     else:
         return None, f"Invalid type provided: {type}", None

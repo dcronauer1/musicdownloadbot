@@ -9,24 +9,22 @@
 
 
 		
-	in download_audio, could do elif (album or playlist), do init stuff, then seperate for each of them?
-
-1000 /replace thumbnail title:Nevermind album:Nevermind artist:Nirvana
-		doesnt work???
-		https://musicbrainz.org/release-group/1b022e01-4da6-387b-8658-8678046e4cef
-
+	getting metadata for playlists should also be threaded (the for loop)
+		check bugs, can timeout?
 10	allow musicolet timestamp formatting for replace timestamps
+
+	make exclude keyword code (so i can exclude stuff like "feat ___" or "{artist} - ")
+
+remove dates as a parameter, get them from database.
 	
-make exclude keyword code (so i can exclude stuff like "feat ___")
+in download_audio, could do elif (album or playlist), do init stuff, then seperate for each of them?
 make thumbnail_error like success_list
-getting metadata for playlists should also be threaded
 already exists confirmation should come before manually searching for metadata
 make sure download() and replace_thumbnail() can accept just an album
 exclude tracks
 
 [features]
 2,3	add more arguments
-		date, year
 		add in a force: so if force is true then it uses inputted args exactly
 
 	commands:
