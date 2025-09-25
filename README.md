@@ -20,11 +20,12 @@ set up directories accordingly in config.json
 
 # Features:
 * Download music from YouTube as .opus. .m4a is partially supported.  
+  * Download playlists as either separate or single file(s) using type = playlist or type = album, respectively
 * Add title, author, album title, tags, and more ~~(year, date)~~  
 * Store a list of authors and tags. 
   * If names are very close, it will be stored as the same artist/tag.
     * Todo: add config to disable this
-* 
+* Add Album/Song covers from musicbrainz database
 
 # Notes
 * Soundcloud "works"; however, without a Soundcloud Go subscription, downloads are heavily compressed.

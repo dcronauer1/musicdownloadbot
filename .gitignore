@@ -1,4 +1,5 @@
 config.json
+/local
 *.dump
 scpslbot.spec
 *.old
