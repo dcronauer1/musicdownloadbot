@@ -108,7 +108,14 @@ EOL
 fi
 
 # --- RUN ONCE TO GENERATE CONFIG ---
-echo "Running $BINARY_NAME to generate config..."
-"$LOCAL_BINARY" || true
-echo "If config was generated, edit config.json, then start service manually if installed:"
-echo "sudo systemctl start $SERVICE_NAME"
+CONFIG_FILE="$INSTALL_DIR/config.json"
+
+if [ -f "$CONFIG_FILE" ]; then
+    echo "Config file already exists at $CONFIG_FILE."
+    echo "Skipping initial config generation."
+else
+    echo "Running $BINARY_NAME once to generate config..."
+    "$LOCAL_BINARY" || true
+    echo "If config was generated, edit config.json, then start service manually if installed:"
+    echo "sudo systemctl start $SERVICE_NAME"
+fi

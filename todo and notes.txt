@@ -7,6 +7,8 @@
     auto builder:
         make it so i can add custom descriptions for changes
 
+    need to auto update periodically (every 6hrs or so)
+
     Auto installer 
 !!!!!!!        test ssh and separate user capabilities
             run on a fresh install of ubuntuserver
