@@ -113,8 +113,11 @@ def update_files(update_self=config["directory_settings"]["auto_update"]):
     update_release("yt-dlp/yt-dlp","yt-dlp",config["download_settings"]["yt_dlp_path"])
 
     if update_self:
-        #update_release("dcronauer1/musicdownloadbot","musicdownloadbot")
-        pass
+        if update_release("dcronauer1/musicdownloadbot","musicdownloadbot"):
+            print("Updated to new version, restarting")
+            #TODO send a thing in discord to let user know it updated, maybe
+            sys.exit(1)
+
     else:
         #TODO prompt user to update IF there is an update (also send them the version changes)
         pass
@@ -125,7 +128,7 @@ def update_files(update_self=config["directory_settings"]["auto_update"]):
         print(f"ERROR: yt-dlp does not exist: {ytdlp_path}")
         sys.exit(1)
 
-def update_release(repo: str, asset_name: str, output_path=None) -> None:
+def update_release(repo: str, asset_name: str, output_path=None) -> bool:
     """
     Check if there is a new release for the given GitHub repo and asset,
     and download it if it is newer than the last version.
@@ -133,12 +136,16 @@ def update_release(repo: str, asset_name: str, output_path=None) -> None:
     Args:
         repo: GitHub repository in the form 'owner/repo'
         asset_name: Name of the asset file to download
-        output_path: where asset goes. MUST include /asset_name at the end. None for program_dir/asset_name
+        output_path: Where the asset goes. MUST include /asset_name at the end. None for program_dir/asset_name
+
+    Returns:
+        True if the asset was updated, False otherwise
     """
     version_file = os.path.join(TEMP_DIRECTORY, f"{repo.replace('/', '_')}_version.txt")
+
     if output_path is None:
-        output_path = os.path.dirname(sys.executable)
-        output_path = os.path.join(output_path, asset_name)
+        program_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
+        output_path = os.path.join(program_dir, asset_name)
 
     # Get latest release info
     api_url = f"https://api.github.com/repos/{repo}/releases/latest"
@@ -153,7 +160,7 @@ def update_release(repo: str, asset_name: str, output_path=None) -> None:
             current_version = f.read().strip()
         if current_version == latest_version:
             print(f"{repo} is up to date ({latest_version})")
-            return
+            return False
 
     # Find the asset
     asset = next((a for a in release["assets"] if a["name"] == asset_name), None)
@@ -172,5 +179,6 @@ def update_release(repo: str, asset_name: str, output_path=None) -> None:
     # Update version file
     with open(version_file, "w") as f:
         f.write(latest_version)
-    
+
     print(f"{asset_name} updated to {latest_version} at {output_path}")
+    return True #updated

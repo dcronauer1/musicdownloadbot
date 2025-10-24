@@ -20,7 +20,9 @@
             check that the user running it has correct permissions for the directory theyre installing in
         maybe set up ssh key?
 
-    
+    add a config for a channel/user to send logs to. if empty, then skip.
+        make this a function in discord_helpers.py
+
     command default configs
 
 
