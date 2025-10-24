@@ -1,7 +1,5 @@
 # How To Setup:
 `sudo apt install python3 python3-pip samba ffmpeg atomicparsley python3-mutagen`  
-get runable for yt-dlp: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options  
-
 set up directories accordingly in config.json  
 
 ## Environment Setup:
@@ -44,4 +42,7 @@ TODO: add more
 - playlist: downloads a playlist, but each song is an individual file inside a sub directory
     - Album covers are downloaded for each song individually
     - Track numbers are excluded if excludetracknumsforplaylist is True
-    
+
+
+# Dependencies:
+https://github.com/yt-dlp/yt-dlp

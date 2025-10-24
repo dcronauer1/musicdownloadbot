@@ -104,9 +104,9 @@ def initialize_config():
     #replace placeholders
     replace_placeholders(config, ["{program_dir}"], [program_dir])
 
-    # Validate critical paths
+    # Validate critical paths and files
     required_paths = {
-        "yt-dlp": config["download_settings"]["yt_dlp_path"],
+#        "yt-dlp": config["download_settings"]["yt_dlp_path"],  #NOTE moved to update_files() in file_handling.py
         "music directory": config["download_settings"]["music_directory"]
     }
     for name, path in required_paths.items():

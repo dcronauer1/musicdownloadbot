@@ -316,6 +316,7 @@ async def help_commands(interaction: discord.Interaction):
 @bot.event
 async def on_ready():
     # Remove the command group additions and sync from here
+    update_files()
     apply_directory_permissions()
     print(f"Logged in as {bot.user}")
 

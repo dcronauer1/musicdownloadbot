@@ -5,6 +5,7 @@ import re
 import json
 import grp
 import sys
+import requests
 from config.config_manager import config
 from typing import Optional
 
@@ -105,3 +106,71 @@ def save_music_tree():
         f.write('\n'.join(tree_lines))
 
     return file_path
+
+def update_files(update_self=config["directory_settings"]["auto_update"]):
+    """Function to run on start, and periodically"""
+
+    update_release("yt-dlp/yt-dlp","yt-dlp",config["download_settings"]["yt_dlp_path"])
+
+    if update_self:
+        #update_release("dcronauer1/musicdownloadbot","musicdownloadbot")
+        pass
+    else:
+        #TODO prompt user to update IF there is an update (also send them the version changes)
+        pass
+    
+    #check if ytdlp exists
+    ytdlp_path = config["download_settings"]["yt_dlp_path"]
+    if not os.path.exists(ytdlp_path):
+        print(f"ERROR: yt-dlp does not exist: {ytdlp_path}")
+        sys.exit(1)
+
+def update_release(repo: str, asset_name: str, output_path=None) -> None:
+    """
+    Check if there is a new release for the given GitHub repo and asset,
+    and download it if it is newer than the last version.
+
+    Args:
+        repo: GitHub repository in the form 'owner/repo'
+        asset_name: Name of the asset file to download
+        output_path: where asset goes. MUST include /asset_name at the end. None for program_dir/asset_name
+    """
+    version_file = os.path.join(TEMP_DIRECTORY, f"{repo.replace('/', '_')}_version.txt")
+    if output_path is None:
+        output_path = os.path.dirname(sys.executable)
+        output_path = os.path.join(output_path, asset_name)
+
+    # Get latest release info
+    api_url = f"https://api.github.com/repos/{repo}/releases/latest"
+    response = requests.get(api_url)
+    response.raise_for_status()
+    release = response.json()
+    latest_version = release["tag_name"]
+
+    # Check if we already have this version
+    if os.path.exists(version_file) and not(os.path.isfile(output_path)):
+        with open(version_file, "r") as f:
+            current_version = f.read().strip()
+        if current_version == latest_version:
+            print(f"{repo} is already up to date ({latest_version})")
+            return
+
+    # Find the asset
+    asset = next((a for a in release["assets"] if a["name"] == asset_name), None)
+    if not asset:
+        raise Exception(f"Asset '{asset_name}' not found in the latest release of {repo}.")
+
+    # Download asset
+    download_url = asset["browser_download_url"]
+    print(f"Downloading {asset_name} from {repo} version {latest_version}")
+    r = requests.get(download_url)
+    r.raise_for_status()
+    with open(output_path, "wb") as f:
+        f.write(r.content)
+    os.chmod(output_path, 0o755)
+
+    # Update version file
+    with open(version_file, "w") as f:
+        f.write(latest_version)
+    
+    print(f"{asset_name} updated to {latest_version} at {output_path}")

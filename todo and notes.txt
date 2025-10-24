@@ -3,10 +3,21 @@
 ✓=done
 
 [active focus]
+
+    auto builder:
+        make it so i can add custom descriptions for changes
+
+    config stuff
+        when starting, check if config is like below. exit if so.
+                "bot_settings": {
+                "BOT_TOKEN": "[your-token-here]"
+            },
+        explain keep_perms_consistent config in readme
+
     Auto installer 
         basically, have a "setup.sh" file, and walk usr through what they want to do 
-        configs (probably just generate and tell user to fill it out)
         set up service automatically
+            program should run once, then service should be stopped. Tell user to fill out config file, then run "sudo systemctl start musicdownloadbot"
         required linux packages
         make a separate user
             have music be owned by that new user, but make sure installing user has access to everything
