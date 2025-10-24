@@ -104,15 +104,24 @@ def initialize_config():
     #replace placeholders
     replace_placeholders(config, ["{program_dir}"], [program_dir])
 
-    # Validate critical paths and files
-    required_paths = {
-#        "yt-dlp": config["download_settings"]["yt_dlp_path"],  #NOTE moved to update_files() in file_handling.py
-        "music directory": config["download_settings"]["music_directory"]
-    }
-    for name, path in required_paths.items():
+    # Validate critical paths and files 
+    temp_config = DEFAULT_CONFIG
+    replace_placeholders(temp_config, ["{program_dir}"], [program_dir])
+    for key in ["music_directory"]:
+        path = config["download_settings"][key]
         if not os.path.exists(path):
-            print(f"ERROR: {name} path does not exist: {path}")
-            sys.exit(1)
+            default_path = temp_config["download_settings"][key]
+            if path == default_path:
+                # Default path missing → create it
+                try:
+                    os.makedirs(path, exist_ok=True)
+                    print(f"Created default {key} directory: {path}")
+                except OSError as e:
+                    print(f"ERROR: Failed to create {key} directory: {e}")
+                    sys.exit(1)
+            else:
+                print(f"ERROR: {key} path does not exist: {path}")
+                sys.exit(1)
 
     # Add temp directory
     temp_dir = os.path.join(program_dir, "temp")
