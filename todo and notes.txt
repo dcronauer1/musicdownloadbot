@@ -4,6 +4,8 @@
 
 [active focus]
 
+    update discord.py
+
     auto builder:
         make it so i can add custom descriptions for changes
 

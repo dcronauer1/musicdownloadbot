@@ -148,11 +148,11 @@ def update_release(repo: str, asset_name: str, output_path=None) -> None:
     latest_version = release["tag_name"]
 
     # Check if we already have this version
-    if os.path.exists(version_file) and not(os.path.isfile(output_path)):
+    if os.path.exists(version_file) and os.path.isfile(output_path):
         with open(version_file, "r") as f:
             current_version = f.read().strip()
         if current_version == latest_version:
-            print(f"{repo} is already up to date ({latest_version})")
+            print(f"{repo} is up to date ({latest_version})")
             return
 
     # Find the asset

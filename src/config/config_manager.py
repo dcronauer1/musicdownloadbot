@@ -8,7 +8,7 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
         "BOT_TOKEN": "[your-token-here]"
     },
     "download_settings": {
-        "music_dir": "{program_dir}/music",
+        "music_directory": "{program_dir}/music",
         "file_type": "opus",
         "file_extension": ".opus",
         "default_cover_size": "1200",
