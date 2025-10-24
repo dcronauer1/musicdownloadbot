@@ -12,8 +12,8 @@ This program allows you to download youtube videos/playlists as songs/albums, wi
 * Add Album/Song covers from musicbrainz database
 
 # How To Setup:
-This program has only been tested on ubuntu-server, but should work on any linux-based system with the apt package manager
-Download and run "installer.sh" from the newest release
+This program has only been tested on ubuntu-server, but should work on any linux-based system with the apt package manager  
+Download and run "installer.sh" from the newest release  
 set up directories accordingly in config.json
 
 ## Environment Setup:
@@ -39,7 +39,7 @@ set up directories accordingly in config.json
 TODO
 keep_perms_consistent:  
 
-group: group to set music files to. Default uses same group as user running program 
+group: user group to set music files to. Default uses same group as user running program 
 
 
 # Commands:
