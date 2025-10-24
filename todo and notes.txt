@@ -3,10 +3,6 @@
 ✓=done
 
 [active focus]
-    github auto updater
-        update moveProject.bat to copy compiled project back over (for release purposes)
-        
-
     Auto installer 
         basically, have a "setup.sh" file, and walk usr through what they want to do 
         configs (probably just generate and tell user to fill it out)
