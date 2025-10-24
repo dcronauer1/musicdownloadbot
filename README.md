@@ -1,3 +1,16 @@
+# Music Download Bot
+This program allows you to download youtube videos/playlists as songs/albums, with metadata options, through Discord
+
+# Features:
+* Download music from YouTube as .opus.  
+  * Download playlists as either separate or single file(s) using type = playlist or type = album, respectively
+  * .m4a is partially supported.
+* Add title, author, album title, tags, and more ~~(year, date)~~  
+* Store a list of authors and tags. 
+  * If names are very close, it will be stored as the same artist/tag.
+    * Todo: add config to disable this
+* Add Album/Song covers from musicbrainz database
+
 # How To Setup:
 `sudo apt install python3 python3-pip samba ffmpeg atomicparsley python3-mutagen`  
 set up directories accordingly in config.json  
@@ -16,19 +29,15 @@ set up directories accordingly in config.json
 * Foobar2000 recommended  
 * Will add sync script in the future
 
-# Features:
-* Download music from YouTube as .opus. .m4a is partially supported.  
-  * Download playlists as either separate or single file(s) using type = playlist or type = album, respectively
-* Add title, author, album title, tags, and more ~~(year, date)~~  
-* Store a list of authors and tags. 
-  * If names are very close, it will be stored as the same artist/tag.
-    * Todo: add config to disable this
-* Add Album/Song covers from musicbrainz database
-
 # Notes
 * Soundcloud "works"; however, without a Soundcloud Go subscription, downloads are heavily compressed.
   * Resource for adding soundcloud go token: https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
 * Default cover size can be "250”, “500”, “1200”. Anything else will default to max size, which is often much larger than 1200, so is not recommended.
+
+# Config File:
+TODO
+keep_perms_consistent:  
+
 
 # Commands:
 TODO: add more
