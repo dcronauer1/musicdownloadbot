@@ -1,4 +1,4 @@
-discord.py==2.5.2
+discord.py==2.6.4
 musicbrainzngs==0.7.1
 mutagen==1.47.0
-Requests==2.32.3
+Requests==2.32.5
