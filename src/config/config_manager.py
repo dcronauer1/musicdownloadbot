@@ -8,17 +8,18 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
         "BOT_TOKEN": "[your-token-here]"
     },
     "download_settings": {
-        "yt_dlp_path": "/path/to/yt-dlp",
-        "base_directory": "/path/to/music",
+        "base_directory": "{program_dir}/music",
         "file_type": "opus",
         "file_extension": ".opus",
-        "default_cover_size": "1200"
+        "default_cover_size": "1200",
+        "yt_dlp_path": "{program_dir}/yt-dlp"
     },
     "directory_settings":{
         "keep_perms_consistent": True,
         "file_perms": 664,
         "directory_perms": 775,
-        "group": "sambashare"
+        "group": "sambashare",
+        "auto_update": True
     },
     "musicbrainz": {
         "app_name": "YourMusicBot",
@@ -26,10 +27,32 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
     }
 }
 
+def replace_placeholders(config, before_list, after_list):
+    """
+    Recursively replace multiple placeholders in dict values.
+
+    Args:
+        config (dict): dictionary to process
+        before_list (list[str]): list of strings to replace
+        after_list (list[str]): list of replacement strings
+
+    Example:
+        replace_placeholders(config, ['a', 'b'], ['A', 'B'])
+    """
+    if len(before_list) != len(after_list):
+        raise ValueError("before_list and after_list must have the same length")
+
+    for k, v in config.items():
+        if isinstance(v, dict):
+            replace_placeholders(v, before_list, after_list)
+        elif isinstance(v, str):
+            for before, after in zip(before_list, after_list):
+                if before in v:
+                    v = v.replace(before, after)
+            config[k] = v
+
 def validate_config(config, default_config):
-    """
-    Validate the config file, filling in missing fields with defaults.
-    """
+    """Validate the config file, filling in missing fields with defaults."""
     updated = False
 
     for key, default_value in default_config.items():
@@ -48,6 +71,12 @@ def validate_config(config, default_config):
 
 def initialize_config():
     """Load and validate the config file."""
+    if getattr(sys, 'frozen', False):  # PyInstaller bundle
+        program_dir = os.path.dirname(sys.executable)
+    else:  # Running as Python script
+        program_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Create default config if not exists
     if not os.path.exists("config.json"):
         with open("config.json", "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
@@ -63,7 +92,6 @@ def initialize_config():
 
     if validate_config(config, DEFAULT_CONFIG):
         print("Updating config with missing defaults.")
-
         shutil.copy("config.json", "config.json.old")
         print("Backup created: config.json.old")
 
@@ -72,7 +100,10 @@ def initialize_config():
 
         print("Config updated. Restarting required.")
         sys.exit(0)
-    
+
+    #replace placeholders
+    replace_placeholders(config, ["{program_dir}"], [program_dir])
+
     # Validate critical paths
     required_paths = {
         "yt-dlp": config["download_settings"]["yt_dlp_path"],
@@ -82,21 +113,11 @@ def initialize_config():
         if not os.path.exists(path):
             print(f"ERROR: {name} path does not exist: {path}")
             sys.exit(1)
-    
-    # Add temp directory to config
-    if getattr(sys, 'frozen', False):  # PyInstaller bundle
-        program_dir = os.path.dirname(sys.executable)
-    else:  # Running as Python script
-        program_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Add temp directory
     temp_dir = os.path.join(program_dir, "temp")
     config["directory_settings"]["temp_directory"] = temp_dir
-
-    # Create directory
-    if not os.path.exists(temp_dir):
-        try:
-            os.makedirs(temp_dir, exist_ok=False)
-        except OSError as e:
-            print(f"ERROR: Failed to create temp directory: {e}")
+    os.makedirs(temp_dir, exist_ok=True)
 
     return config
 
