@@ -8,28 +8,22 @@
         make it so i can add custom descriptions for changes
 
     Auto installer 
-        basically, have a "setup.sh" file, and walk usr through what they want to do 
-        set up service automatically
-            program should run once, then service should be stopped. Tell user to fill out config file, then run "sudo systemctl start musicdownloadbot"
-        required linux packages
+!!!!!!!        test ssh and separate user capabilities
+            run on a fresh install of ubuntuserver
         make a separate user
-            have music be owned by that new user, but make sure installing user has access to everything
-                so installing user owns bot stuff, but music user owns music stuff
-                    generate ssh key under music user
-                make it so /music is default local, but can be put somewhere else
-            check that the user running it has correct permissions for the directory theyre installing in
-        maybe set up ssh key?
+            generate ssh key under music user
 
     add a config for a channel/user to send logs to. if empty, then skip.
         make this a function in discord_helpers.py
 
-    command default configs
+    add default configs for commands (ex: usedatabase)
+        check if title=albumtitle, ie if theres a difference between providing the title when albumtitle is provided
 
-
-    edit track titles before downloading
+    [feat] edit track titles before downloading
         be able to send track title list (w/o times)
-        exclude certain keywords
-            exclude list .txt file
+            have the program send the user the list, so then the user can just copy that message, edit, then send it back
+        exclude certain keywords/phrases
+            (maybe) exclude list .txt file
                 param to enable/disable the exclude list (defualt True)
     
 

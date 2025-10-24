@@ -12,8 +12,9 @@ This program allows you to download youtube videos/playlists as songs/albums, wi
 * Add Album/Song covers from musicbrainz database
 
 # How To Setup:
-`sudo apt install python3 python3-pip samba ffmpeg atomicparsley python3-mutagen`  
-set up directories accordingly in config.json  
+This program has only been tested on ubuntu-server, but should work on any linux-based system with the apt package manager
+Download and run "installer.sh" from the newest release
+set up directories accordingly in config.json
 
 ## Environment Setup:
 ### On Phone:

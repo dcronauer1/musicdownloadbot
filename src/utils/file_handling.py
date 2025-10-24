@@ -116,11 +116,7 @@ def update_files(update_self=config["directory_settings"]["auto_update"]):
     update_release("yt-dlp/yt-dlp","yt-dlp",config["download_settings"]["yt_dlp_path"])
 
     if update_self:
-        if update_release("dcronauer1/musicdownloadbot","musicdownloadbot"):
-            print("Updated to new version, restarting")
-            #TODO send a thing in discord to let user know it updated, maybe
-            sys.exit(1)
-
+        update_release("dcronauer1/musicdownloadbot","musicdownloadbot",restart_if_updated=True)
     else:
         #TODO prompt user to update IF there is an update (also send them the version changes)
         pass
@@ -131,7 +127,7 @@ def update_files(update_self=config["directory_settings"]["auto_update"]):
         print(f"ERROR: yt-dlp does not exist: {ytdlp_path}")
         sys.exit(1)
 
-def update_release(repo: str, asset_name: str, output_path=None) -> bool:
+def update_release(repo: str, asset_name: str, restart_if_updated=False, output_path=None) -> bool:
     """
     Check if there is a new release for the given GitHub repo and asset,
     and download it if it is newer than the last version.
@@ -184,4 +180,5 @@ def update_release(repo: str, asset_name: str, output_path=None) -> bool:
         f.write(latest_version)
 
     print(f"{asset_name} updated to {latest_version} at {output_path}")
-    return True #updated
+    if restart_if_updated:
+        sys.exit(0)
