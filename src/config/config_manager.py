@@ -77,14 +77,15 @@ def initialize_config():
         program_dir = os.path.dirname(os.path.abspath(__file__))
 
     # Create default config if not exists
-    if not os.path.exists("config.json"):
-        with open("config.json", "w") as f:
+    config_path = os.path.join(program_dir,"config.json")
+    if not os.path.exists(config_path):
+        with open(config_path, "w") as f:
             json.dump(DEFAULT_CONFIG, f, indent=4)
         print("Config file created. Please fill it out and restart.")
         sys.exit(0)
 
     try:
-        with open("config.json", "r") as f:
+        with open(config_path, "r") as f:
             config = json.load(f)
     except json.JSONDecodeError:
         print("Error: Invalid JSON format in config.json.")
@@ -92,13 +93,14 @@ def initialize_config():
 
     if validate_config(config, DEFAULT_CONFIG):
         print("Updating config with missing defaults.")
-        shutil.copy("config.json", "config.json.old")
+        config_path_old = os.path.join(program_dir,"config.json.old")
+        shutil.copy(config_path, config_path_old)
         print("Backup created: config.json.old")
 
-        with open("config.json", "w") as f:
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=4)
 
-        print("Config updated. Restarting required.")
+        print("Config updated. Restart required.")
         sys.exit(0)
 
     #replace placeholders
