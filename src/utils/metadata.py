@@ -17,7 +17,7 @@ from utils.file_handling import find_file_case_insensitive
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
-BASE_DIRECTORY = config["download_settings"]["base_directory"]
+MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
 TEMP_DIRECTORY = config["directory_settings"]["temp_directory"]
 
 try:
@@ -443,12 +443,12 @@ async def replace_thumbnail(title: str=None, playlist:bool=False, cover_URL:str=
     #etc
     #TODO above
     
-    subdir = os.path.join(BASE_DIRECTORY, f"{title}")
+    subdir = os.path.join(MUSIC_DIRECTORY, f"{title}")
     if playlist:
         #get list of files in subdir (only file.ext, not full path)
         subdir_list = [f for f in os.listdir(subdir) if not f.endswith('.txt')] 
     else:
-        audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
+        audio_file = find_file_case_insensitive(MUSIC_DIRECTORY, f"{title}{FILE_EXTENSION}")
         subdir_list=[audio_file] #this is the single track's *full directory* in list form
 
     if subdir_list == [] or subdir_list == None:

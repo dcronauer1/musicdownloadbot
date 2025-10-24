@@ -8,7 +8,7 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
         "BOT_TOKEN": "[your-token-here]"
     },
     "download_settings": {
-        "base_directory": "{program_dir}/music",
+        "music_dir": "{program_dir}/music",
         "file_type": "opus",
         "file_extension": ".opus",
         "default_cover_size": "1200",
@@ -107,7 +107,7 @@ def initialize_config():
     # Validate critical paths
     required_paths = {
         "yt-dlp": config["download_settings"]["yt_dlp_path"],
-        "base directory": config["download_settings"]["base_directory"]
+        "music directory": config["download_settings"]["music_directory"]
     }
     for name, path in required_paths.items():
         if not os.path.exists(path):

@@ -10,6 +10,7 @@ from typing import Optional
 
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 TEMP_DIRECTORY = config["directory_settings"]["temp_directory"]
+MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
 
 def get_entries_from_json(filename) -> str:
     """function to return all entries from a json file"""
@@ -40,15 +41,13 @@ def find_file_case_insensitive(directory, filename):
 
 def apply_directory_permissions():
     """
-    Applies consistent permissions to all files and directories in BASE_DIRECTORY
+    Applies consistent permissions to all files and directories in MUSIC_DIRECTORY
     based on the configuration settings.
 
     :return: False if failed, True if success
     """
     if not config["directory_settings"]["keep_perms_consistent"]:
         return False
-
-    base_dir = config["download_settings"]["base_directory"]
     
     # Convert permissions to octal
     file_perms = int(str(config["directory_settings"]["file_perms"]), 8)
@@ -61,7 +60,7 @@ def apply_directory_permissions():
         print(f"Group {target_group} not found")
         return False
 
-    for root, dirs, files in os.walk(base_dir):
+    for root, dirs, files in os.walk(MUSIC_DIRECTORY):
         for name in dirs + files:
             path = os.path.join(root, name)
             try:
@@ -79,7 +78,7 @@ def apply_directory_permissions():
     print("✅Updated file permissions successfully\n")
     return True
 
-def save_music_tree(base_directory):
+def save_music_tree():
     """
     Function to recursively build a tree of the given directory.
     Excludes .txt files.
@@ -98,7 +97,7 @@ def save_music_tree(base_directory):
                 lines.append('  ' * indent + f'{entry.name}')
         return lines
 
-    tree_lines = _build_and_format_tree(base_directory)
+    tree_lines = _build_and_format_tree(MUSIC_DIRECTORY)
 
     file_path = os.path.join(TEMP_DIRECTORY,"tree.txt")
 

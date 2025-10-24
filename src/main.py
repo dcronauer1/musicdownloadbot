@@ -12,7 +12,7 @@ from utils.discord_helpers import *
 from utils.metadata import *
 from utils.file_handling import *
 
-BASE_DIRECTORY = config["download_settings"]["base_directory"]
+MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
 
@@ -120,11 +120,11 @@ class ReplaceGroup(app_commands.Group):
         """Shared method to find audio file and handle missing files"""
         if(not isDir):
             #TODO: add handling for other files types here, check todo --> features
-            audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}{FILE_EXTENSION}")
+            audio_file = find_file_case_insensitive(MUSIC_DIRECTORY, f"{title}{FILE_EXTENSION}")
         else:
-            audio_file = find_file_case_insensitive(BASE_DIRECTORY, f"{title}")
+            audio_file = find_file_case_insensitive(MUSIC_DIRECTORY, f"{title}")
         if not audio_file:    #check if file exists
-            tree = save_music_tree(BASE_DIRECTORY)
+            tree = save_music_tree()
             await interaction.followup.send("❗File does not exist. Available songs:",file=discord.File(tree))
             return None
         return audio_file
@@ -236,7 +236,7 @@ class ListGroup(app_commands.Group):
     @app_commands.command(name="music", description="list all music files")
     async def list_music(self, interaction: discord.Interaction):
         """function to list all music"""
-        tree = save_music_tree(BASE_DIRECTORY)
+        tree = save_music_tree()
         await interaction.response.send_message(file=discord.File(tree))
         return
 

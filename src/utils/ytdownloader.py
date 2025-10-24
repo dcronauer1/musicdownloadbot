@@ -12,7 +12,7 @@ from mutagen.mp4 import MP4
 
 # Retrieve settings from the JSON configuration
 YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
-BASE_DIRECTORY = config["download_settings"]["base_directory"]
+MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
 FILE_TYPE = config["download_settings"]["file_type"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 
@@ -193,7 +193,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         tags_str = None
 
     # Construct the output file template; yt-dlp will append the proper extension.
-    output_file_template = os.path.join(BASE_DIRECTORY, f"{output_name}.%(ext)s")
+    output_file_template = os.path.join(MUSIC_DIRECTORY, f"{output_name}.%(ext)s")
 
     # Build the metadata postprocessor args for single/playlist mode:
     # NOTE: we will override title only for final combined file in album_playlist.
@@ -208,9 +208,9 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
     # But for album_playlist, we do NOT override title for individual tracks.
 
     #does the song already exist?
-    if os.path.exists(os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")):
+    if os.path.exists(os.path.join(MUSIC_DIRECTORY, f"{output_name}{FILE_EXTENSION}")):
         confirmation_str = f'⚠️"{output_name}{FILE_EXTENSION}" already exists, continue anyways?\nArguments: {meta_args}'
-    elif os.path.exists(os.path.join(BASE_DIRECTORY, f"{output_name}")):
+    elif os.path.exists(os.path.join(MUSIC_DIRECTORY, f"{output_name}")):
         confirmation_str = f'⚠️"{output_name}" already exists, continue anyways?\nArguments: {meta_args}'
     else:
         confirmation_str = f'Arguments: {meta_args}'
@@ -250,13 +250,13 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             print(error_str)
             return None, error_str, None
         else:
-            audio_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
+            audio_file = os.path.join(MUSIC_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
             print("Song Download complete.")
             return audio_file, None, output_name
 
     elif type == "playlist":
         # Download each track individually into subfolder; let yt-dlp embed per-video title via --add-metadata.
-        subdir = os.path.join(BASE_DIRECTORY, f"{output_name}")
+        subdir = os.path.join(MUSIC_DIRECTORY, f"{output_name}")
         os.makedirs(subdir, exist_ok=True)
         if excludetracknumsforplaylist:
             track_nums_arg=''
@@ -283,7 +283,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         # Later, for the combined file, we will override title to output_name.
 
         # 1. Create temporary directory
-        temp_dir = os.path.join(BASE_DIRECTORY, f"temp_{output_name}")
+        temp_dir = os.path.join(MUSIC_DIRECTORY, f"temp_{output_name}")
         os.makedirs(temp_dir, exist_ok=True)
 
         # 2. Download individual tracks with metadata into temp_dir
@@ -403,7 +403,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             meta_args_combined += f" -metadata album='{album}'"
         meta_args_combined += f" -metadata title='{output_name}'"
 
-        combined_file = os.path.join(BASE_DIRECTORY, f"{output_name}_combined{FILE_EXTENSION}")
+        combined_file = os.path.join(MUSIC_DIRECTORY, f"{output_name}_combined{FILE_EXTENSION}")
         ffmpeg_cmd = (
             f"ffmpeg -f concat -safe 0 -i \"{concat_file}\" "
             f"-i \"{metadata_file}\" -map_metadata 0 -map 0:a -map_chapters 1 "
@@ -420,7 +420,7 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
             return None, error_str, None
 
         # 10. Rename/move final file to desired name.ext
-        final_file = os.path.join(BASE_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
+        final_file = os.path.join(MUSIC_DIRECTORY, f"{output_name}{FILE_EXTENSION}")
         try:
             os.replace(combined_file, final_file)
         except Exception:
