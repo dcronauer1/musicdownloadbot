@@ -4,6 +4,7 @@ import asyncio
 from typing import Optional
 from discord import app_commands
 from discord.ext import commands
+import time
 
 from config.config_manager import config
 from utils.ytdownloader import *
@@ -316,8 +317,14 @@ async def help_commands(interaction: discord.Interaction):
 @bot.event
 async def on_ready():
     # Remove the command group additions and sync from here
-    update_files()
     apply_directory_permissions()
     print(f"Logged in as {bot.user}")
 
-bot.run(config["bot_settings"]["BOT_TOKEN"])
+update_files()
+
+try:
+    bot.run(config["bot_settings"]["BOT_TOKEN"])
+except Exception as e:
+    print(f"Error when starting bot: {e}")
+    time.sleep(15)
+    sys.exit(1)
