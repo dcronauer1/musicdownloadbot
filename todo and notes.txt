@@ -2,6 +2,37 @@
 *=in progress
 ✓=done
 
+[active focus]
+    github auto updater
+        update moveProject.bat to copy compiled project back over (for release purposes)
+        
+
+    Auto installer 
+        basically, have a "setup.sh" file, and walk usr through what they want to do 
+        configs (probably just generate and tell user to fill it out)
+        set up service automatically
+        required linux packages
+        make a separate user
+            have music be owned by that new user, but make sure installing user has access to everything
+                so installing user owns bot stuff, but music user owns music stuff
+                    generate ssh key under music user
+                make it so /music is default local, but can be put somewhere else
+            check that the user running it has correct permissions for the directory theyre installing in
+        maybe set up ssh key?
+
+    
+    command default configs
+
+
+    edit track titles before downloading
+        be able to send track title list (w/o times)
+        exclude certain keywords
+            exclude list .txt file
+                param to enable/disable the exclude list (defualt True)
+    
+
+
+
 [big things]
 	Add other platforms
 		grabbing links raw (with wget or smthing)
@@ -17,14 +48,14 @@
 
 remove dates as a parameter, get them from database.
 	
-in download_audio, could do elif (album or playlist), do init stuff, then seperate for each of them?
+in download_audio, could do elif (album or playlist), do init stuff, then separate for each of them?
 make thumbnail_error like success_list
 already exists confirmation should come before manually searching for metadata
 make sure download() and replace_thumbnail() can accept just an album
 exclude tracks
 
 [features]
-2,10 auto updater
+2,10 auto updater from github page
 
 2,3	add more arguments
 		add in a force: so if force is true then it uses inputted args exactly
@@ -46,19 +77,17 @@ exclude tracks
 5,3	ability to rename and modify tracks inside of playlists
 		just do a parameter playlist. then if one is provided make the song dir "base/playlist/song"
 		for existing entire playlist handling, make comment say "for modifying entire playlist" and "for singles inside playlists" for other param
+        trim tracks (ie remove first/last x seconds)
+
 
 3,3	ability to download youtube videos as well
 		shouldnt be too hard, i can just ignore metadata and run the command raw
 		need extra configs (for directory)
 
-5,3	timestamps metadata from database
+2,3	timestamps metadata from database
 		get timestamps (titles, or titles and times) from database
 		ability to replace only the timestamp titles (keep times the same)
-
-*45	implement usedatabase
-		should do usedatabase cover,tracktimes,tracknames
-			instead of true/false
-		cover, timestamps, timestamp names
+        !low priority because its better to download albums as playlists instead of videos, as timestamps will never be perfect for a single video
 
 3,2	be able to cancel "⏳ Please send thumbnail (text or image attachment):"
 
@@ -134,15 +163,7 @@ exclude tracks
 
 4,2	replace_thumbnail makes bot lose connection. (only in console)
 
-
-[notes]
-	from mutagen.m4a import M4ATags
-		https://chat.deepseek.com/a/chat/s/55c9d945-bdd9-403c-8766-e5c585b3b681
-
-	
-✓	set up defaults properly (default author is channel uploader, default title is video title, etc)
-		need to do date still
-	
+3   ' in file title causes issues. This was fixed for track titles, so look at that
 
 
 
@@ -160,6 +181,11 @@ exclude tracks
 	
 	✓	ability to pull details from a database
 	✓		including thumbnail
+    implement usedatabase
+		should do usedatabase cover,tracktimes,tracknames
+			instead of true/false
+		cover, timestamps, timestamp names
+
 
 	[improvements]
 	✓	find a way to make the starting portion of replace commands be in one spot for the class
