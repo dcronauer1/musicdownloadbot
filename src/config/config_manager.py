@@ -18,7 +18,7 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
         "keep_perms_consistent": True,
         "file_perms": 664,
         "directory_perms": 775,
-        "group": "sambashare",
+        "group": "None",
         "auto_update": True
     },
     "musicbrainz": {

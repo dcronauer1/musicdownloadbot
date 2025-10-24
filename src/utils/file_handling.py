@@ -55,11 +55,14 @@ def apply_directory_permissions():
     dir_perms = int(str(config["directory_settings"]["directory_perms"]), 8)
     target_group = config["directory_settings"]["group"]
 
-    try:
-        gid = grp.getgrnam(target_group).gr_gid
-    except KeyError:
-        print(f"Group {target_group} not found")
-        return False
+    if target_group is None or target_group == "None":
+        gid = os.getegid()
+    else:
+        try:
+            gid = grp.getgrnam(target_group).gr_gid
+        except KeyError:
+            print(f"Group {target_group} not found")
+            return False
 
     for root, dirs, files in os.walk(MUSIC_DIRECTORY):
         for name in dirs + files:

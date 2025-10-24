@@ -2,7 +2,7 @@
 *=in progress
 ✓=done
 
-[active focus]
+[active focus] 10/24/25
 
     auto builder:
         make it so i can add custom descriptions for changes
@@ -57,8 +57,6 @@ make sure download() and replace_thumbnail() can accept just an album
 exclude tracks
 
 [features]
-2,10 auto updater from github page
-
 2,3	add more arguments
 		add in a force: so if force is true then it uses inputted args exactly
 
@@ -187,7 +185,7 @@ exclude tracks
 		should do usedatabase cover,tracktimes,tracknames
 			instead of true/false
 		cover, timestamps, timestamp names
-
+    auto updater
 
 	[improvements]
 	✓	find a way to make the starting portion of replace commands be in one spot for the class

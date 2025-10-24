@@ -38,6 +38,8 @@ set up directories accordingly in config.json
 TODO
 keep_perms_consistent:  
 
+group: group to set music files to. Default uses same group as user running program 
+
 
 # Commands:
 TODO: add more
