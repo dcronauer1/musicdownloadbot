@@ -6,6 +6,9 @@ import json
 import grp
 import sys
 import requests
+import shutil
+import tempfile
+import subprocess
 from config.config_manager import config
 from typing import Optional
 
@@ -143,10 +146,11 @@ def update_release(repo: str, asset_name: str, restart_if_updated=False, output_
     version_file = os.path.join(TEMP_DIRECTORY, f"{repo.replace('/', '_')}_version.txt")
 
     if output_path is None:
+        # Determine output path depending on whether running from frozen executable
         program_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
         output_path = os.path.join(program_dir, asset_name)
 
-    # Get latest release info
+    # Get latest release info from GitHub API
     api_url = f"https://api.github.com/repos/{repo}/releases/latest"
     response = requests.get(api_url)
     response.raise_for_status()
@@ -161,24 +165,68 @@ def update_release(repo: str, asset_name: str, restart_if_updated=False, output_
             print(f"{repo} is up to date ({latest_version})")
             return False
 
-    # Find the asset
+    # Find the asset in the release
     asset = next((a for a in release["assets"] if a["name"] == asset_name), None)
     if not asset:
         raise Exception(f"Asset '{asset_name}' not found in the latest release of {repo}.")
 
-    # Download asset
+    # Download asset content
     download_url = asset["browser_download_url"]
     print(f"Downloading {asset_name} from {repo} version {latest_version}")
-    r = requests.get(download_url)
+    # stream the download to avoid partial-write execution problems and to conserve memory
+    r = requests.get(download_url, stream=True)
     r.raise_for_status()
-    with open(output_path, "wb") as f:
-        f.write(r.content)
-    os.chmod(output_path, 0o755)
+
+    # Save to a temporary file (so we don't overwrite the running binary)
+    # Use same directory as output to keep move atomic on same FS when possible.
+    tmp_dir = os.path.dirname(output_path) or "."
+    with tempfile.NamedTemporaryFile(delete=False, dir=tmp_dir, prefix=asset_name + "_") as tmp_file:
+        # write in streaming chunks to avoid memory issues
+        for chunk in r.iter_content(chunk_size=8192):
+            if chunk:
+                tmp_file.write(chunk)
+        # flush and sync to ensure the file is fully written to disk before we try to execute/move it
+        tmp_file.flush()
+        os.fsync(tmp_file.fileno())
+        tmp_path = tmp_file.name
+    # ensure downloaded file is executable
+    try:
+        st = os.stat(tmp_path)
+        os.chmod(tmp_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    except Exception:
+        # best-effort chmod; we'll attempt again after move if needed
+        pass
 
     # Update version file
     with open(version_file, "w") as f:
         f.write(latest_version)
 
-    print(f"{asset_name} updated to {latest_version} at {output_path}")
+    print(f"{asset_name} downloaded to temporary path {tmp_path}")
+
     if restart_if_updated:
+        # Replace old binary with the downloaded one and then exit.
+        # The service manager is expected to restart the program.
+        try:
+            # Use shutil.move to handle cross-filesystem moves as well.
+            shutil.move(tmp_path, output_path)
+            try:
+                os.chmod(output_path, 0o755)
+            except Exception:
+                pass
+            print(f"{asset_name} updated to {latest_version} at {output_path}")
+            print("Update applied; exiting so the service manager can restart the program.")
+        except Exception as e:
+            # If move fails, keep the tmp file (for debugging) and raise
+            print(f"Failed to replace binary: {e}")
+            raise
+        # Exit now — do not attempt to relaunch; service will restart it.
         sys.exit(0)
+
+    # If not restarting immediately, replace in place
+    shutil.move(tmp_path, output_path)
+    try:
+        os.chmod(output_path, 0o755)
+    except Exception:
+        pass
+    print(f"{asset_name} updated to {latest_version} at {output_path}")
+    return True

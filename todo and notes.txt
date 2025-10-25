@@ -12,6 +12,7 @@
     Auto installer 
 !!!!!!!        test ssh and separate user capabilities
             run on a fresh install of ubuntuserver
+            make sure it auto restarts when closing
         make a separate user
             generate ssh key under music user
 
