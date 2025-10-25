@@ -130,7 +130,7 @@ def update_files(update_self=config["directory_settings"]["auto_update"]):
         print(f"ERROR: yt-dlp does not exist: {ytdlp_path}")
         sys.exit(1)
 
-def update_release(repo: str, asset_name: str, restart_if_updated=False, output_path=None) -> bool:
+def update_release(repo: str, asset_name: str, output_path=None, restart_if_updated=False) -> bool:
     """
     Check if there is a new release for the given GitHub repo and asset,
     and download it if it is newer than the last version.
