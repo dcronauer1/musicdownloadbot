@@ -2,13 +2,20 @@
 set -e
 
 # --- CONFIG ---
+SERVICE_NAME="musicdownloadbot"
+
 REPO="dcronauer1/musicdownloadbot"
 BINARY_NAME="musicdownloadbot"
 INSTALL_DIR="$(pwd)/$BINARY_NAME"
 LOCAL_BINARY="$INSTALL_DIR/$BINARY_NAME"
-SERVICE_NAME="musicdownloadbot"
 TEMP_DIR="$INSTALL_DIR/temp"
 VERSION_FILE="$TEMP_DIR/${REPO//\//_}_version.txt"
+
+#Verify user is running as intended user
+read -p "Are you sure you want this program to run as $USER? [y/N]: " TEMP
+if [[ "$TEMP" =~ ^[Nn]$ ]]; then
+    exit 1
+fi
 
 # --- CHECK PERMISSIONS ---
 if [ ! -w "$PWD" ]; then
@@ -19,7 +26,7 @@ fi
 # --- INSTALL REQUIRED PACKAGES ---
 echo "Installing required packages..."
 sudo apt update
-sudo apt install -y python3 python3-pip samba ffmpeg atomicparsley python3-mutagen
+sudo apt install -y python3 python3-pip ffmpeg atomicparsley python3-mutagen
 
 # --- CREATE INSTALL DIRS ---
 mkdir -p "$INSTALL_DIR"
@@ -51,7 +58,8 @@ chmod 644 "$VERSION_FILE"
 echo "Installed $BINARY_NAME version $LATEST_VERSION to $LOCAL_BINARY"
 
 # --- CREATE SYSTEM USER (OPTIONAL) ---
-read -p "Do you want to create a separate user for copying music over ssh? This will generate an SSH key for you. [y/N]: " CREATE_USER
+echo ""
+read -p "Do you want to create a separate user for copying music over ssh? This will generate an SSH key for you, and place it in authorized_keys for that user. This is recommended, as the user pulling music should only have read access to the music. This will install openssh client and server. [y/N]: " CREATE_USER
 if [[ "$CREATE_USER" =~ ^[Yy]$ ]]; then
     read -p "Enter username for music user: " MUSIC_USER
 
@@ -60,27 +68,43 @@ if [[ "$CREATE_USER" =~ ^[Yy]$ ]]; then
     else
         sudo adduser --disabled-password --gecos "" "$MUSIC_USER"
         echo "User $MUSIC_USER created."
+        
+        # Set home directory permissions to 755
+        sudo chmod 755 "/home/$MUSIC_USER"
+        echo "Set home directory permissions to 755 for /home/$MUSIC_USER"
     fi
 
     # --- GENERATE SSH KEY ---
+    sudo apt install -y openssh-client openssh-server
+
     SSH_DIR="/home/$MUSIC_USER/.ssh"
     sudo mkdir -p "$SSH_DIR"
-    sudo -u "$MUSIC_USER" ssh-keygen -t ed25519 -f "$SSH_DIR/id_ed25519" -N ""
-    sudo -u "$MUSIC_USER" bash -c "cat $SSH_DIR/id_ed25519.pub >> $SSH_DIR/authorized_keys"
+    # Set proper ownership and permissions before generating keys
     sudo chown -R "$MUSIC_USER:$MUSIC_USER" "$SSH_DIR"
     sudo chmod 700 "$SSH_DIR"
+    
+    # Generate SSH key as the music user
+    sudo -u "$MUSIC_USER" ssh-keygen -t ed25519 -f "$SSH_DIR/id_ed25519" -N ""
+    sudo -u "$MUSIC_USER" bash -c "cat $SSH_DIR/id_ed25519.pub >> $SSH_DIR/authorized_keys"
     sudo chmod 600 "$SSH_DIR/authorized_keys"
 
     # Copy private key for user convenience
-    cp "$SSH_DIR/id_ed25519" "$INSTALL_DIR/ssh_private_key"
+    sudo cp "$SSH_DIR/id_ed25519" "$INSTALL_DIR/ssh_private_key"
+    sudo chown $USER "$INSTALL_DIR/ssh_private_key"
     chmod 600 "$INSTALL_DIR/ssh_private_key"
-    echo "Private key copied to $INSTALL_DIR/ssh_private_key. Add this key to your devices and delete it when done."
+    echo -e "\n\nPrivate key copied to $INSTALL_DIR/ssh_private_key. Add this key to your devices and delete it when done."
+    
+    # Clean up the original keys from the music user's .ssh directory
     sudo rm "$SSH_DIR/id_ed25519"
     sudo rm "$SSH_DIR/id_ed25519.pub"
-    echo "Ensure SSH is configured: disable password auth, port forwarding, etc."
+    echo "Ensure SSH is configured, The ssh port you use is forwarded, etc."
+    echo "Recommended /etc/ssh/sshd_config configs:"
+    echo -e "Port 2022 (Recommended to not use default port)\nPermitRootLogin no\nPubkeyAuthentication yes\nPasswordAuthentication no\nAuthorizedKeysFile .ssh/authorized_keys"
+    echo "Remember to run sudo systemctl restart ssh"
 fi
 
 # --- SET UP SYSTEMD SERVICE ---
+
 read -p "Do you want to set up the musicdownloadbot systemd service? [y/N]: " SETUP_SERVICE
 if [[ "$SETUP_SERVICE" =~ ^[Yy]$ ]]; then
     RUN_USER=$(logname 2>/dev/null || echo "$USER")
@@ -97,6 +121,9 @@ User=$RUN_USER
 ExecStart=$LOCAL_BINARY
 WorkingDirectory=$INSTALL_DIR
 Restart=on-failure
+RestartSec=10
+StartLimitInterval=100
+StartLimitBurst=5
 
 [Install]
 WantedBy=multi-user.target
@@ -104,7 +131,12 @@ EOL
 
     sudo systemctl daemon-reload
     sudo systemctl enable "$SERVICE_NAME.service"
-    echo "Service $SERVICE_NAME installed. It will run once on start to generate config, then stop."
+
+    echo -e "\n\nService $SERVICE_NAME installed. It will run once on start to generate config, then stop."
+    echo "If config is generated, edit config.json, then start service manually if installed:"
+    echo "sudo systemctl start $SERVICE_NAME"
+    echo "To see logs, run:"
+    echo "journalctl -u $SERVICE_NAME"
 fi
 
 # --- RUN ONCE TO GENERATE CONFIG ---
@@ -116,6 +148,11 @@ if [ -f "$CONFIG_FILE" ]; then
 else
     echo "Running $BINARY_NAME once to generate config..."
     "$LOCAL_BINARY" || true
-    echo "If config was generated, edit config.json, then start service manually if installed:"
-    echo "sudo systemctl start $SERVICE_NAME"
 fi
+
+
+#todo: modify config.json to have music dir be in 2nduser/music
+#chown the music dir to the first user (make it 0x775)
+#if it does this, tell user that musicdir was modified to that dir, and that they can change it to any dir as long as running user has rwx and musicuser has r
+
+#alt to above, just make musicdir in /music (check if dir already exists before doing this?)
