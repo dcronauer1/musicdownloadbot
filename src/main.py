@@ -4,7 +4,6 @@ import asyncio
 from typing import Optional
 from discord import app_commands
 from discord.ext import commands
-import time
 
 from config.config_manager import config
 from utils.ytdownloader import *
@@ -327,5 +326,4 @@ try:
     bot.run(config["bot_settings"]["BOT_TOKEN"])
 except Exception as e:
     print(f"Error when starting bot: {e}")
-    time.sleep(15)
     sys.exit(1)
