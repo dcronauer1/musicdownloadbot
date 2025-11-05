@@ -30,6 +30,32 @@ set up directories accordingly in config.json
 * Foobar2000 recommended  
 * Will add sync script in the future
 
+## How to set up FolderSync with SSH
+
+### 1. Prepare the Private Key
+- Get the private key (`musicdownloadbot/ssh_private_key` if generated with `installer.sh`)
+- Move it to your phone
+- **Important**: Delete this file from the server after moving it
+
+### 2. Create New SFTP Account in FolderSync
+- **Username**: The user you created with `installer.sh` (not the user running the program)
+- **Address**: Your public IPv4 address
+- **Port**: The port defined in `/etc/ssh/sshd_config`
+- **Private Key File**: `ssh_private_key`
+
+### 3. Create Folder Pair
+- **Sync Type**: "To right folder"
+- **Left Account**: SFTP user created in step 2
+- **Folder**: Music folder location
+  - You may need to move the folder's location.
+  - Directory should have rwx for the user running program, and r for the ssh user
+- **Right Account**: Local folder of your choosing (recommended: `/Music`)
+- **Scheduling**: Set up as needed (example: every hour)
+- Recommended Sync Options:
+  - Enable "Sync deletions"
+  - Overwrite old files: Always
+  - If both local and remote file have been modified: Use left file
+
 # Notes
 * Soundcloud "works"; however, without a Soundcloud Go subscription, downloads are heavily compressed.
   * Resource for adding soundcloud go token: https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
