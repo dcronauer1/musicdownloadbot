@@ -76,7 +76,7 @@ def initialize_config():
     else:  # Running as Python script
         program_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Create default config if not exists
+    # Create default config if it doesnt exist
     config_path = os.path.join(program_dir,"config.json")
     if not os.path.exists(config_path):
         with open(config_path, "w") as f:
@@ -89,7 +89,7 @@ def initialize_config():
             config = json.load(f)
     except json.JSONDecodeError:
         print("Error: Invalid JSON format in config.json.")
-        sys.exit(1)
+        sys.exit(0)
 
     if validate_config(config, DEFAULT_CONFIG):
         print("Updating config with missing defaults.")
@@ -100,8 +100,8 @@ def initialize_config():
         with open(config_path, "w") as f:
             json.dump(config, f, indent=4)
 
-        print("Config updated. Restart required.")
-        sys.exit(0)
+        print("Config updated")
+        sys.exit(1)
 
     #replace placeholders
     replace_placeholders(config, ["{program_dir}"], [program_dir])

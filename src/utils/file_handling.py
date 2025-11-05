@@ -219,8 +219,8 @@ def update_release(repo: str, asset_name: str, output_path=None, restart_if_upda
             # If move fails, keep the tmp file (for debugging) and raise
             print(f"Failed to replace binary: {e}")
             raise
-        # Exit now — do not attempt to relaunch; service will restart it.
-        sys.exit(0)
+        # Exit as failure so service will restart it
+        sys.exit(1)
 
     # If not restarting immediately, replace in place
     shutil.move(tmp_path, output_path)
