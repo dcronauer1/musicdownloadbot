@@ -127,8 +127,8 @@ def initialize_config():
     
     #Check if music_directory is accessible
     music_dir = config["download_settings"]["music_directory"]
-    if os.access(music_dir, os.R_OK | os.W_OK | os.X_OK) and os.path.isdir(music_dir):
-        print(f"{music_dir} is not accessible. Please fix")
+    if not os.access(music_dir, os.R_OK | os.W_OK | os.X_OK) or not os.path.isdir(music_dir):
+        print(f"{music_dir} is not accessible or isn't a directory. Please fix")
         sys.exit(0)
 
     # Add temp directory
