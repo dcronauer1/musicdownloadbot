@@ -80,8 +80,9 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
             await safe_send(interaction,output_str)
         if(error_str):
             await safe_send(interaction,error_str)
-    
-    if timestamps and (type != "playlist"): #if timestamps exist, then user entered timestamps, so use those
+
+    #if timestamps exist, then user entered timestamps, so use those
+    if timestamps and (type != "playlist"): 
         success, error_str = await apply_timestamps_to_file(timestamps,audio_file)
         if(success == False):
             await safe_send(interaction,f"❗Failed to apply chapters: {error_str}")
@@ -92,7 +93,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     else:
         timestamp_file,error_str=None,"type = Playlist"
 
-    #if no timestamp file, then no timestamps exist, so prompt user. UNLESS user entered False for adding timestamps
+    #Prompt user for timestamps if no timestamp file and user didnt enter False for adding timestamps
     if (timestamp_file == None) and (addtimestamps != False) and (type != "playlist"):
         #prompt user defined templates 
         if (await ask_confirmation(interaction, "Would you like to add timestamps?")):

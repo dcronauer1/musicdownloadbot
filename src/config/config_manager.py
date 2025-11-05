@@ -116,14 +116,20 @@ def initialize_config():
             if path == default_path:
                 # Default path missing → create it
                 try:
-                    os.makedirs(path, exist_ok=True)
+                    os.makedirs(path, mode=0o775, exist_ok=True)
                     print(f"Created default {key} directory: {path}")
                 except OSError as e:
                     print(f"ERROR: Failed to create {key} directory: {e}")
                     sys.exit(1)
             else:
                 print(f"ERROR: {key} path does not exist: {path}")
-                sys.exit(1)
+                sys.exit(0)
+    
+    #Check if music_directory is accessible
+    music_dir = config["download_settings"]["music_directory"]
+    if os.access(music_dir, os.R_OK | os.W_OK | os.X_OK) and os.path.isdir(music_dir):
+        print(f"{music_dir} is not accessible. Please fix")
+        sys.exit(0)
 
     # Add temp directory
     temp_dir = os.path.join(program_dir, "temp")
