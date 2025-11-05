@@ -167,3 +167,10 @@ else
     echo "Running $BINARY_NAME once to generate config..."
     "$LOCAL_BINARY" || true
 fi
+
+read -p "Do you want to create /var/music? (yes if you will be using default music directory) [y/N]: " CREATE_MUSIC
+if [[ "$CREATE_MUSIC" =~ ^[Yy]$ ]]; then
+    sudo mkdir /var/music
+    sudo chown $USER:$USER /var/music
+    sudo chmod 775 /var/music
+fi

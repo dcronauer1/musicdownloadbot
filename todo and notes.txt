@@ -9,13 +9,6 @@
 
     need to auto update periodically (every 6hrs or so)
 
-    Auto installer 
-!!!!!!!        test ssh and separate user capabilities
-            run on a fresh install of ubuntuserver
-            make sure it auto restarts when closing
-        make a separate user
-            generate ssh key under music user
-
     add a config for a channel/user to send logs to. if empty, then skip.
         make this a function in discord_helpers.py
 
@@ -183,6 +176,12 @@ exclude tracks
 			instead of true/false
 		cover, timestamps, timestamp names
     auto updater
+    Auto installer 
+        test ssh and separate user capabilities
+            run on a fresh install of ubuntuserver
+            make sure it auto restarts when closing
+        make a separate user
+            generate ssh key under music user
 
 	[improvements]
 	✓	find a way to make the starting portion of replace commands be in one spot for the class
