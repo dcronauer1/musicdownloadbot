@@ -17,6 +17,28 @@ if [[ "$TEMP" =~ ^[Nn]$ ]]; then
     exit 1
 fi
 
+#Update installer.sh
+read -p "Get most recent version of installer.sh? [y/N]: " TEMP2
+if [[ "$TEMP2" =~ ^[Yy]$ ]]; then
+    echo "Downloading latest installer..."
+    
+    # Get installer download URL from latest release (same method as binary)
+    INSTALLER_URL=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" \
+        | grep "browser_download_url.*installer.sh\"" \
+        | cut -d '"' -f 4)
+    
+    if [ -z "$INSTALLER_URL" ]; then
+        echo "Installer.sh not found in latest release. Continuing with current version."
+    else
+        TMP_SCRIPT=$(mktemp)
+        curl -L "$INSTALLER_URL" -o "$TMP_SCRIPT"
+        chmod +x "$TMP_SCRIPT"
+        mv "$TMP_SCRIPT" "$0"
+        echo "Installer updated successfully. Please run the script again."
+        exit 0
+    fi
+fi
+
 # --- CHECK PERMISSIONS ---
 if [ ! -w "$PWD" ]; then
     echo "You do not have write permissions in $(pwd). Please run in a directory you own."
