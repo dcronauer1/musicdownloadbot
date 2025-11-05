@@ -54,8 +54,8 @@ def apply_directory_permissions():
         return False
     
     # Convert permissions to octal
-    file_perms = int(str(config["directory_settings"]["file_perms"]), 8)
-    dir_perms = int(str(config["directory_settings"]["directory_perms"]), 8)
+    file_perms = int(str(config["directory_settings"]["music_file_perms"]), 8)
+    dir_perms = int(str(config["directory_settings"]["music_directory_perms"]), 8)
     target_group = config["directory_settings"]["group"]
 
     if target_group is None or target_group == "None":

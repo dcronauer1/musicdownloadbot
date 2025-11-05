@@ -46,9 +46,7 @@ set up directories accordingly in config.json
 ### 3. Create Folder Pair
 - **Sync Type**: "To right folder"
 - **Left Account**: SFTP user created in step 2
-- **Folder**: Music folder location
-  - You may need to move the folder's location.
-  - Directory should have rwx for the user running program, and r for the ssh user
+- **Folder**: Music folder location (default /var/music)
 - **Right Account**: Local folder of your choosing (recommended: `/Music`)
 - **Scheduling**: Set up as needed (example: every hour)
 - Recommended Sync Options:

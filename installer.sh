@@ -68,10 +68,6 @@ if [[ "$CREATE_USER" =~ ^[Yy]$ ]]; then
     else
         sudo adduser --disabled-password --gecos "" "$MUSIC_USER"
         echo "User $MUSIC_USER created."
-        
-        # Set home directory permissions to 755
-        sudo chmod 755 "/home/$MUSIC_USER"
-        echo "Set home directory permissions to 755 for /home/$MUSIC_USER"
     fi
 
     # --- GENERATE SSH KEY ---
@@ -149,10 +145,3 @@ else
     echo "Running $BINARY_NAME once to generate config..."
     "$LOCAL_BINARY" || true
 fi
-
-
-#todo: modify config.json to have music dir be in 2nduser/music
-#chown the music dir to the first user (make it 0x775)
-#if it does this, tell user that musicdir was modified to that dir, and that they can change it to any dir as long as running user has rwx and musicuser has r
-
-#alt to above, just make musicdir in /music (check if dir already exists before doing this?)

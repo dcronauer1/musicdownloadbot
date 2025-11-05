@@ -8,7 +8,7 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
         "BOT_TOKEN": "[your-token-here]"
     },
     "download_settings": {
-        "music_directory": "{program_dir}/music",
+        "music_directory": "/var/music",
         "file_type": "opus",
         "file_extension": ".opus",
         "default_cover_size": "1200",
@@ -16,8 +16,8 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
     },
     "directory_settings":{
         "keep_perms_consistent": True,
-        "file_perms": 664,
-        "directory_perms": 775,
+        "music_file_perms": 664,
+        "music_directory_perms": 775,
         "group": "None",
         "auto_update": True
     },
