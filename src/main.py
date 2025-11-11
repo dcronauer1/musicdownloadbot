@@ -15,6 +15,7 @@ from utils.file_handling import *
 MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
 FILE_EXTENSION = config["download_settings"]["file_extension"]
 DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
+WHITELIST= config["bot_settings"]["whitelist"]
 
 # Custom Bot class to sync slash commands on startup.
 class MyBot(commands.Bot):
@@ -30,6 +31,15 @@ intents.message_content = True  # Enable message content intent
 
 # Create bot instance with updated intents
 bot = MyBot(command_prefix="!", intents=intents)
+
+async def check_whitelist(interaction: discord.Interaction) -> bool:
+    if not WHITELIST or interaction.user.id in WHITELIST:
+        return True
+    try:
+        await interaction.response.send_message("❌ You are not whitelisted", ephemeral=True)
+    except Exception:
+        await interaction.followup.send("❌ You are not whitelisted", ephemeral=True)
+    return False
 
 @bot.tree.command(name="download", description="Download a video, extract chapters, and send metadata to Discord")
 async def download(interaction: discord.Interaction, link: str, type: str = "Song", title: str = None, artist: str = None, tags: str = None,
@@ -51,7 +61,8 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     """
     # Send an initial response.
     await interaction.response.defer()  # Acknowledge the command first
-    
+    if not await check_whitelist(interaction): return   #check for whitelist
+
     type = type.lower()
     if type == "album":
         type = "album_playlist"
@@ -140,7 +151,8 @@ class ReplaceGroup(app_commands.Group):
         """
         # Defer first to prevent interaction token expiration
         await interaction.response.defer()
-        
+        if not await check_whitelist(interaction): return   #check for whitelist
+
         try:
             #get audio file & check for existence
             audio_file = await self._get_audio_file(interaction, title)
@@ -193,6 +205,7 @@ class ReplaceGroup(app_commands.Group):
         """
         # Defer first to prevent interaction token expiration
         await interaction.response.defer()
+        if not await check_whitelist(interaction): return   #check for whitelist
 
         if title == None or title == "":
             if album == None or album == "":
@@ -237,6 +250,7 @@ class ListGroup(app_commands.Group):
     @app_commands.command(name="music", description="list all music files")
     async def list_music(self, interaction: discord.Interaction):
         """function to list all music"""
+        if not await check_whitelist(interaction): return   #check for whitelist
         tree = save_music_tree()
         await interaction.response.send_message(file=discord.File(tree))
         return
@@ -244,16 +258,19 @@ class ListGroup(app_commands.Group):
     @app_commands.command(name="artists", description="list all authors in use")
     async def list_artists(self, interaction: discord.Interaction):
         """function to list all authors that are stored"""
+        if not await check_whitelist(interaction): return   #check for whitelist
         await interaction.response.send_message(f"List of authors: {get_entries_from_json('artists.json')}")
 
     @app_commands.command(name="tags", description="list all tags in use")
     async def list_tags(self, interaction: discord.Interaction):
         """function to list all tags that are stored"""
+        if not await check_whitelist(interaction): return   #check for whitelist
         await interaction.response.send_message(f"List of tags: {get_entries_from_json('tags.json')}")
 
 @bot.tree.command(name="help", description="Shows a paginated help menu")
-async def help_commands(interaction: discord.Interaction):
-    pages = [
+async def help_command(interaction: discord.Interaction):
+    if not await check_whitelist(interaction): return   #check for whitelist
+    pages = [   #TODO
         discord.Embed(title="🎵 Music Commands", description=
             "/download:\n" \
             "-TODO\n" \

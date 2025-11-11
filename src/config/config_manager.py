@@ -5,7 +5,8 @@ import shutil
 
 DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on run, not saved to the file
     "bot_settings": {
-        "BOT_TOKEN": "[your-token-here]"
+        "BOT_TOKEN": "your_token_here",
+        "whitelist": ["your_discord_id_here","another_id_here"]
     },
     "download_settings": {
         "music_directory": "/var/music",
@@ -24,6 +25,9 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
     "musicbrainz": {
         "app_name": "YourMusicBot",
         "contact_email": "tempemail1732218732931@gmail.com"
+    },
+    "dev":{
+        "debug": False
     }
 }
 
@@ -103,6 +107,20 @@ def initialize_config():
         print("Config updated")
         sys.exit(1)
 
+    should_exit = False
+    if config["bot_settings"]["BOT_TOKEN"] == "your_token_here":
+        print("You need to set your Discord bot token in config.json")
+        should_exit = True
+
+    if config["bot_settings"]["whitelist"] == ["your_discord_id_here","another_id_here"]:
+        print("Whitelist is default. Either enter your Discord id, or make it blank.\n⚠️WARNING: If left blank, anyone can run commands with your bot")
+        should_exit = True
+    # Keep only entries that can be converted to int
+    config["bot_settings"]["whitelist"] = [
+        int(x) for x in config["bot_settings"]["whitelist"]
+        if isinstance(x, (int, str)) and str(x).isdigit()
+    ]
+
     #replace placeholders
     replace_placeholders(config, ["{program_dir}"], [program_dir])
 
@@ -120,7 +138,7 @@ def initialize_config():
                     print(f"Created default {key} directory: {path}")
                 except OSError as e:
                     print(f"ERROR: Failed to create {key} directory: {e}")
-                    sys.exit(1)
+                    sys.exit(0)
             else:
                 print(f"ERROR: {key} path does not exist: {path}")
                 sys.exit(0)
@@ -129,13 +147,17 @@ def initialize_config():
     music_dir = config["download_settings"]["music_directory"]
     if not os.access(music_dir, os.R_OK | os.W_OK | os.X_OK) or not os.path.isdir(music_dir):
         print(f"{music_dir} is not accessible or isn't a directory. Please fix")
-        sys.exit(0)
+        should_exit = True
+
+    if should_exit: sys.exit(0) #give all errors at once
 
     # Add temp directory
     temp_dir = os.path.join(program_dir, "temp")
     config["directory_settings"]["temp_directory"] = temp_dir
     os.makedirs(temp_dir, exist_ok=True)
 
+    if config["dev"]["debug"]:
+        print(config)
     return config
 
 # Load config when imported

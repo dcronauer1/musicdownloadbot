@@ -59,8 +59,12 @@ set up directories accordingly in config.json
   * Resource for adding soundcloud go token: https://www.reddit.com/r/youtubedl/wiki/howdoidownloadhighqualityaudiofromsoundcloud/
 * Default cover size can be "250”, “500”, “1200”. Anything else will default to max size, which is often much larger than 1200, so is not recommended.
 
-# Config File:
-TODO
+# Config File (WIP):
+### bot_settings:
+BOT_TOKEN: Discord bot token. Required
+whitelist: List of Discord user ids allowed to use the bot. **Set blank to let anyone use your bot**
+
+
 keep_perms_consistent:  
 
 group: user group to set music files to. Default uses same group as user running program 
