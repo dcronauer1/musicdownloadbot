@@ -2,7 +2,14 @@
 *=in progress
 ✓=done
 
-[active focus] 10/24/25
+[active focus] 
+    11/11/25
+    ephemeral for messages, make a config
+        all, some, none 
+    Make help command use boxes instead of react buttons
+        doesn work when ephemeral=True
+
+    10/24/25
 
     auto builder:
         make it so i can add custom descriptions for changes
@@ -100,6 +107,9 @@ exclude tracks
 	update messages as things are happing (like when it finishes downloading and starts replacing thumbnails
 
 [improvements]
+5   option for youtube thumbnails to be a certain aspect ratio
+        should be same ratio as musicbrainz db
+
 3   config stuff:
         set up defaults
             usedatabase, album and title handling so only one needs to be provided
@@ -135,8 +145,6 @@ exclude tracks
 
 5	if title is too long, foldersync breaks. so limit title lenght
 		probably just truncate it
-
-4	example config in readme
 
 [bugs]
 5	album_playlist cannot handle exception for single track being entered

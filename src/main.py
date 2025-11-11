@@ -60,7 +60,7 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     The 'interaction' object is similar to 'ctx' in prefix commands, containing information about the command invocation.
     """
     # Send an initial response.
-    await interaction.response.defer()  # Acknowledge the command first
+    await interaction.response.defer(ephemeral=True)  # Acknowledge the command first
     if not await check_whitelist(interaction): return   #check for whitelist
 
     type = type.lower()
@@ -116,9 +116,9 @@ async def download(interaction: discord.Interaction, link: str, type: str = "Son
     
     if timestamp_file:
         # Chapters were extracted using extract_chapters()
-        await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file))
-    else:   
-        await safe_send(interaction,f"🎊Audio downloaded without chapters:\n{error_str}")
+        await interaction.followup.send("🎊Chapters saved! Uploading file...", file=discord.File(timestamp_file),ephemeral=False)
+    else:
+        await safe_send(interaction,f"🎊Audio downloaded without chapters:\n{error_str}",ephemeral=False)
     
     apply_directory_permissions()    #update perms if enabled
     return
@@ -150,7 +150,7 @@ class ReplaceGroup(app_commands.Group):
         :param remove: True: will remove timestamps from files
         """
         # Defer first to prevent interaction token expiration
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         if not await check_whitelist(interaction): return   #check for whitelist
 
         try:
@@ -204,7 +204,7 @@ class ReplaceGroup(app_commands.Group):
         :param customimage: Dont use database, instead send your own image. playlist is the only parameter that matters here. Default False
         """
         # Defer first to prevent interaction token expiration
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         if not await check_whitelist(interaction): return   #check for whitelist
 
         if title == None or title == "":
@@ -252,20 +252,20 @@ class ListGroup(app_commands.Group):
         """function to list all music"""
         if not await check_whitelist(interaction): return   #check for whitelist
         tree = save_music_tree()
-        await interaction.response.send_message(file=discord.File(tree))
+        await interaction.response.send_message(file=discord.File(tree),ephemeral=True)
         return
 
     @app_commands.command(name="artists", description="list all authors in use")
     async def list_artists(self, interaction: discord.Interaction):
         """function to list all authors that are stored"""
         if not await check_whitelist(interaction): return   #check for whitelist
-        await interaction.response.send_message(f"List of authors: {get_entries_from_json('artists.json')}")
+        await interaction.response.send_message(f"List of authors: {get_entries_from_json('artists.json')}",ephemeral=True)
 
     @app_commands.command(name="tags", description="list all tags in use")
     async def list_tags(self, interaction: discord.Interaction):
         """function to list all tags that are stored"""
         if not await check_whitelist(interaction): return   #check for whitelist
-        await interaction.response.send_message(f"List of tags: {get_entries_from_json('tags.json')}")
+        await interaction.response.send_message(f"List of tags: {get_entries_from_json('tags.json')}",ephemeral=True)
 
 @bot.tree.command(name="help", description="Shows a paginated help menu")
 async def help_command(interaction: discord.Interaction):
@@ -295,7 +295,7 @@ async def help_command(interaction: discord.Interaction):
     ]
 
     current_page = 0
-    await interaction.response.defer()
+    await interaction.response.defer(ephemeral=False)   #TODO make ephemeral=True after switching from reactions to buttons
     message = await interaction.followup.send(embed=pages[current_page], wait=True)
 
     await message.add_reaction("⬅️")
@@ -327,7 +327,7 @@ async def help_command(interaction: discord.Interaction):
 
     except asyncio.TimeoutError:
         try:
-            await message.delete()
+            await message.delete()      #TODO wont need this when ephemeral=True above
         except discord.Forbidden:
             pass
 
