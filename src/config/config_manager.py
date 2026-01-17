@@ -34,7 +34,7 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
 
 def replace_placeholders(config, before_list, after_list):
     """
-    Recursively replace multiple placeholders in dict values.
+    Recursively replace multiple placeholders in dict and list values.
 
     Args:
         config (dict): dictionary to process
@@ -44,17 +44,15 @@ def replace_placeholders(config, before_list, after_list):
     Example:
         replace_placeholders(config, ['a', 'b'], ['A', 'B'])
     """
-    if len(before_list) != len(after_list):
-        raise ValueError("before_list and after_list must have the same length")
-
-    for k, v in config.items():
-        if isinstance(v, dict):
-            replace_placeholders(v, before_list, after_list)
-        elif isinstance(v, str):
-            for before, after in zip(before_list, after_list):
-                if before in v:
-                    v = v.replace(before, after)
-            config[k] = v
+    if isinstance(config, dict):
+        for k, v in config.items():
+            config[k] = replace_placeholders(v, before_list, after_list)
+    elif isinstance(config, list):
+        return [replace_placeholders(v, before_list, after_list) for v in config]
+    elif isinstance(config, str):
+        for before, after in zip(before_list, after_list):
+            config = config.replace(before, after)
+    return config
 
 def validate_config(config, default_config):
     """Validate the config file, filling in missing fields with defaults."""
@@ -65,7 +63,11 @@ def validate_config(config, default_config):
             config[key] = default_value
             updated = True
         elif isinstance(default_value, dict):
-            updated = validate_config(config[key], default_value) or updated
+            if not isinstance(config[key], dict):
+                config[key] = default_value
+                updated = True
+            else:
+                updated = validate_config(config[key], default_value) or updated
         elif config[key] is None:
             print(f"'{key}' is None, setting to default: {default_value}")
             config[key] = default_value
@@ -125,14 +127,14 @@ def initialize_config():
     replace_placeholders(config, ["{program_dir}"], [program_dir])
 
     # Validate critical paths and files 
-    temp_config = DEFAULT_CONFIG
-    replace_placeholders(temp_config, ["{program_dir}"], [program_dir])
+    #temp_config = DEFAULT_CONFIG #NOTE this doesnt copy
+    replace_placeholders(DEFAULT_CONFIG, ["{program_dir}"], [program_dir])
 
     keys = [("download_settings", "music_directory"),("directory_settings", "temp_directory")]
     for section, option in keys:    #check critical directories
         path = config[section][option]
         if not os.path.exists(path):
-            default_path = temp_config[section][option]
+            default_path = DEFAULT_CONFIG[section][option]
             if path == default_path:
                 # Default path missing → create it
                 try:
