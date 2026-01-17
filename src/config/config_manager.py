@@ -3,34 +3,35 @@ import json
 import sys
 import shutil
 
-DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on run, not saved to the file
-    "bot_settings": {
-        "BOT_TOKEN": "your_token_here",
-        "whitelist": ["your_discord_id_here","another_id_here"]
-    },
-    "download_settings": {
-        "music_directory": "/var/music",
-        "file_type": "opus",
-        "file_extension": ".opus",
-        "default_cover_size": "1200",
-        "yt_dlp_path": "{program_dir}/yt-dlp"
-    },
-    "directory_settings":{
-        "keep_perms_consistent": True,
-        "music_file_perms": 664,
-        "music_directory_perms": 775,
-        "group": "None",
-        "auto_update": True,
-        "temp_directory": "{program_dir}/temp"
-    },
-    "musicbrainz": {
-        "app_name": "YourMusicBot",
-        "contact_email": "tempemail1732218732931@gmail.com"
-    },
-    "dev":{
-        "debug": False
+def _default_config():
+    return {  #config["directory_settings"]["temp_directory"] is set on run, not saved to the file
+        "bot_settings": {
+            "BOT_TOKEN": "your_token_here",
+            "whitelist": ["your_discord_id_here","another_id_here"]
+        },
+        "download_settings": {
+            "music_directory": "/var/music",
+            "file_type": "opus",
+            "file_extension": ".opus",
+            "default_cover_size": "1200",
+            "yt_dlp_path": "{program_dir}/yt-dlp"
+        },
+        "directory_settings":{
+            "keep_perms_consistent": True,
+            "music_file_perms": 664,
+            "music_directory_perms": 775,
+            "group": "None",
+            "auto_update": True,
+            "temp_directory": "{program_dir}/temp"
+        },
+        "musicbrainz": {
+            "app_name": "YourMusicBot",
+            "contact_email": "tempemail1732218732931@gmail.com"
+        },
+        "dev":{
+            "debug": False
+        }
     }
-}
 
 def replace_placeholders(config, before_list, after_list):
     """
@@ -82,10 +83,11 @@ def initialize_config():
         program_dir = os.path.dirname(os.path.abspath(__file__))
 
     # Create default config if it doesnt exist
+    default_config = _default_config()
     config_path = os.path.join(program_dir,"config.json")
     if not os.path.exists(config_path):
         with open(config_path, "w") as f:
-            json.dump(DEFAULT_CONFIG, f, indent=4)
+            json.dump(default_config, f, indent=4)
         print("Config file created. Please fill it out and restart.")
         sys.exit(0)
 
@@ -96,7 +98,7 @@ def initialize_config():
         print("Error: Invalid JSON format in config.json.")
         sys.exit(0)
 
-    if validate_config(config, DEFAULT_CONFIG):
+    if validate_config(config, default_config):
         print("Updating config with missing defaults.")
         config_path_old = os.path.join(program_dir,"config.json.old")
         shutil.copy(config_path, config_path_old)
@@ -127,14 +129,13 @@ def initialize_config():
     replace_placeholders(config, ["{program_dir}"], [program_dir])
 
     # Validate critical paths and files 
-    #temp_config = DEFAULT_CONFIG #NOTE this doesnt copy
-    replace_placeholders(DEFAULT_CONFIG, ["{program_dir}"], [program_dir])
+    replace_placeholders(default_config, ["{program_dir}"], [program_dir])
 
     keys = [("download_settings", "music_directory"),("directory_settings", "temp_directory")]
     for section, option in keys:    #check critical directories
         path = config[section][option]
         if not os.path.exists(path):
-            default_path = DEFAULT_CONFIG[section][option]
+            default_path = default_config[section][option]
             if path == default_path:
                 # Default path missing → create it
                 try:
