@@ -20,7 +20,8 @@ DEFAULT_CONFIG = {  #config["directory_settings"]["temp_directory"] is set on ru
         "music_file_perms": 664,
         "music_directory_perms": 775,
         "group": "None",
-        "auto_update": True
+        "auto_update": True,
+        "temp_directory": "{program_dir}/temp"
     },
     "musicbrainz": {
         "app_name": "YourMusicBot",
@@ -58,7 +59,6 @@ def replace_placeholders(config, before_list, after_list):
 def validate_config(config, default_config):
     """Validate the config file, filling in missing fields with defaults."""
     updated = False
-
     for key, default_value in default_config.items():
         if key not in config:
             print(f"Missing '{key}', adding default.")
@@ -70,7 +70,6 @@ def validate_config(config, default_config):
             print(f"'{key}' is None, setting to default: {default_value}")
             config[key] = default_value
             updated = True
-
     return updated
 
 def initialize_config():
@@ -107,6 +106,7 @@ def initialize_config():
         print("Config updated")
         sys.exit(1)
 
+    #check for missing critical configs 
     should_exit = False
     if config["bot_settings"]["BOT_TOKEN"] == "your_token_here":
         print("You need to set your Discord bot token in config.json")
@@ -127,34 +127,29 @@ def initialize_config():
     # Validate critical paths and files 
     temp_config = DEFAULT_CONFIG
     replace_placeholders(temp_config, ["{program_dir}"], [program_dir])
-    for key in ["music_directory"]:
-        path = config["download_settings"][key]
+
+    keys = [("download_settings", "music_directory"),("directory_settings", "temp_directory")]
+    for section, option in keys:    #check critical directories
+        path = config[section][option]
         if not os.path.exists(path):
-            default_path = temp_config["download_settings"][key]
+            default_path = temp_config[section][option]
             if path == default_path:
                 # Default path missing → create it
                 try:
                     os.makedirs(path, mode=0o775, exist_ok=True)
-                    print(f"Created default {key} directory: {path}")
+                    print(f"Created default {option} directory: {path}")
                 except OSError as e:
-                    print(f"ERROR: Failed to create {key} directory: {e}")
-                    sys.exit(0)
+                    print(f"ERROR: Failed to create {option} directory: {e}")
+                    should_exit=True
             else:
-                print(f"ERROR: {key} path does not exist: {path}")
-                sys.exit(0)
-    
-    #Check if music_directory is accessible
-    music_dir = config["download_settings"]["music_directory"]
-    if not os.access(music_dir, os.R_OK | os.W_OK | os.X_OK) or not os.path.isdir(music_dir):
-        print(f"{music_dir} is not accessible or isn't a directory. Please fix")
-        should_exit = True
+                print(f"ERROR: {option} not default and path does not exist: {path}")
+                should_exit=True
+        #Check if directory is accessible
+        if not os.access(path, os.R_OK | os.W_OK | os.X_OK) or not os.path.isdir(path):
+            print(f"{path} is not accessible or isn't a directory. Please fix")
+            should_exit = True
 
-    if should_exit: sys.exit(0) #give all errors at once
-
-    # Add temp directory
-    temp_dir = os.path.join(program_dir, "temp")
-    config["directory_settings"]["temp_directory"] = temp_dir
-    os.makedirs(temp_dir, exist_ok=True)
+    if should_exit: sys.exit(0) #give all errors and then exit
 
     if config["dev"]["debug"]:
         print(config)

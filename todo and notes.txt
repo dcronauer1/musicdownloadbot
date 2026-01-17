@@ -7,7 +7,9 @@
     ephemeral for messages, make a config
         all, some, none 
     Make help command use boxes instead of react buttons
-        doesn work when ephemeral=True
+        doesnt work when ephemeral=True
+        include version number in help
+    print the user running the bot/program at start (for if people ever run it raw)
 
     10/24/25
 
@@ -15,9 +17,12 @@
         make it so i can add custom descriptions for changes
 
     need to auto update periodically (every 6hrs or so)
+        how to safely do this? probably a way to check if a command has been ran
 
     add a config for a channel/user to send logs to. if empty, then skip.
         make this a function in discord_helpers.py
+        could also take this a step further and make a logs file
+        ***make a config section for logs: logs{ephemeral,sendtouser,sendtochannel,logfile} etc.
 
     add default configs for commands (ex: usedatabase)
         check if title=albumtitle, ie if theres a difference between providing the title when albumtitle is provided
