@@ -12,11 +12,12 @@ from utils.discord_helpers import ask_confirmation
 from utils.metadata import get_audio_duration,apply_thumbnail_to_file,get_audio_metadata,fetch_musicbrainz_data,replace_thumbnail
 
 # Retrieve settings from the JSON configuration
-YT_DLP_PATH = CONFIG["download_settings"]["yt_dlp_path"]
+#TODO make these not global
+YT_DLP_PATH = CONFIG["directory_settings"]["yt_dlp_path"]
 MUSIC_DIRECTORY = CONFIG["download_settings"]["music_directory"]
 FILE_TYPE = CONFIG["download_settings"]["file_type"]
 FILE_EXTENSION = CONFIG["download_settings"]["file_extension"]
-
+AUTO_UPDATE_YTDLP = CONFIG["directory_settings"]["auto_update_ytdlp"]
 
 def load_known_list(filename):
     """Load a JSON list from a file, or return an empty list if file does not exist."""
@@ -220,9 +221,10 @@ async def download_audio(interaction, video_url: str, type: str, output_name: st
         return None, "User did not confirm", None
 
     #Update yt-dlp
-    print("Updating yt-dlp...")
-    update_command = f"{YT_DLP_PATH} -U"
-    returncode, _, stderr = await run_command(update_command, True)
+    if AUTO_UPDATE_YTDLP:
+        print("Updating yt-dlp...")
+        update_command = f"{YT_DLP_PATH} -U"
+        returncode, _, stderr = await run_command(update_command, True)
     
     if returncode != 0:
         error_str = f"Error updating yt-dlp: {stderr}"

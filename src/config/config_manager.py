@@ -15,8 +15,7 @@ def _default_config():
             "music_directory": "/var/music",
             "file_type": "opus",
             "file_extension": ".opus",
-            "default_cover_size": "1200",
-            "yt_dlp_path": "{program_dir}/yt-dlp"
+            "default_cover_size": "1200"
         },
         "directory_settings":{
             "keep_perms_consistent": True,
@@ -24,7 +23,9 @@ def _default_config():
             "music_directory_perms": 775,
             "user_group": "None",
             "auto_update": True,
-            "temp_directory": "{program_dir}/temp"
+            "auto_update_ytdlp": True,
+            "temp_directory": "{program_dir}/temp",
+            "yt_dlp_path": "{program_dir}/yt-dlp"
         },
         "musicbrainz": {
             "app_name": "YourMusicBot",

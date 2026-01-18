@@ -117,7 +117,7 @@ def save_music_tree():
 def update_files(update_self=CONFIG["directory_settings"]["auto_update"]):
     """Function to run on start, and periodically"""
 
-    update_release("yt-dlp/yt-dlp","yt-dlp",CONFIG["download_settings"]["yt_dlp_path"])
+    update_release("yt-dlp/yt-dlp","yt-dlp",CONFIG["directory_settings"]["yt_dlp_path"])
 
     if update_self:
         update_release("dcronauer1/musicdownloadbot","musicdownloadbot",restart_if_updated=True)
@@ -126,7 +126,7 @@ def update_files(update_self=CONFIG["directory_settings"]["auto_update"]):
         pass
     
     #check if ytdlp exists
-    ytdlp_path = CONFIG["download_settings"]["yt_dlp_path"]
+    ytdlp_path = CONFIG["directory_settings"]["yt_dlp_path"]
     if not os.path.exists(ytdlp_path):
         print(f"ERROR: yt-dlp does not exist: {ytdlp_path}")
         sys.exit(1)
