@@ -22,7 +22,7 @@ def _default_config():
             "keep_perms_consistent": True,
             "music_file_perms": 664,
             "music_directory_perms": 775,
-            "group": "None",
+            "user_group": "None",
             "auto_update": True,
             "temp_directory": "{program_dir}/temp"
         },

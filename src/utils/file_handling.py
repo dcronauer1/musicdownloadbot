@@ -57,7 +57,7 @@ def apply_directory_permissions():
     # Convert permissions to octal
     file_perms = int(str(CONFIG["directory_settings"]["music_file_perms"]), 8)
     dir_perms = int(str(CONFIG["directory_settings"]["music_directory_perms"]), 8)
-    target_group = CONFIG["directory_settings"]["group"]
+    target_group = CONFIG["directory_settings"]["user_group"]
 
     if target_group is None or target_group == "None":
         gid = os.getegid()
