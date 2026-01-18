@@ -1,10 +1,8 @@
 import subprocess
 import json
 import os
-from config.config_manager import config
 import re
 from typing import Optional
-from utils.core import run_command
 import sys
 import asyncio
 import musicbrainzngs
@@ -13,18 +11,21 @@ from mutagen import File
 from mutagen.oggopus import OggOpus
 from mutagen.flac import Picture
 import base64
+
+from config.config_manager import CONFIG
+from utils.core import run_command
 from utils.file_handling import find_file_case_insensitive
 
-FILE_EXTENSION = config["download_settings"]["file_extension"]
-DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
-MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
-TEMP_DIRECTORY = config["directory_settings"]["temp_directory"]
+FILE_EXTENSION = CONFIG["download_settings"]["file_extension"]
+DEFAULT_COVER_SIZE = CONFIG["download_settings"]["default_cover_size"]
+MUSIC_DIRECTORY = CONFIG["download_settings"]["music_directory"]
+TEMP_DIRECTORY = CONFIG["directory_settings"]["temp_directory"]
 
 try:
     musicbrainzngs.set_useragent(
-        app=config["musicbrainz"]["app_name"],
+        app=CONFIG["musicbrainz"]["app_name"],
         version="1.0",
-        contact=config["musicbrainz"]["contact_email"]
+        contact=CONFIG["musicbrainz"]["contact_email"]
     )
     musicbrainzngs.set_rate_limit(limit_or_interval=1.0, new_requests=1)
 except KeyError as e:

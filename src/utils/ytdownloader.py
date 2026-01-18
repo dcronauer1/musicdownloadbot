@@ -3,18 +3,19 @@ import json
 import difflib
 import re
 import shutil
-from config.config_manager import config
-from utils.core import run_command
-from utils.discord_helpers import ask_confirmation
-from utils.metadata import get_audio_duration,apply_thumbnail_to_file,get_audio_metadata,fetch_musicbrainz_data,replace_thumbnail
 from mutagen import File
 from mutagen.mp4 import MP4
 
+from config.config_manager import CONFIG
+from utils.core import run_command
+from utils.discord_helpers import ask_confirmation
+from utils.metadata import get_audio_duration,apply_thumbnail_to_file,get_audio_metadata,fetch_musicbrainz_data,replace_thumbnail
+
 # Retrieve settings from the JSON configuration
-YT_DLP_PATH = config["download_settings"]["yt_dlp_path"]
-MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
-FILE_TYPE = config["download_settings"]["file_type"]
-FILE_EXTENSION = config["download_settings"]["file_extension"]
+YT_DLP_PATH = CONFIG["download_settings"]["yt_dlp_path"]
+MUSIC_DIRECTORY = CONFIG["download_settings"]["music_directory"]
+FILE_TYPE = CONFIG["download_settings"]["file_type"]
+FILE_EXTENSION = CONFIG["download_settings"]["file_extension"]
 
 
 def load_known_list(filename):

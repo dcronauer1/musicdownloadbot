@@ -9,12 +9,13 @@ import requests
 import shutil
 import tempfile
 import subprocess
-from config.config_manager import config
 from typing import Optional
 
-FILE_EXTENSION = config["download_settings"]["file_extension"]
-TEMP_DIRECTORY = config["directory_settings"]["temp_directory"]
-MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
+from config.config_manager import CONFIG
+
+FILE_EXTENSION = CONFIG["download_settings"]["file_extension"]
+TEMP_DIRECTORY = CONFIG["directory_settings"]["temp_directory"]
+MUSIC_DIRECTORY = CONFIG["download_settings"]["music_directory"]
 
 def get_entries_from_json(filename) -> str:
     """function to return all entries from a json file"""
@@ -50,13 +51,13 @@ def apply_directory_permissions():
 
     :return: False if failed, True if success
     """
-    if not config["directory_settings"]["keep_perms_consistent"]:
+    if not CONFIG["directory_settings"]["keep_perms_consistent"]:
         return False
     
     # Convert permissions to octal
-    file_perms = int(str(config["directory_settings"]["music_file_perms"]), 8)
-    dir_perms = int(str(config["directory_settings"]["music_directory_perms"]), 8)
-    target_group = config["directory_settings"]["group"]
+    file_perms = int(str(CONFIG["directory_settings"]["music_file_perms"]), 8)
+    dir_perms = int(str(CONFIG["directory_settings"]["music_directory_perms"]), 8)
+    target_group = CONFIG["directory_settings"]["group"]
 
     if target_group is None or target_group == "None":
         gid = os.getegid()
@@ -113,10 +114,10 @@ def save_music_tree():
 
     return file_path
 
-def update_files(update_self=config["directory_settings"]["auto_update"]):
+def update_files(update_self=CONFIG["directory_settings"]["auto_update"]):
     """Function to run on start, and periodically"""
 
-    update_release("yt-dlp/yt-dlp","yt-dlp",config["download_settings"]["yt_dlp_path"])
+    update_release("yt-dlp/yt-dlp","yt-dlp",CONFIG["download_settings"]["yt_dlp_path"])
 
     if update_self:
         update_release("dcronauer1/musicdownloadbot","musicdownloadbot",restart_if_updated=True)
@@ -125,7 +126,7 @@ def update_files(update_self=config["directory_settings"]["auto_update"]):
         pass
     
     #check if ytdlp exists
-    ytdlp_path = config["download_settings"]["yt_dlp_path"]
+    ytdlp_path = CONFIG["download_settings"]["yt_dlp_path"]
     if not os.path.exists(ytdlp_path):
         print(f"ERROR: yt-dlp does not exist: {ytdlp_path}")
         sys.exit(1)

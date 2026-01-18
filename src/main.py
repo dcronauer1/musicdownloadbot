@@ -5,17 +5,24 @@ from typing import Optional
 from discord import app_commands
 from discord.ext import commands
 
-from config.config_manager import config
+from config.config_manager import initialize_config
+try:
+    CONFIG = initialize_config()    #NOTE must call this before importing other files
+except Exception as e:
+    print(e)
+    sys.exit(0) #stop and dont restart
+
+#TODO only import required functions
 from utils.ytdownloader import *
 from utils.metadata import *
 from utils.discord_helpers import *
 from utils.metadata import *
 from utils.file_handling import *
 
-MUSIC_DIRECTORY = config["download_settings"]["music_directory"]
-FILE_EXTENSION = config["download_settings"]["file_extension"]
-DEFAULT_COVER_SIZE = config["download_settings"]["default_cover_size"]
-WHITELIST= config["bot_settings"]["whitelist"]
+MUSIC_DIRECTORY = CONFIG["download_settings"]["music_directory"]
+FILE_EXTENSION = CONFIG["download_settings"]["file_extension"]
+DEFAULT_COVER_SIZE = CONFIG["download_settings"]["default_cover_size"]
+WHITELIST= CONFIG["bot_settings"]["whitelist"]
 
 # Custom Bot class to sync slash commands on startup.
 class MyBot(commands.Bot):
@@ -340,7 +347,7 @@ async def on_ready():
 update_files()
 
 try:
-    bot.run(config["bot_settings"]["BOT_TOKEN"])
+    bot.run(CONFIG["bot_settings"]["BOT_TOKEN"])
 except Exception as e:
     print(f"Error when starting bot: {e}")
     sys.exit(1)

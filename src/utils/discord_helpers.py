@@ -1,9 +1,10 @@
 import discord
 import asyncio
-from config.config_manager import config
 from typing import Optional
 
-FILE_EXTENSION = config["download_settings"]["file_extension"]
+from config.config_manager import CONFIG
+
+FILE_EXTENSION = CONFIG["download_settings"]["file_extension"]
 
 # Confirmation view using Discord UI buttons
 class ConfirmView(discord.ui.View):
